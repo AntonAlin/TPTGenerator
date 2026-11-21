@@ -1,0 +1,7 @@
+{
+  "$comment": "Which official FinDatEx template the app is built against. To change TPT version: drop the new .xlsx into /spec, point 'template' at it, update or remove 'overrides', run `npm run spec:build`, and review the warnings it prints.",
+  "template": "spec/TPT_V8_post_consultation_261008V2.xlsx",
+  "sheet": "TPT V8.0",
+  "overrides": "spec/tpt_v8.overrides.json",
+  "output": "src/spec/tpt_spec.json"
+}

@@ -1,0 +1,11 @@
+{
+  "$comment": "Metadata that is NOT in the Excel template itself. Every value must cite its official source in 'sources'.",
+  "versionFieldValue": "V8.0 dated 8 October 2026",
+  "fileNameVersionTag": "V8",
+  "mustBeEmptyFieldIds": ["17b", "29", "31", "35", "36", "44", "54", "58b", "106", "108", "114", "116", "118", "120", "124", "125", "126", "141"],
+  "sources": [
+    "versionFieldValue: spec/TPT_V8_Technical_Annex.pdf, section 'File structure and version identification' (\"Field 1000 must contain 'V8.0 dated 8 October 2026'\").",
+    "fileNameVersionTag: spec/TPT_V8_Technical_Annex.pdf, section 'File structure and version identification' and the template's naming convention.",
+    "mustBeEmptyFieldIds: spec/TPT_V8_Technical_Annex.pdf, section 'Fields retained but no longer maintained' (18 fields, must be left empty)."
+  ]
+}

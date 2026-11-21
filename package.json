@@ -1,0 +1,31 @@
+{
+  "name": "tpt-generator",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Static, in-browser converter from portfolio holdings files to the FinDatEx Solvency II Tripartite Template (TPT).",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "spec:build": "node scripts/build-spec.ts",
+    "spec:check": "node scripts/build-spec.ts --check",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run spec:check && tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "preact": "^10.29.8",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.6",
+    "@types/node": "^22.20.5",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.1"
+  }
+}
