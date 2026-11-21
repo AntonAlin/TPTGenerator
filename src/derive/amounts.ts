@@ -121,12 +121,14 @@ const KIND_PRIOR: Record<RowKind, Record<AmountRole, number>> = {
   bond: { quantity: -0.7, nominal: 0.5, mv_local: 0, mv_port: 0, other: -2.5 },
   cash: { quantity: -0.5, nominal: -0.3, mv_local: 0.5, mv_port: 0.2, other: -2.5 },
   listed: { quantity: 0.5, nominal: -0.3, mv_local: 0, mv_port: 0, other: -2.5 },
-  otc: { quantity: -0.5, nominal: 0.5, mv_local: 0, mv_port: 0, other: -2.5 },
+  otc: { quantity: -1.5, nominal: 0.5, mv_local: 0, mv_port: 0, other: -2.5 },
   unknown: { quantity: 0, nominal: 0, mv_local: 0, mv_port: 0, other: -2.5 },
 };
 
 /** Cost of reading a cell as something other than what its column was mapped to. */
 const MOVE_COST = 3;
+/** Quantity and nominal are often confused in holdings files (a "Quantity" column holds bond nominals), so that move is cheaper. */
+const QTY_NOMINAL_MOVE_COST = 1;
 
 /** Closeness of a to b: 2 = exact (≤ 0.1%), 1 = close (≤ 1%), 0 = no match. */
 function match(a: number, b: number): 0 | 1 | 2 {
@@ -167,7 +169,10 @@ function scoreAssignment(cells: AmountCell[], roles: AmountRole[], rc: RowContex
       header[r] = c.header;
     }
     const mapped = FIELD_ROLE[c.field];
-    if (mapped && mapped !== r) score -= MOVE_COST;
+    if (mapped && mapped !== r) {
+      const qn = (x: AmountRole) => x === 'quantity' || x === 'nominal';
+      score -= qn(mapped) && qn(r) ? QTY_NOMINAL_MOVE_COST : MOVE_COST;
+    }
     score += KIND_PRIOR[rc.kind][r];
     // Shape: bond nominals and OTC notionals are usually round amounts.
     if (r === 'nominal' && rc.kind === 'bond' && Math.abs(c.value) >= 1000 && c.value % 1000 === 0) score += 0.3;
@@ -361,31 +366,45 @@ export function interpretAmounts(holdings: Holding[], ctx: AmountContext): Amoun
           const r = choice[ri];
           return s + (k >= 0 && r && isMvRole(r[k]) ? cellsOf(ri)[k].value : 0);
         }, 0);
-      if (match(sum(chosen), total) === 2) {
+      // Report totals are exact sums of what the report shows: "adds up" means equal to rounding.
+      const gap = Math.abs(sum(chosen) - total);
+      if (gap <= Math.max(1, Math.abs(total) * 1e-7)) {
         notes.push(`Column "${header}": the market values add up to the reported total ${fmt(total)}.`);
         continue;
       }
-      // Candidate re-readings: market value → not a market value (removes the cell from the column sum).
+      // Candidate re-readings: a derivative's "market value" that is really something else
+      // (typically the notional). Other rows' market values are not second-guessed here.
       const candidates = holdings
         .map((_, ri) => ri)
         .filter((ri) => {
           const k = idxIn(ri);
           const r = chosen[ri];
-          if (k < 0 || !r || !isMvRole(r[k])) return false;
-          if (isDerivativeKind(kinds[ri])) return true;
-          return ranked[ri].some((o) => !isMvRole(o.roles[k]) && o.p > 0.001);
+          return k >= 0 && !!r && isMvRole(r[k]) && isDerivativeKind(kinds[ri]);
         })
         .slice(0, 16);
+      // A re-reading is acceptable when what is left of the gap could be the re-read derivatives'
+      // own market values (the total includes them, the rows do not show them): at most 5% of the
+      // re-read amounts (a forward or swap is rarely worth more than that share of its notional)
+      // and 2% of the total (hedged share classes can carry notionals close to the NAV). Among acceptable re-readings, the one that changes
+      // the fewest cells wins; a smaller remainder only breaks ties. (Choosing the smallest
+      // remainder outright would also flip genuine small derivative values that happen to offset
+      // the hidden ones.)
       let best: { mask: number; err: number } | undefined;
       for (let mask = 1; mask < 1 << candidates.length; mask++) {
+        let flippedAmount = 0;
         const trial = chosen.map((r, ri) => {
           const b = candidates.indexOf(ri);
-          return b >= 0 && mask & (1 << b) ? r!.map((x, k) => (k === idxIn(ri) ? ('other' as AmountRole) : x)) : r;
+          if (b < 0 || !(mask & (1 << b))) return r;
+          flippedAmount += Math.abs(cellsOf(ri)[idxIn(ri)].value);
+          return r!.map((x, k) => (k === idxIn(ri) ? ('other' as AmountRole) : x));
         });
-        const err = Math.abs(sum(trial) - total) / Math.abs(total);
-        if (!best || err < best.err - 1e-12 || (Math.abs(err - best.err) <= 1e-12 && popcount(mask) < popcount(best.mask))) best = { mask, err };
+        const errAbs = Math.abs(sum(trial) - total);
+        const err = errAbs / Math.abs(total);
+        if (err > 0.02 || errAbs > 0.05 * flippedAmount || errAbs > 0.05 * gap) continue;
+        const better = !best || popcount(mask) < popcount(best.mask) || (popcount(mask) === popcount(best.mask) && err < best.err);
+        if (better) best = { mask, err };
       }
-      if (best && best.err <= 0.001) {
+      if (best) {
         const flipped = candidates.filter((_, b) => best!.mask & (1 << b));
         for (const ri of flipped) {
           chosen[ri] = notAValue(cellsOf(ri), chosen[ri]!, idxIn(ri), fxOf(holdings[ri]));

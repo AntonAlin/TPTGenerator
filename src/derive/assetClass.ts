@@ -136,6 +136,8 @@ export interface AssetClassInput {
   hasCoupon?: boolean;
   hasMaturity?: boolean;
   price?: number;
+  /** Quantity × price = market value in the file: priced per unit, not in % of nominal. */
+  unitPriced?: boolean;
   /** Maturity date ISO, used to split short/long deposits. */
   maturity?: string;
   valuationDate?: string;
@@ -320,6 +322,10 @@ export function inferAssetClass(input: AssetClassInput): AssetClassResult {
   }
   if (input.isin && input.price !== undefined && !(input.price >= 70 && input.price <= 130)) {
     evidence.push('Has an ISIN, no coupon/maturity, price not bond-like');
+    return done('equity', 'low');
+  }
+  if (input.isin && input.unitPriced) {
+    evidence.push('Has an ISIN, no coupon/maturity, quantity × price = market value (priced per unit, not in % of nominal)');
     return done('equity', 'low');
   }
   evidence.push('No usable evidence');

@@ -100,6 +100,45 @@ describe('derivative notional shown in the market value column', () => {
   });
 });
 
+describe('column total that includes a hidden derivative market value', () => {
+  const eur: AmountContext = { portfolioCurrency: 'EUR', fx: () => 1 };
+  const equities = () => [
+    holding(0, { security_name: 'SAP SE', currency: 'EUR', price: 245.1 }, [['Holding', 'amount_mixed', 4000], ['Market value', 'market_value_local', 980_400]]),
+    holding(1, { security_name: 'Siemens AG', currency: 'EUR', price: 196.05 }, [['Holding', 'amount_mixed', 5000], ['Market value', 'market_value_local', 980_250]]),
+  ];
+  it('re-reads only the notional, not a genuine small value that happens to offset the hidden one', () => {
+    // Forward A shows its notional; its real value (-8,000) is in the total but not in the file.
+    // Forward B shows its real value 8,300. Dropping both would leave a smaller remainder (300)
+    // than dropping A alone (8,000), but only A's cell needs re-reading.
+    const hs = [
+      ...equities(),
+      holding(2, { security_name: 'FX FWD EUR/USD 15-DEC-2026', currency: 'EUR' }, [['Holding', 'amount_mixed', 3_900_000], ['Market value', 'market_value_local', 3_900_000]]),
+      holding(3, { security_name: 'FX FWD EUR/USD 17-MAR-2027', currency: 'EUR' }, [['Holding', 'amount_mixed', 1_600_000], ['Market value', 'market_value_local', 8_300]]),
+    ];
+    const totals: TotalRow[] = [{ row: 9, label: 'Total', cells: [null, 980_400 + 980_250 - 8_000 + 8_300], subtotal: false }];
+    const r = interpretAmounts(hs, { ...eur, totals });
+    expect(r.holdings[2].file.market_value_local).toBeUndefined();
+    expect(r.holdings[2].file.nominal).toBe(3_900_000);
+    expect(r.holdings[3].file).toMatchObject({ nominal: 1_600_000, market_value_local: 8_300 });
+    expect(r.notes.join(' ')).toMatch(/matches after re-reading 1 cell/);
+  });
+  it('accepts a remainder of a few tenths of a percent of the total when it is small next to the notional', () => {
+    // Hedged share class: the hidden forward value is 0.8% of its notional and 0.76% of the total.
+    const hs = [...equities(), holding(2, { security_name: 'FX FWD EUR/USD 15-DEC-2026', currency: 'EUR' }, [['Holding', 'amount_mixed', 1_900_000], ['Market value', 'market_value_local', 1_900_000]])];
+    const totals: TotalRow[] = [{ row: 9, label: 'Total', cells: [null, 980_400 + 980_250 + 15_000], subtotal: false }];
+    const r = interpretAmounts(hs, { ...eur, totals });
+    expect(r.holdings[2].file.market_value_local).toBeUndefined();
+    expect(r.holdings[2].file.nominal).toBe(1_900_000);
+  });
+  it('does not re-read a derivative value when that would not explain the gap', () => {
+    const hs = [...equities(), holding(2, { security_name: 'FX FWD EUR/USD 17-MAR-2027', currency: 'EUR' }, [['Holding', 'amount_mixed', 1_600_000], ['Market value', 'market_value_local', 8_300]])];
+    // The total is off by 250,000 for some other reason (e.g. accrued interest not shown).
+    const totals: TotalRow[] = [{ row: 9, label: 'Total', cells: [null, 980_400 + 980_250 + 8_300 + 250_000], subtotal: false }];
+    const r = interpretAmounts(hs, { ...eur, totals });
+    expect(r.holdings[2].file.market_value_local).toBe(8_300);
+  });
+});
+
 describe('notional duplicated in both market value columns', () => {
   it('drops both copies when the portfolio-currency total only adds up without them', () => {
     const COL = { Holding: 0, 'Market value': 1, 'Market value EUR': 2 };

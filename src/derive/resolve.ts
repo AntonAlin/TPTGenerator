@@ -205,6 +205,12 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
     hasCoupon: f.coupon !== undefined,
     hasMaturity: f.maturity_date !== undefined,
     price: f.price,
+    unitPriced:
+      f.quantity !== undefined &&
+      f.price !== undefined &&
+      f.market_value_local !== undefined &&
+      f.market_value_local !== 0 &&
+      Math.abs(f.quantity * f.price - f.market_value_local) <= Math.max(1, Math.abs(f.market_value_local) * 0.005),
     maturity: f.maturity_date,
     valuationDate: ctx.valuationDate,
   });

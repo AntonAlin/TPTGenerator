@@ -30,6 +30,13 @@ describe('inferAssetClass', () => {
     expect(r.evidence[0]).toMatch(/Asset type "Equity"/);
     expect(inferAssetClass({ name: '???' }).confidence).toBe('low');
   });
+  it('a share priced near 100 is equity when quantity × price = market value', () => {
+    // Price 103.9 alone looks like a bond price (% of nominal); per-unit pricing says otherwise.
+    expect(inferAssetClass({ name: 'Sandlux Holding', isin: 'DK8740020783', price: 103.9 }).assetClass).toBe('other');
+    const r = inferAssetClass({ name: 'Sandlux Holding', isin: 'DK8740020783', price: 103.9, unitPriced: true });
+    expect(r.assetClass).toBe('equity');
+    expect(r.evidence.join(' ')).toMatch(/priced per unit/);
+  });
   it('splits deposits by term', () => {
     expect(inferAssetClass({ name: 'Term deposit', maturity: '2028-01-01', valuationDate: '2026-09-30' }).assetClass).toBe('deposit_long');
   });

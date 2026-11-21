@@ -7,3 +7,6 @@ coverage/
 training/.venv/
 training/__pycache__/
 training/data/
+
+# Output of `npm run random` (generated test portfolios)
+random-portfolios/

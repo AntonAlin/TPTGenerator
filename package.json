@@ -14,7 +14,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "npm run build && tsx scripts/e2e-browser.ts",
-    "samples": "tsx scripts/make-samples.ts"
+    "samples": "tsx scripts/make-samples.ts",
+    "random": "tsx scripts/evaluate-portfolio.ts random-portfolios"
   },
   "engines": {
     "node": ">=20"
