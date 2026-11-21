@@ -1,0 +1,840 @@
+{
+  "$comment": "Header synonyms per canonical field and language. Editable: matching is case-, accent- and punctuation-insensitive. Adding variants here improves detection without retraining the model.",
+  "isin": {
+    "en": [
+      "isin",
+      "isin code",
+      "security isin",
+      "isin number",
+      "instrument isin"
+    ],
+    "sv": [
+      "isin kod",
+      "isin-kod",
+      "isinkod",
+      "isin nummer"
+    ],
+    "de": [
+      "isin",
+      "isin nummer",
+      "wertpapier isin"
+    ],
+    "fr": [
+      "code isin",
+      "isin titre"
+    ]
+  },
+  "other_identifier": {
+    "en": [
+      "ticker",
+      "symbol",
+      "sedol",
+      "cusip",
+      "bloomberg ticker",
+      "bloomberg id",
+      "figi",
+      "security id",
+      "security code",
+      "instrument id",
+      "asset id",
+      "ric",
+      "valoren",
+      "internal id",
+      "local code"
+    ],
+    "sv": [
+      "kortnamn",
+      "värdepapperskod",
+      "instrument id",
+      "tickersymbol"
+    ],
+    "de": [
+      "wkn",
+      "kennnummer",
+      "wertpapierkennnummer",
+      "valorennummer",
+      "kürzel"
+    ],
+    "fr": [
+      "code valeur",
+      "mnémonique",
+      "identifiant titre",
+      "code interne"
+    ]
+  },
+  "security_name": {
+    "en": [
+      "security name",
+      "security",
+      "name",
+      "description",
+      "security description",
+      "instrument",
+      "instrument name",
+      "asset name",
+      "holding",
+      "holding name",
+      "position name",
+      "asset description",
+      "issue"
+    ],
+    "sv": [
+      "värdepapper",
+      "värdepappersnamn",
+      "namn",
+      "benämning",
+      "instrument",
+      "instrumentnamn",
+      "beskrivning",
+      "innehav",
+      "placering"
+    ],
+    "de": [
+      "wertpapier",
+      "wertpapiername",
+      "bezeichnung",
+      "wertpapierbezeichnung",
+      "name",
+      "titel",
+      "gattung",
+      "beschreibung"
+    ],
+    "fr": [
+      "libellé",
+      "libellé titre",
+      "nom",
+      "titre",
+      "désignation",
+      "valeur",
+      "nom du titre",
+      "instrument"
+    ]
+  },
+  "quantity": {
+    "en": [
+      "quantity",
+      "qty",
+      "units",
+      "shares",
+      "number of shares",
+      "no of shares",
+      "holding quantity",
+      "position",
+      "amount held",
+      "contracts",
+      "number of units",
+      "quantity held",
+      "volume"
+    ],
+    "sv": [
+      "antal",
+      "antal andelar",
+      "antal aktier",
+      "kvantitet",
+      "innehav antal",
+      "antal st",
+      "andelar",
+      "volym"
+    ],
+    "de": [
+      "anzahl",
+      "stück",
+      "stückzahl",
+      "menge",
+      "bestand",
+      "anteile",
+      "stücke"
+    ],
+    "fr": [
+      "quantité",
+      "nombre",
+      "nombre de titres",
+      "nombre de parts",
+      "qté",
+      "position"
+    ]
+  },
+  "nominal": {
+    "en": [
+      "nominal",
+      "nominal amount",
+      "face value",
+      "par value",
+      "par amount",
+      "notional",
+      "principal",
+      "nominal value",
+      "face amount",
+      "original face"
+    ],
+    "sv": [
+      "nominellt",
+      "nominellt belopp",
+      "nominellt värde",
+      "nominal",
+      "nom belopp"
+    ],
+    "de": [
+      "nominale",
+      "nennwert",
+      "nominalwert",
+      "nennbetrag",
+      "nominal"
+    ],
+    "fr": [
+      "nominal",
+      "valeur nominale",
+      "montant nominal",
+      "notionnel"
+    ]
+  },
+  "market_value_local": {
+    "en": [
+      "market value local",
+      "market value",
+      "mv local",
+      "local market value",
+      "value local",
+      "market value lc",
+      "market value qc",
+      "local value",
+      "market value in local currency",
+      "value in local currency",
+      "market value instrument currency",
+      "market value trade currency",
+      "mv lcl"
+    ],
+    "sv": [
+      "marknadsvärde",
+      "marknadsvärde lokal",
+      "marknadsvärde lokal valuta",
+      "lokalt marknadsvärde",
+      "värde lokal valuta",
+      "marknadsvärde i lokal valuta",
+      "mv lokal"
+    ],
+    "de": [
+      "marktwert",
+      "kurswert",
+      "marktwert lokal",
+      "kurswert lokal",
+      "kurswert in handelswährung",
+      "marktwert in lokaler währung",
+      "kurswert fw"
+    ],
+    "fr": [
+      "valeur de marché",
+      "valorisation",
+      "valeur boursière",
+      "valeur de marché locale",
+      "valorisation devise",
+      "valeur en devise locale"
+    ]
+  },
+  "market_value_portfolio": {
+    "en": [
+      "market value base",
+      "market value portfolio currency",
+      "base market value",
+      "mv base",
+      "value base",
+      "market value fund currency",
+      "market value reporting currency",
+      "market value bc",
+      "market value pc",
+      "base value",
+      "value in base currency",
+      "total market value base",
+      "market value (base)",
+      "mv rc"
+    ],
+    "sv": [
+      "marknadsvärde bas",
+      "marknadsvärde basvaluta",
+      "marknadsvärde portföljvaluta",
+      "marknadsvärde fondvaluta",
+      "värde basvaluta",
+      "marknadsvärde sek",
+      "marknadsvärde i sek",
+      "värde sek"
+    ],
+    "de": [
+      "marktwert fondswährung",
+      "kurswert fondswährung",
+      "marktwert basiswährung",
+      "kurswert in fondswährung",
+      "kurswert eur",
+      "marktwert eur",
+      "kurswert portfoliowährung"
+    ],
+    "fr": [
+      "valeur de marché devise du fonds",
+      "valorisation devise du portefeuille",
+      "valeur en devise de référence",
+      "valeur de marché eur",
+      "valorisation eur"
+    ]
+  },
+  "price": {
+    "en": [
+      "price",
+      "market price",
+      "unit price",
+      "close price",
+      "closing price",
+      "last price",
+      "clean price",
+      "px",
+      "px last",
+      "valuation price",
+      "price local",
+      "quoted price",
+      "mid price"
+    ],
+    "sv": [
+      "kurs",
+      "pris",
+      "senast betalt",
+      "stängningskurs",
+      "marknadskurs",
+      "värderingskurs",
+      "kurs lokal"
+    ],
+    "de": [
+      "kurs",
+      "preis",
+      "schlusskurs",
+      "marktpreis",
+      "bewertungskurs",
+      "kurs in %"
+    ],
+    "fr": [
+      "cours",
+      "prix",
+      "cours de clôture",
+      "cours de valorisation",
+      "prix unitaire",
+      "cours en devise"
+    ]
+  },
+  "currency": {
+    "en": [
+      "currency",
+      "ccy",
+      "curr",
+      "cur",
+      "currency code",
+      "local currency",
+      "trade currency",
+      "quotation currency",
+      "security currency",
+      "instrument currency",
+      "denomination currency",
+      "price currency",
+      "iso currency"
+    ],
+    "sv": [
+      "valuta",
+      "valutakod",
+      "handelsvaluta",
+      "lokal valuta",
+      "noteringsvaluta",
+      "instrumentvaluta"
+    ],
+    "de": [
+      "währung",
+      "whg",
+      "handelswährung",
+      "notierungswährung",
+      "wertpapierwährung",
+      "währungscode"
+    ],
+    "fr": [
+      "devise",
+      "devise de cotation",
+      "code devise",
+      "monnaie",
+      "devise du titre"
+    ]
+  },
+  "coupon": {
+    "en": [
+      "coupon",
+      "coupon rate",
+      "cpn",
+      "interest rate",
+      "rate",
+      "coupon %",
+      "annual coupon",
+      "nominal rate"
+    ],
+    "sv": [
+      "kupong",
+      "kupongränta",
+      "ränta",
+      "räntesats",
+      "kupong %",
+      "nominell ränta"
+    ],
+    "de": [
+      "kupon",
+      "zinssatz",
+      "nominalzins",
+      "coupon",
+      "zins",
+      "kupon %"
+    ],
+    "fr": [
+      "coupon",
+      "taux",
+      "taux du coupon",
+      "taux nominal",
+      "taux d'intérêt"
+    ]
+  },
+  "maturity_date": {
+    "en": [
+      "maturity",
+      "maturity date",
+      "mat date",
+      "redemption date",
+      "final maturity",
+      "expiry",
+      "expiry date",
+      "expiration date",
+      "maturity dt",
+      "due date",
+      "end date"
+    ],
+    "sv": [
+      "förfallodag",
+      "förfallodatum",
+      "förfall",
+      "slutdag",
+      "löptid till",
+      "inlösendag",
+      "lösendag"
+    ],
+    "de": [
+      "fälligkeit",
+      "fälligkeitsdatum",
+      "laufzeit bis",
+      "endfälligkeit",
+      "verfall",
+      "verfallsdatum",
+      "rückzahlungsdatum"
+    ],
+    "fr": [
+      "échéance",
+      "date d'échéance",
+      "date de maturité",
+      "maturité",
+      "date de remboursement",
+      "expiration"
+    ]
+  },
+  "asset_type": {
+    "en": [
+      "asset type",
+      "asset class",
+      "security type",
+      "instrument type",
+      "type",
+      "asset category",
+      "class",
+      "category",
+      "product type",
+      "sec type",
+      "investment type",
+      "asset group"
+    ],
+    "sv": [
+      "tillgångsslag",
+      "värdepapperstyp",
+      "instrumenttyp",
+      "typ",
+      "tillgångstyp",
+      "kategori",
+      "placeringstyp",
+      "värdepappersslag"
+    ],
+    "de": [
+      "anlageklasse",
+      "wertpapierart",
+      "instrumententyp",
+      "assetklasse",
+      "gattungsart",
+      "kategorie",
+      "art",
+      "typ"
+    ],
+    "fr": [
+      "classe d'actifs",
+      "type d'actif",
+      "type de titre",
+      "type d'instrument",
+      "catégorie",
+      "nature",
+      "type"
+    ]
+  },
+  "weight": {
+    "en": [
+      "weight",
+      "weight %",
+      "% of nav",
+      "% of portfolio",
+      "portfolio weight",
+      "% of fund",
+      "pct of nav",
+      "allocation",
+      "% weight",
+      "% of total",
+      "% assets",
+      "exposure %"
+    ],
+    "sv": [
+      "vikt",
+      "andel",
+      "andel %",
+      "andel av fond",
+      "% av fondförmögenhet",
+      "andel av fondförmögenheten",
+      "vikt %",
+      "procent av portfölj",
+      "andel av portfölj"
+    ],
+    "de": [
+      "gewicht",
+      "gewichtung",
+      "anteil",
+      "% fondsvermögen",
+      "anteil am fondsvermögen",
+      "% des fondsvermögens",
+      "anteil in %"
+    ],
+    "fr": [
+      "poids",
+      "pondération",
+      "% actif net",
+      "% de l'actif net",
+      "poids %",
+      "% du portefeuille",
+      "part"
+    ]
+  },
+  "rating": {
+    "en": [
+      "rating",
+      "credit rating",
+      "s&p rating",
+      "moody's rating",
+      "fitch rating",
+      "composite rating",
+      "average rating",
+      "sp rating",
+      "moodys",
+      "ratings",
+      "issue rating",
+      "bbg composite"
+    ],
+    "sv": [
+      "rating",
+      "kreditbetyg",
+      "kreditrating",
+      "betyg"
+    ],
+    "de": [
+      "rating",
+      "bonität",
+      "kreditrating",
+      "emissionsrating"
+    ],
+    "fr": [
+      "notation",
+      "note",
+      "rating",
+      "note de crédit",
+      "notation émission"
+    ]
+  },
+  "issuer_name": {
+    "en": [
+      "issuer",
+      "issuer name",
+      "issuer long name",
+      "obligor",
+      "company",
+      "company name",
+      "issuer description",
+      "emitter",
+      "borrower",
+      "parent issuer"
+    ],
+    "sv": [
+      "emittent",
+      "utgivare",
+      "emittentnamn",
+      "bolag",
+      "företag",
+      "låntagare"
+    ],
+    "de": [
+      "emittent",
+      "emittentenname",
+      "aussteller",
+      "unternehmen",
+      "schuldner",
+      "herausgeber"
+    ],
+    "fr": [
+      "émetteur",
+      "nom de l'émetteur",
+      "société",
+      "entreprise",
+      "emetteur"
+    ]
+  },
+  "issuer_lei": {
+    "en": [
+      "lei",
+      "issuer lei",
+      "lei code",
+      "legal entity identifier",
+      "issuer lei code",
+      "lei issuer"
+    ],
+    "sv": [
+      "lei-kod",
+      "lei kod",
+      "emittent lei"
+    ],
+    "de": [
+      "lei",
+      "lei des emittenten",
+      "emittent lei"
+    ],
+    "fr": [
+      "code lei",
+      "lei émetteur",
+      "lei de l'émetteur"
+    ]
+  },
+  "country": {
+    "en": [
+      "country",
+      "country code",
+      "country of risk",
+      "country of issue",
+      "domicile",
+      "issuer country",
+      "country of incorporation",
+      "cntry",
+      "risk country",
+      "listing country",
+      "nationality"
+    ],
+    "sv": [
+      "land",
+      "landkod",
+      "emittentland",
+      "hemvist",
+      "riskland",
+      "noteringsland"
+    ],
+    "de": [
+      "land",
+      "ländercode",
+      "sitzland",
+      "emittentenland",
+      "risikoland",
+      "domizil",
+      "länderschlüssel"
+    ],
+    "fr": [
+      "pays",
+      "code pays",
+      "pays de l'émetteur",
+      "pays de risque",
+      "pays d'émission",
+      "domiciliation"
+    ]
+  },
+  "accrued_interest": {
+    "en": [
+      "accrued interest",
+      "accrued",
+      "accrued income",
+      "ai",
+      "interest accrued",
+      "accrued coupon",
+      "accrued int",
+      "accrual"
+    ],
+    "sv": [
+      "upplupen ränta",
+      "upplupna räntor",
+      "upplupen",
+      "upplupen kupong"
+    ],
+    "de": [
+      "stückzinsen",
+      "aufgelaufene zinsen",
+      "stückzins",
+      "zinsabgrenzung"
+    ],
+    "fr": [
+      "coupon couru",
+      "intérêts courus",
+      "intérêts courus non échus",
+      "icne",
+      "couru"
+    ]
+  },
+  "fx_rate": {
+    "en": [
+      "fx rate",
+      "exchange rate",
+      "fx",
+      "rate to base",
+      "currency rate",
+      "fx to base",
+      "conversion rate",
+      "spot rate",
+      "base fx rate"
+    ],
+    "sv": [
+      "valutakurs",
+      "växelkurs",
+      "kurs valuta",
+      "valutakurs sek"
+    ],
+    "de": [
+      "devisenkurs",
+      "wechselkurs",
+      "fx kurs",
+      "umrechnungskurs",
+      "währungskurs"
+    ],
+    "fr": [
+      "taux de change",
+      "cours de change",
+      "parité",
+      "taux de conversion"
+    ]
+  },
+  "cic": {
+    "en": [
+      "cic",
+      "cic code",
+      "solvency ii cic",
+      "complementary identification code",
+      "s2 cic",
+      "sii cic"
+    ],
+    "sv": [
+      "cic kod",
+      "cic-kod"
+    ],
+    "de": [
+      "cic code",
+      "cic-code"
+    ],
+    "fr": [
+      "code cic"
+    ]
+  },
+  "ignore": {
+    "en": [
+      "comment",
+      "comments",
+      "notes",
+      "note",
+      "remarks",
+      "sector",
+      "industry",
+      "gics sector",
+      "book cost",
+      "cost",
+      "cost value",
+      "acquisition cost",
+      "unrealised p l",
+      "unrealized gain loss",
+      "p&l",
+      "yield",
+      "ytm",
+      "duration",
+      "modified duration",
+      "purchase date",
+      "trade date",
+      "settlement date",
+      "valuation date",
+      "report date",
+      "custodian",
+      "account",
+      "account number",
+      "portfolio",
+      "fund code",
+      "row",
+      "line",
+      "no",
+      "% change",
+      "daily change"
+    ],
+    "sv": [
+      "kommentar",
+      "anmärkning",
+      "bransch",
+      "sektor",
+      "anskaffningsvärde",
+      "orealiserat resultat",
+      "avkastning",
+      "duration",
+      "anskaffningsdatum",
+      "affärsdag",
+      "likviddag",
+      "värderingsdag",
+      "förvaringsinstitut",
+      "konto",
+      "kontonummer",
+      "portfölj",
+      "depå",
+      "rad",
+      "förändring %"
+    ],
+    "de": [
+      "bemerkung",
+      "kommentar",
+      "sektor",
+      "branche",
+      "einstandswert",
+      "unrealisierter g v",
+      "rendite",
+      "duration",
+      "kaufdatum",
+      "handelstag",
+      "valuta datum",
+      "stichtag",
+      "verwahrstelle",
+      "konto",
+      "depot",
+      "zeile",
+      "veränderung %"
+    ],
+    "fr": [
+      "commentaire",
+      "remarques",
+      "secteur",
+      "prix de revient",
+      "plus moins value",
+      "rendement",
+      "sensibilité",
+      "date d'achat",
+      "date de valorisation",
+      "dépositaire",
+      "compte",
+      "ligne",
+      "var %"
+    ]
+  }
+}

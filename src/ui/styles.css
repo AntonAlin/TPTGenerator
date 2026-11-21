@@ -96,3 +96,40 @@ ul.codes { margin: 4px 0; padding-left: 18px; }
 
 .warnings { margin: 8px 0; padding: 6px 10px; background: var(--warn-soft); border-radius: 6px; }
 .warnings ul { margin: 6px 0 0; }
+
+/* ---- Phase 2: upload & mapping ---- */
+.stack { display: flex; flex-direction: column; gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; }
+.card h2, .card h3 { margin: 0 0 8px; }
+.dropzone { border: 2px dashed var(--border); border-radius: 10px; padding: 28px 16px; text-align: center; background: var(--surface); }
+.dropzone.over { border-color: var(--accent); background: var(--accent-soft); }
+.linklike { color: var(--accent); text-decoration: underline; cursor: pointer; }
+.error { color: var(--bad); font-weight: 600; }
+.ok { color: var(--ok); }
+.warn { color: var(--warn); }
+.small { font-size: 0.85rem; }
+.narrow { width: 5em; }
+button.primary, button.secondary, label.button { font: inherit; padding: 7px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--accent); }
+button.primary { background: var(--accent); color: #fff; }
+@media (prefers-color-scheme: dark) { button.primary { color: #0d1117; } }
+button.secondary, label.button.secondary { background: var(--surface); color: var(--accent); }
+button.small { padding: 2px 8px; font-size: 0.85rem; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+.step:disabled { opacity: 0.45; cursor: not-allowed; }
+.filters input[type='text'], .filters input[type='number'] { font: inherit; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); }
+.grid.compact th, .grid.compact td { padding: 3px 8px; font-size: 0.9rem; white-space: nowrap; }
+.grid.compact tbody tr { cursor: default; }
+.grid.mapping tbody tr { cursor: default; }
+.grid.mapping td { vertical-align: top; }
+.grid.mapping tr.low { background: var(--warn-soft); }
+.grid.mapping tr.dup td { box-shadow: inset 3px 0 0 var(--bad); }
+.grid.mapping select { font: inherit; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); max-width: 260px; }
+.samples { max-width: 320px; }
+.samples code { display: inline-block; margin: 0 4px 4px 0; padding: 0 4px; border-radius: 4px; background: var(--bg); border: 1px solid var(--border); max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conf { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.conf .bar { width: 60px; height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; }
+.conf .bar span { display: block; height: 100%; background: var(--accent); }
+tr.low .conf .bar span { background: var(--warn); }
+ul.reasons { margin: 0; padding-left: 16px; }
+details summary { cursor: pointer; }
+.table-wrap.unbounded { max-height: none; }
