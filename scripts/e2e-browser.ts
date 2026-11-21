@@ -6,6 +6,7 @@
  *  - mixed amount columns re-read cell by cell (Amounts tab),
  *  - downloaded TPT / quality report files are valid and have the spec layout,
  *  - IndexedDB persistence (the source profile survives a page reload),
+ *  - the affiliate banner is labelled, its image is self-hosted, its link sends no referrer,
  *  - no page or console errors, no request to any other origin,
  *  - the Content-Security-Policy blocks network requests from the page.
  */
@@ -66,6 +67,18 @@ try {
     assert.match(csp ?? '', /connect-src 'none'/);
     const outcome = await page.evaluate(() => fetch('https://example.com/').then(() => 'sent', () => 'blocked'));
     assert.equal(outcome, 'blocked');
+  });
+
+  await step('affiliate banner: labelled, self-hosted image, link without referrer', async () => {
+    const link = page.locator('aside.promo a.promo-link');
+    assert.equal(await link.getAttribute('href'), 'https://go.nordvpn.net/aff_c?offer_id=15&aff_id=160913&url_id=902');
+    assert.equal(await link.getAttribute('target'), '_blank');
+    assert.match((await link.getAttribute('rel')) ?? '', /\bsponsored\b.*\bnoreferrer\b/);
+    assert.ok(await page.isVisible('text=Advertisement · affiliate link'));
+    const img = link.locator('img');
+    await img.scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => (document.querySelector('aside.promo img') as HTMLImageElement | null)?.complete === true);
+    assert.ok(await img.evaluate((el: HTMLImageElement) => el.naturalWidth === 700 && el.currentSrc.startsWith(location.origin)));
   });
 
   await step('upload Swedish custodian file: header, skipped rows, preview', async () => {

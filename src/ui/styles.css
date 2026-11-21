@@ -54,7 +54,18 @@ code { font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; font-size:
 
 .content { padding-top: 16px; }
 .placeholder { background: var(--surface); border: 1px dashed var(--border); border-radius: 8px; padding: 24px; }
-.app-footer { margin-top: 32px; font-size: 0.85rem; }
+.app-footer { margin-top: 32px; font-size: 0.85rem; display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-start; justify-content: space-between; }
+.app-footer > p { margin: 0; flex: 1 1 320px; max-width: 760px; }
+
+/* Affiliate banner (labelled), self-hosted image */
+.promo { flex: 0 1 280px; max-width: 280px; }
+.promo-label { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+.promo-link { display: block; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+.promo-link img { display: block; width: 100%; height: auto; }
+.promo-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.promo-note { margin-top: 6px; line-height: 1.4; }
+@media (max-width: 600px) { .promo { flex-basis: 100%; max-width: 320px; } }
+@media print { .promo { display: none !important; } }
 
 .filters { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 8px 0 12px; }
 .filters input[type='search'], .filters select { font: inherit; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); }

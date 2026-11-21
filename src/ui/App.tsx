@@ -14,6 +14,7 @@ import { normalizeHoldings } from '../derive/holdings.ts';
 import { buildFxTable, guessPortfolioCurrency, impliedFxRates } from '../derive/valuation.ts';
 import { resolveHoldings } from '../derive/resolve.ts';
 import { interpretAmounts } from '../derive/amounts.ts';
+import { Promo } from './Promo.tsx';
 
 type StepId = 'upload' | 'mapping' | 'fund' | 'export' | 'spec';
 
@@ -176,8 +177,11 @@ export function App() {
       <main class="content">{body}</main>
 
       <footer class="app-footer muted">
-        Field definitions are generated from {spec.meta.sourceFile.split('#')[0].replace('spec/', '')} ({spec.meta.dateLine}). This tool does not use
-        market or reference data. Derived values are estimates and are flagged as such. Not legal or regulatory advice.
+        <p>
+          Field definitions are generated from {spec.meta.sourceFile.split('#')[0].replace('spec/', '')} ({spec.meta.dateLine}). This tool does not use
+          market or reference data. Derived values are estimates and are flagged as such. Not legal or regulatory advice.
+        </p>
+        <Promo />
       </footer>
     </div>
   );

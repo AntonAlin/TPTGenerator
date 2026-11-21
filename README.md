@@ -20,6 +20,9 @@ Live app: <https://tptgenerator.alin.one> (GitHub Pages).
 - **Network requests are blocked.** The production build has a Content-Security-Policy with
   `connect-src 'none'`: the browser refuses any request from the app, so portfolio data cannot be sent
   anywhere even by mistake. The browser end-to-end test checks this.
+- **One labelled affiliate banner** (NordVPN) is shown in the footer. Its image is served from this site, so
+  nothing is requested from the advertiser unless you click it. The link opens in a new tab without a
+  referrer, and nothing from the app is attached to it.
 - **Uploaded files stay in memory** and are gone when you close the tab.
 - **What you choose to save** (source profiles and fund profiles) is stored in your
   browser's IndexedDB on your computer only. Clearing site data deletes it, so export it regularly. Each
