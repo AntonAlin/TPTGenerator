@@ -68,6 +68,11 @@ outdated npm registry package, so `npm install` needs access to `cdn.sheetjs.com
 
 The Vite `base` is relative (`./`), so the site works under any repository name or domain.
 
+**Troubleshooting a blank page.** If the live site shows a blank page and serves files such as `/README.md`
+or `/src/main.tsx`, Pages is publishing the raw repository ("Deploy from a branch") instead of the
+built app. Set **Source** to **GitHub Actions** and deploy a *new* commit: Pages identifies deployments by
+commit, so re-deploying a commit that was already published from a branch keeps the old files.
+
 ## Project layout
 
 ```
