@@ -1,0 +1,6989 @@
+{
+"classification": "NACE Rev. 2",
+"source": "spec/nace/NACE_Rev2_Sept2019.pdf (supplied by the project owner)",
+"tptFormat": "Section letter + code digits without dots (TPT field 148)",
+"counts": {
+"section": 21,
+"division": 88,
+"group": 272,
+"class": 615
+},
+"items": [
+{
+"code": "A",
+"nace": "A",
+"level": "section",
+"section": "A",
+"label": "Agriculture, forestry and fishing"
+},
+{
+"code": "A01",
+"nace": "01",
+"level": "division",
+"section": "A",
+"label": "Crop and animal production, hunting and related service activities"
+},
+{
+"code": "A011",
+"nace": "01.1",
+"level": "group",
+"section": "A",
+"label": "Growing of non-perennial crops"
+},
+{
+"code": "A0111",
+"nace": "01.11",
+"level": "class",
+"section": "A",
+"label": "Growing of cereals (except rice), leguminous crops and oil seeds"
+},
+{
+"code": "A0112",
+"nace": "01.12",
+"level": "class",
+"section": "A",
+"label": "Growing of rice"
+},
+{
+"code": "A0113",
+"nace": "01.13",
+"level": "class",
+"section": "A",
+"label": "Growing of vegetables and melons, roots and tubers"
+},
+{
+"code": "A0114",
+"nace": "01.14",
+"level": "class",
+"section": "A",
+"label": "Growing of sugar cane"
+},
+{
+"code": "A0115",
+"nace": "01.15",
+"level": "class",
+"section": "A",
+"label": "Growing of tobacco"
+},
+{
+"code": "A0116",
+"nace": "01.16",
+"level": "class",
+"section": "A",
+"label": "Growing of fibre crops"
+},
+{
+"code": "A0119",
+"nace": "01.19",
+"level": "class",
+"section": "A",
+"label": "Growing of other non-perennial crops"
+},
+{
+"code": "A012",
+"nace": "01.2",
+"level": "group",
+"section": "A",
+"label": "Growing of perennial crops"
+},
+{
+"code": "A0121",
+"nace": "01.21",
+"level": "class",
+"section": "A",
+"label": "Growing of grapes"
+},
+{
+"code": "A0122",
+"nace": "01.22",
+"level": "class",
+"section": "A",
+"label": "Growing of tropical and subtropical fruits"
+},
+{
+"code": "A0123",
+"nace": "01.23",
+"level": "class",
+"section": "A",
+"label": "Growing of citrus fruits"
+},
+{
+"code": "A0124",
+"nace": "01.24",
+"level": "class",
+"section": "A",
+"label": "Growing of pome fruits and stone fruits"
+},
+{
+"code": "A0125",
+"nace": "01.25",
+"level": "class",
+"section": "A",
+"label": "Growing of other tree and bush fruits and nuts"
+},
+{
+"code": "A0126",
+"nace": "01.26",
+"level": "class",
+"section": "A",
+"label": "Growing of oleaginous fruits"
+},
+{
+"code": "A0127",
+"nace": "01.27",
+"level": "class",
+"section": "A",
+"label": "Growing of beverage crops"
+},
+{
+"code": "A0128",
+"nace": "01.28",
+"level": "class",
+"section": "A",
+"label": "Growing of spices, aromatic, drug and pharmaceutical crops"
+},
+{
+"code": "A0129",
+"nace": "01.29",
+"level": "class",
+"section": "A",
+"label": "Growing of other perennial crops"
+},
+{
+"code": "A013",
+"nace": "01.3",
+"level": "group",
+"section": "A",
+"label": "Plant propagation"
+},
+{
+"code": "A0130",
+"nace": "01.30",
+"level": "class",
+"section": "A",
+"label": "Plant propagation"
+},
+{
+"code": "A014",
+"nace": "01.4",
+"level": "group",
+"section": "A",
+"label": "Animal production"
+},
+{
+"code": "A0141",
+"nace": "01.41",
+"level": "class",
+"section": "A",
+"label": "Raising of dairy cattle"
+},
+{
+"code": "A0142",
+"nace": "01.42",
+"level": "class",
+"section": "A",
+"label": "Raising of other cattle and buffaloes"
+},
+{
+"code": "A0143",
+"nace": "01.43",
+"level": "class",
+"section": "A",
+"label": "Raising of horses and other equines"
+},
+{
+"code": "A0144",
+"nace": "01.44",
+"level": "class",
+"section": "A",
+"label": "Raising of camels and camelids"
+},
+{
+"code": "A0145",
+"nace": "01.45",
+"level": "class",
+"section": "A",
+"label": "Raising of sheep and goats"
+},
+{
+"code": "A0146",
+"nace": "01.46",
+"level": "class",
+"section": "A",
+"label": "Raising of swine/pigs"
+},
+{
+"code": "A0147",
+"nace": "01.47",
+"level": "class",
+"section": "A",
+"label": "Raising of poultry"
+},
+{
+"code": "A0149",
+"nace": "01.49",
+"level": "class",
+"section": "A",
+"label": "Raising of other animals"
+},
+{
+"code": "A015",
+"nace": "01.5",
+"level": "group",
+"section": "A",
+"label": "Mixed farming"
+},
+{
+"code": "A0150",
+"nace": "01.50",
+"level": "class",
+"section": "A",
+"label": "Mixed farming"
+},
+{
+"code": "A016",
+"nace": "01.6",
+"level": "group",
+"section": "A",
+"label": "Support activities to agriculture and post-harvest crop activities"
+},
+{
+"code": "A0161",
+"nace": "01.61",
+"level": "class",
+"section": "A",
+"label": "Support activities for crop production"
+},
+{
+"code": "A0162",
+"nace": "01.62",
+"level": "class",
+"section": "A",
+"label": "Support activities for animal production"
+},
+{
+"code": "A0163",
+"nace": "01.63",
+"level": "class",
+"section": "A",
+"label": "Post-harvest crop activities"
+},
+{
+"code": "A0164",
+"nace": "01.64",
+"level": "class",
+"section": "A",
+"label": "Seed processing for propagation"
+},
+{
+"code": "A017",
+"nace": "01.7",
+"level": "group",
+"section": "A",
+"label": "Hunting, trapping and related service activities"
+},
+{
+"code": "A0170",
+"nace": "01.70",
+"level": "class",
+"section": "A",
+"label": "Hunting, trapping and related service activities"
+},
+{
+"code": "A02",
+"nace": "02",
+"level": "division",
+"section": "A",
+"label": "Forestry and logging"
+},
+{
+"code": "A021",
+"nace": "02.1",
+"level": "group",
+"section": "A",
+"label": "Silviculture and other forestry activities"
+},
+{
+"code": "A0210",
+"nace": "02.10",
+"level": "class",
+"section": "A",
+"label": "Silviculture and other forestry activities"
+},
+{
+"code": "A022",
+"nace": "02.2",
+"level": "group",
+"section": "A",
+"label": "Logging"
+},
+{
+"code": "A0220",
+"nace": "02.20",
+"level": "class",
+"section": "A",
+"label": "Logging"
+},
+{
+"code": "A023",
+"nace": "02.3",
+"level": "group",
+"section": "A",
+"label": "Gathering of wild growing non-wood products"
+},
+{
+"code": "A0230",
+"nace": "02.30",
+"level": "class",
+"section": "A",
+"label": "Gathering of wild growing non-wood products"
+},
+{
+"code": "A024",
+"nace": "02.4",
+"level": "group",
+"section": "A",
+"label": "Support services to forestry"
+},
+{
+"code": "A0240",
+"nace": "02.40",
+"level": "class",
+"section": "A",
+"label": "Support services to forestry"
+},
+{
+"code": "A03",
+"nace": "03",
+"level": "division",
+"section": "A",
+"label": "Fishing and aquaculture"
+},
+{
+"code": "A031",
+"nace": "03.1",
+"level": "group",
+"section": "A",
+"label": "Fishing"
+},
+{
+"code": "A0311",
+"nace": "03.11",
+"level": "class",
+"section": "A",
+"label": "Marine fishing"
+},
+{
+"code": "A0312",
+"nace": "03.12",
+"level": "class",
+"section": "A",
+"label": "Freshwater fishing"
+},
+{
+"code": "A032",
+"nace": "03.2",
+"level": "group",
+"section": "A",
+"label": "Aquaculture"
+},
+{
+"code": "A0321",
+"nace": "03.21",
+"level": "class",
+"section": "A",
+"label": "Marine aquaculture"
+},
+{
+"code": "A0322",
+"nace": "03.22",
+"level": "class",
+"section": "A",
+"label": "Freshwater aquaculture"
+},
+{
+"code": "B",
+"nace": "B",
+"level": "section",
+"section": "B",
+"label": "Mining and quarrying"
+},
+{
+"code": "B05",
+"nace": "05",
+"level": "division",
+"section": "B",
+"label": "Mining of coal and lignite"
+},
+{
+"code": "B051",
+"nace": "05.1",
+"level": "group",
+"section": "B",
+"label": "Mining of hard coal"
+},
+{
+"code": "B0510",
+"nace": "05.10",
+"level": "class",
+"section": "B",
+"label": "Mining of hard coal"
+},
+{
+"code": "B052",
+"nace": "05.2",
+"level": "group",
+"section": "B",
+"label": "Mining of lignite"
+},
+{
+"code": "B0520",
+"nace": "05.20",
+"level": "class",
+"section": "B",
+"label": "Mining of lignite"
+},
+{
+"code": "B06",
+"nace": "06",
+"level": "division",
+"section": "B",
+"label": "Extraction of crude petroleum and natural gas"
+},
+{
+"code": "B061",
+"nace": "06.1",
+"level": "group",
+"section": "B",
+"label": "Extraction of crude petroleum"
+},
+{
+"code": "B0610",
+"nace": "06.10",
+"level": "class",
+"section": "B",
+"label": "Extraction of crude petroleum"
+},
+{
+"code": "B062",
+"nace": "06.2",
+"level": "group",
+"section": "B",
+"label": "Extraction of natural gas"
+},
+{
+"code": "B0620",
+"nace": "06.20",
+"level": "class",
+"section": "B",
+"label": "Extraction of natural gas"
+},
+{
+"code": "B07",
+"nace": "07",
+"level": "division",
+"section": "B",
+"label": "Mining of metal ores"
+},
+{
+"code": "B071",
+"nace": "07.1",
+"level": "group",
+"section": "B",
+"label": "Mining of iron ores"
+},
+{
+"code": "B0710",
+"nace": "07.10",
+"level": "class",
+"section": "B",
+"label": "Mining of iron ores"
+},
+{
+"code": "B072",
+"nace": "07.2",
+"level": "group",
+"section": "B",
+"label": "Mining of non-ferrous metal ores"
+},
+{
+"code": "B0721",
+"nace": "07.21",
+"level": "class",
+"section": "B",
+"label": "Mining of uranium and thorium ores"
+},
+{
+"code": "B0729",
+"nace": "07.29",
+"level": "class",
+"section": "B",
+"label": "Mining of other non-ferrous metal ores"
+},
+{
+"code": "B08",
+"nace": "08",
+"level": "division",
+"section": "B",
+"label": "Other mining and quarrying"
+},
+{
+"code": "B081",
+"nace": "08.1",
+"level": "group",
+"section": "B",
+"label": "Quarrying of stone, sand and clay"
+},
+{
+"code": "B0811",
+"nace": "08.11",
+"level": "class",
+"section": "B",
+"label": "Quarrying of ornamental and building stone, limestone, gypsum, chalk and slate"
+},
+{
+"code": "B0812",
+"nace": "08.12",
+"level": "class",
+"section": "B",
+"label": "Operation of gravel and sand pits; mining of clays and kaolin"
+},
+{
+"code": "B089",
+"nace": "08.9",
+"level": "group",
+"section": "B",
+"label": "Mining and quarrying n.e.c."
+},
+{
+"code": "B0891",
+"nace": "08.91",
+"level": "class",
+"section": "B",
+"label": "Mining of chemical and fertiliser minerals"
+},
+{
+"code": "B0892",
+"nace": "08.92",
+"level": "class",
+"section": "B",
+"label": "Extraction of peat"
+},
+{
+"code": "B0893",
+"nace": "08.93",
+"level": "class",
+"section": "B",
+"label": "Extraction of salt"
+},
+{
+"code": "B0899",
+"nace": "08.99",
+"level": "class",
+"section": "B",
+"label": "Other mining and quarrying n.e.c."
+},
+{
+"code": "B09",
+"nace": "09",
+"level": "division",
+"section": "B",
+"label": "Mining support service activities"
+},
+{
+"code": "B091",
+"nace": "09.1",
+"level": "group",
+"section": "B",
+"label": "Support activities for petroleum and natural gas extraction"
+},
+{
+"code": "B0910",
+"nace": "09.10",
+"level": "class",
+"section": "B",
+"label": "Support activities for petroleum and natural gas extraction"
+},
+{
+"code": "B099",
+"nace": "09.9",
+"level": "group",
+"section": "B",
+"label": "Support activities for other mining and quarrying"
+},
+{
+"code": "B0990",
+"nace": "09.90",
+"level": "class",
+"section": "B",
+"label": "Support activities for other mining and quarrying"
+},
+{
+"code": "C",
+"nace": "C",
+"level": "section",
+"section": "C",
+"label": "Manufacturing"
+},
+{
+"code": "C10",
+"nace": "10",
+"level": "division",
+"section": "C",
+"label": "Manufacture of food products"
+},
+{
+"code": "C101",
+"nace": "10.1",
+"level": "group",
+"section": "C",
+"label": "Processing and preserving of meat and production of meat products"
+},
+{
+"code": "C1011",
+"nace": "10.11",
+"level": "class",
+"section": "C",
+"label": "Processing and preserving of meat"
+},
+{
+"code": "C1012",
+"nace": "10.12",
+"level": "class",
+"section": "C",
+"label": "Processing and preserving of poultry meat"
+},
+{
+"code": "C1013",
+"nace": "10.13",
+"level": "class",
+"section": "C",
+"label": "Production of meat and poultry meat products"
+},
+{
+"code": "C102",
+"nace": "10.2",
+"level": "group",
+"section": "C",
+"label": "Processing and preserving of fish, crustaceans and molluscs"
+},
+{
+"code": "C1020",
+"nace": "10.20",
+"level": "class",
+"section": "C",
+"label": "Processing and preserving of fish, crustaceans and molluscs"
+},
+{
+"code": "C103",
+"nace": "10.3",
+"level": "group",
+"section": "C",
+"label": "Processing and preserving of fruit and vegetables"
+},
+{
+"code": "C1031",
+"nace": "10.31",
+"level": "class",
+"section": "C",
+"label": "Processing and preserving of potatoes"
+},
+{
+"code": "C1032",
+"nace": "10.32",
+"level": "class",
+"section": "C",
+"label": "Manufacture of fruit and vegetable juice"
+},
+{
+"code": "C1039",
+"nace": "10.39",
+"level": "class",
+"section": "C",
+"label": "Other processing and preserving of fruit and vegetables"
+},
+{
+"code": "C104",
+"nace": "10.4",
+"level": "group",
+"section": "C",
+"label": "Manufacture of vegetable and animal oils and fats"
+},
+{
+"code": "C1041",
+"nace": "10.41",
+"level": "class",
+"section": "C",
+"label": "Manufacture of oils and fats"
+},
+{
+"code": "C1042",
+"nace": "10.42",
+"level": "class",
+"section": "C",
+"label": "Manufacture of margarine and similar edible fats"
+},
+{
+"code": "C105",
+"nace": "10.5",
+"level": "group",
+"section": "C",
+"label": "Manufacture of dairy products"
+},
+{
+"code": "C1051",
+"nace": "10.51",
+"level": "class",
+"section": "C",
+"label": "Operation of dairies and cheese making"
+},
+{
+"code": "C1052",
+"nace": "10.52",
+"level": "class",
+"section": "C",
+"label": "Manufacture of ice cream"
+},
+{
+"code": "C106",
+"nace": "10.6",
+"level": "group",
+"section": "C",
+"label": "Manufacture of grain mill products, starches and starch products"
+},
+{
+"code": "C1061",
+"nace": "10.61",
+"level": "class",
+"section": "C",
+"label": "Manufacture of grain mill products"
+},
+{
+"code": "C1062",
+"nace": "10.62",
+"level": "class",
+"section": "C",
+"label": "Manufacture of starches and starch products"
+},
+{
+"code": "C107",
+"nace": "10.7",
+"level": "group",
+"section": "C",
+"label": "Manufacture of bakery and farinaceous products"
+},
+{
+"code": "C1071",
+"nace": "10.71",
+"level": "class",
+"section": "C",
+"label": "Manufacture of bread; manufacture of fresh pastry goods and cakes"
+},
+{
+"code": "C1072",
+"nace": "10.72",
+"level": "class",
+"section": "C",
+"label": "Manufacture of rusks and biscuits; manufacture of preserved pastry goods and cakes"
+},
+{
+"code": "C1073",
+"nace": "10.73",
+"level": "class",
+"section": "C",
+"label": "Manufacture of macaroni, noodles, couscous and similar farinaceous products"
+},
+{
+"code": "C108",
+"nace": "10.8",
+"level": "group",
+"section": "C",
+"label": "Manufacture of other food products"
+},
+{
+"code": "C1081",
+"nace": "10.81",
+"level": "class",
+"section": "C",
+"label": "Manufacture of sugar"
+},
+{
+"code": "C1082",
+"nace": "10.82",
+"level": "class",
+"section": "C",
+"label": "Manufacture of cocoa, chocolate and sugar confectionery"
+},
+{
+"code": "C1083",
+"nace": "10.83",
+"level": "class",
+"section": "C",
+"label": "Processing of tea and coffee"
+},
+{
+"code": "C1084",
+"nace": "10.84",
+"level": "class",
+"section": "C",
+"label": "Manufacture of condiments and seasonings"
+},
+{
+"code": "C1085",
+"nace": "10.85",
+"level": "class",
+"section": "C",
+"label": "Manufacture of prepared meals and dishes"
+},
+{
+"code": "C1086",
+"nace": "10.86",
+"level": "class",
+"section": "C",
+"label": "Manufacture of homogenised food preparations and dietetic food"
+},
+{
+"code": "C1089",
+"nace": "10.89",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other food products n.e.c."
+},
+{
+"code": "C109",
+"nace": "10.9",
+"level": "group",
+"section": "C",
+"label": "Manufacture of prepared animal feeds"
+},
+{
+"code": "C1091",
+"nace": "10.91",
+"level": "class",
+"section": "C",
+"label": "Manufacture of prepared feeds for farm animals"
+},
+{
+"code": "C1092",
+"nace": "10.92",
+"level": "class",
+"section": "C",
+"label": "Manufacture of prepared pet foods"
+},
+{
+"code": "C11",
+"nace": "11",
+"level": "division",
+"section": "C",
+"label": "Manufacture of beverages"
+},
+{
+"code": "C110",
+"nace": "11.0",
+"level": "group",
+"section": "C",
+"label": "Manufacture of beverages"
+},
+{
+"code": "C1101",
+"nace": "11.01",
+"level": "class",
+"section": "C",
+"label": "Distilling, rectifying and blending of spirits"
+},
+{
+"code": "C1102",
+"nace": "11.02",
+"level": "class",
+"section": "C",
+"label": "Manufacture of wine from grape"
+},
+{
+"code": "C1103",
+"nace": "11.03",
+"level": "class",
+"section": "C",
+"label": "Manufacture of cider and other fruit wines"
+},
+{
+"code": "C1104",
+"nace": "11.04",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other non-distilled fermented beverages"
+},
+{
+"code": "C1105",
+"nace": "11.05",
+"level": "class",
+"section": "C",
+"label": "Manufacture of beer"
+},
+{
+"code": "C1106",
+"nace": "11.06",
+"level": "class",
+"section": "C",
+"label": "Manufacture of malt"
+},
+{
+"code": "C1107",
+"nace": "11.07",
+"level": "class",
+"section": "C",
+"label": "Manufacture of soft drinks; production of mineral waters and other bottled waters"
+},
+{
+"code": "C12",
+"nace": "12",
+"level": "division",
+"section": "C",
+"label": "Manufacture of tobacco products"
+},
+{
+"code": "C120",
+"nace": "12.0",
+"level": "group",
+"section": "C",
+"label": "Manufacture of tobacco products"
+},
+{
+"code": "C1200",
+"nace": "12.00",
+"level": "class",
+"section": "C",
+"label": "Manufacture of tobacco products"
+},
+{
+"code": "C13",
+"nace": "13",
+"level": "division",
+"section": "C",
+"label": "Manufacture of textiles"
+},
+{
+"code": "C131",
+"nace": "13.1",
+"level": "group",
+"section": "C",
+"label": "Preparation and spinning of textile fibres"
+},
+{
+"code": "C1310",
+"nace": "13.10",
+"level": "class",
+"section": "C",
+"label": "Preparation and spinning of textile fibres"
+},
+{
+"code": "C132",
+"nace": "13.2",
+"level": "group",
+"section": "C",
+"label": "Weaving of textiles"
+},
+{
+"code": "C1320",
+"nace": "13.20",
+"level": "class",
+"section": "C",
+"label": "Weaving of textiles"
+},
+{
+"code": "C133",
+"nace": "13.3",
+"level": "group",
+"section": "C",
+"label": "Finishing of textiles"
+},
+{
+"code": "C1330",
+"nace": "13.30",
+"level": "class",
+"section": "C",
+"label": "Finishing of textiles"
+},
+{
+"code": "C139",
+"nace": "13.9",
+"level": "group",
+"section": "C",
+"label": "Manufacture of other textiles"
+},
+{
+"code": "C1391",
+"nace": "13.91",
+"level": "class",
+"section": "C",
+"label": "Manufacture of knitted and crocheted fabrics"
+},
+{
+"code": "C1392",
+"nace": "13.92",
+"level": "class",
+"section": "C",
+"label": "Manufacture of made-up textile articles, except apparel"
+},
+{
+"code": "C1393",
+"nace": "13.93",
+"level": "class",
+"section": "C",
+"label": "Manufacture of carpets and rugs"
+},
+{
+"code": "C1394",
+"nace": "13.94",
+"level": "class",
+"section": "C",
+"label": "Manufacture of cordage, rope, twine and netting"
+},
+{
+"code": "C1395",
+"nace": "13.95",
+"level": "class",
+"section": "C",
+"label": "Manufacture of non-wovens and articles made from non-wovens, except apparel"
+},
+{
+"code": "C1396",
+"nace": "13.96",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other technical and industrial textiles"
+},
+{
+"code": "C1399",
+"nace": "13.99",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other textiles n.e.c."
+},
+{
+"code": "C14",
+"nace": "14",
+"level": "division",
+"section": "C",
+"label": "Manufacture of wearing apparel"
+},
+{
+"code": "C141",
+"nace": "14.1",
+"level": "group",
+"section": "C",
+"label": "Manufacture of wearing apparel, except fur apparel"
+},
+{
+"code": "C1411",
+"nace": "14.11",
+"level": "class",
+"section": "C",
+"label": "Manufacture of leather clothes"
+},
+{
+"code": "C1412",
+"nace": "14.12",
+"level": "class",
+"section": "C",
+"label": "Manufacture of workwear"
+},
+{
+"code": "C1413",
+"nace": "14.13",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other outerwear"
+},
+{
+"code": "C1414",
+"nace": "14.14",
+"level": "class",
+"section": "C",
+"label": "Manufacture of underwear"
+},
+{
+"code": "C1419",
+"nace": "14.19",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other wearing apparel and accessories"
+},
+{
+"code": "C142",
+"nace": "14.2",
+"level": "group",
+"section": "C",
+"label": "Manufacture of articles of fur"
+},
+{
+"code": "C1420",
+"nace": "14.20",
+"level": "class",
+"section": "C",
+"label": "Manufacture of articles of fur"
+},
+{
+"code": "C143",
+"nace": "14.3",
+"level": "group",
+"section": "C",
+"label": "Manufacture of knitted and crocheted apparel"
+},
+{
+"code": "C1431",
+"nace": "14.31",
+"level": "class",
+"section": "C",
+"label": "Manufacture of knitted and crocheted hosiery"
+},
+{
+"code": "C1439",
+"nace": "14.39",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other knitted and crocheted apparel"
+},
+{
+"code": "C15",
+"nace": "15",
+"level": "division",
+"section": "C",
+"label": "Manufacture of leather and related products"
+},
+{
+"code": "C151",
+"nace": "15.1",
+"level": "group",
+"section": "C",
+"label": "Tanning and dressing of leather; manufacture of luggage, handbags, saddlery and harness; dressing and dyeing of fur"
+},
+{
+"code": "C1511",
+"nace": "15.11",
+"level": "class",
+"section": "C",
+"label": "Tanning and dressing of leather; dressing and dyeing of fur"
+},
+{
+"code": "C1512",
+"nace": "15.12",
+"level": "class",
+"section": "C",
+"label": "Manufacture of luggage, handbags and the like, saddlery and harness"
+},
+{
+"code": "C152",
+"nace": "15.2",
+"level": "group",
+"section": "C",
+"label": "Manufacture of footwear"
+},
+{
+"code": "C1520",
+"nace": "15.20",
+"level": "class",
+"section": "C",
+"label": "Manufacture of footwear"
+},
+{
+"code": "C16",
+"nace": "16",
+"level": "division",
+"section": "C",
+"label": "Manufacture of wood and of products of wood and cork, except furniture; manufacture of articles of straw and plaiting materials"
+},
+{
+"code": "C161",
+"nace": "16.1",
+"level": "group",
+"section": "C",
+"label": "Sawmilling and planing of wood"
+},
+{
+"code": "C1610",
+"nace": "16.10",
+"level": "class",
+"section": "C",
+"label": "Sawmilling and planing of wood"
+},
+{
+"code": "C162",
+"nace": "16.2",
+"level": "group",
+"section": "C",
+"label": "Manufacture of products of wood, cork, straw and plaiting materials"
+},
+{
+"code": "C1621",
+"nace": "16.21",
+"level": "class",
+"section": "C",
+"label": "Manufacture of veneer sheets and wood-based panels"
+},
+{
+"code": "C1622",
+"nace": "16.22",
+"level": "class",
+"section": "C",
+"label": "Manufacture of assembled parquet floors"
+},
+{
+"code": "C1623",
+"nace": "16.23",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other builders' carpentry and joinery"
+},
+{
+"code": "C1624",
+"nace": "16.24",
+"level": "class",
+"section": "C",
+"label": "Manufacture of wooden containers"
+},
+{
+"code": "C1629",
+"nace": "16.29",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other products of wood; manufacture of articles of cork, straw and plaiting materials"
+},
+{
+"code": "C17",
+"nace": "17",
+"level": "division",
+"section": "C",
+"label": "Manufacture of paper and paper products"
+},
+{
+"code": "C171",
+"nace": "17.1",
+"level": "group",
+"section": "C",
+"label": "Manufacture of pulp, paper and paperboard"
+},
+{
+"code": "C1711",
+"nace": "17.11",
+"level": "class",
+"section": "C",
+"label": "Manufacture of pulp"
+},
+{
+"code": "C1712",
+"nace": "17.12",
+"level": "class",
+"section": "C",
+"label": "Manufacture of paper and paperboard"
+},
+{
+"code": "C172",
+"nace": "17.2",
+"level": "group",
+"section": "C",
+"label": "Manufacture of articles of paper and paperboard"
+},
+{
+"code": "C1721",
+"nace": "17.21",
+"level": "class",
+"section": "C",
+"label": "Manufacture of corrugated paper and paperboard and of containers of paper and paperboard"
+},
+{
+"code": "C1722",
+"nace": "17.22",
+"level": "class",
+"section": "C",
+"label": "Manufacture of household and sanitary goods and of toilet requisites"
+},
+{
+"code": "C1723",
+"nace": "17.23",
+"level": "class",
+"section": "C",
+"label": "Manufacture of paper stationery"
+},
+{
+"code": "C1724",
+"nace": "17.24",
+"level": "class",
+"section": "C",
+"label": "Manufacture of wallpaper"
+},
+{
+"code": "C1729",
+"nace": "17.29",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other articles of paper and paperboard"
+},
+{
+"code": "C18",
+"nace": "18",
+"level": "division",
+"section": "C",
+"label": "Printing and reproduction of recorded media"
+},
+{
+"code": "C181",
+"nace": "18.1",
+"level": "group",
+"section": "C",
+"label": "Printing and service activities related to printing"
+},
+{
+"code": "C1811",
+"nace": "18.11",
+"level": "class",
+"section": "C",
+"label": "Printing of newspapers"
+},
+{
+"code": "C1812",
+"nace": "18.12",
+"level": "class",
+"section": "C",
+"label": "Other printing"
+},
+{
+"code": "C1813",
+"nace": "18.13",
+"level": "class",
+"section": "C",
+"label": "Pre-press and pre-media services"
+},
+{
+"code": "C1814",
+"nace": "18.14",
+"level": "class",
+"section": "C",
+"label": "Binding and related services"
+},
+{
+"code": "C182",
+"nace": "18.2",
+"level": "group",
+"section": "C",
+"label": "Reproduction of recorded media"
+},
+{
+"code": "C1820",
+"nace": "18.20",
+"level": "class",
+"section": "C",
+"label": "Reproduction of recorded media"
+},
+{
+"code": "C19",
+"nace": "19",
+"level": "division",
+"section": "C",
+"label": "Manufacture of coke and refined petroleum products"
+},
+{
+"code": "C191",
+"nace": "19.1",
+"level": "group",
+"section": "C",
+"label": "Manufacture of coke oven products"
+},
+{
+"code": "C1910",
+"nace": "19.10",
+"level": "class",
+"section": "C",
+"label": "Manufacture of coke oven products"
+},
+{
+"code": "C192",
+"nace": "19.2",
+"level": "group",
+"section": "C",
+"label": "Manufacture of refined petroleum products"
+},
+{
+"code": "C1920",
+"nace": "19.20",
+"level": "class",
+"section": "C",
+"label": "Manufacture of refined petroleum products"
+},
+{
+"code": "C20",
+"nace": "20",
+"level": "division",
+"section": "C",
+"label": "Manufacture of chemicals and chemical products"
+},
+{
+"code": "C201",
+"nace": "20.1",
+"level": "group",
+"section": "C",
+"label": "Manufacture of basic chemicals, fertilisers and nitrogen compounds, plastics and synthetic rubber in primary forms"
+},
+{
+"code": "C2011",
+"nace": "20.11",
+"level": "class",
+"section": "C",
+"label": "Manufacture of industrial gases"
+},
+{
+"code": "C2012",
+"nace": "20.12",
+"level": "class",
+"section": "C",
+"label": "Manufacture of dyes and pigments"
+},
+{
+"code": "C2013",
+"nace": "20.13",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other inorganic basic chemicals"
+},
+{
+"code": "C2014",
+"nace": "20.14",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other organic basic chemicals"
+},
+{
+"code": "C2015",
+"nace": "20.15",
+"level": "class",
+"section": "C",
+"label": "Manufacture of fertilisers and nitrogen compounds"
+},
+{
+"code": "C2016",
+"nace": "20.16",
+"level": "class",
+"section": "C",
+"label": "Manufacture of plastics in primary forms"
+},
+{
+"code": "C2017",
+"nace": "20.17",
+"level": "class",
+"section": "C",
+"label": "Manufacture of synthetic rubber in primary forms"
+},
+{
+"code": "C202",
+"nace": "20.2",
+"level": "group",
+"section": "C",
+"label": "Manufacture of pesticides and other agrochemical products"
+},
+{
+"code": "C2020",
+"nace": "20.20",
+"level": "class",
+"section": "C",
+"label": "Manufacture of pesticides and other agrochemical products"
+},
+{
+"code": "C203",
+"nace": "20.3",
+"level": "group",
+"section": "C",
+"label": "Manufacture of paints, varnishes and similar coatings, printing ink and mastics"
+},
+{
+"code": "C2030",
+"nace": "20.30",
+"level": "class",
+"section": "C",
+"label": "Manufacture of paints, varnishes and similar coatings, printing ink and Mastics"
+},
+{
+"code": "C204",
+"nace": "20.4",
+"level": "group",
+"section": "C",
+"label": "Manufacture of soap and detergents, cleaning and polishing preparations, perfumes and toilet preparations"
+},
+{
+"code": "C2041",
+"nace": "20.41",
+"level": "class",
+"section": "C",
+"label": "Manufacture of soap and detergents, cleaning and polishing preparations"
+},
+{
+"code": "C2042",
+"nace": "20.42",
+"level": "class",
+"section": "C",
+"label": "Manufacture of perfumes and toilet preparations"
+},
+{
+"code": "C205",
+"nace": "20.5",
+"level": "group",
+"section": "C",
+"label": "Manufacture of other chemical products"
+},
+{
+"code": "C2051",
+"nace": "20.51",
+"level": "class",
+"section": "C",
+"label": "Manufacture of explosives"
+},
+{
+"code": "C2052",
+"nace": "20.52",
+"level": "class",
+"section": "C",
+"label": "Manufacture of glues"
+},
+{
+"code": "C2053",
+"nace": "20.53",
+"level": "class",
+"section": "C",
+"label": "Manufacture of essential oils"
+},
+{
+"code": "C2059",
+"nace": "20.59",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other chemical products n.e.c."
+},
+{
+"code": "C206",
+"nace": "20.6",
+"level": "group",
+"section": "C",
+"label": "Manufacture of man-made fibres"
+},
+{
+"code": "C2060",
+"nace": "20.60",
+"level": "class",
+"section": "C",
+"label": "Manufacture of man-made fibres"
+},
+{
+"code": "C21",
+"nace": "21",
+"level": "division",
+"section": "C",
+"label": "Manufacture of basic pharmaceutical products and pharmaceutical preparations"
+},
+{
+"code": "C211",
+"nace": "21.1",
+"level": "group",
+"section": "C",
+"label": "Manufacture of basic pharmaceutical products"
+},
+{
+"code": "C2110",
+"nace": "21.10",
+"level": "class",
+"section": "C",
+"label": "Manufacture of basic pharmaceutical products"
+},
+{
+"code": "C212",
+"nace": "21.2",
+"level": "group",
+"section": "C",
+"label": "Manufacture of pharmaceutical preparations"
+},
+{
+"code": "C2120",
+"nace": "21.20",
+"level": "class",
+"section": "C",
+"label": "Manufacture of pharmaceutical preparations"
+},
+{
+"code": "C22",
+"nace": "22",
+"level": "division",
+"section": "C",
+"label": "Manufacture of rubber and plastic products"
+},
+{
+"code": "C221",
+"nace": "22.1",
+"level": "group",
+"section": "C",
+"label": "Manufacture of rubber products"
+},
+{
+"code": "C2211",
+"nace": "22.11",
+"level": "class",
+"section": "C",
+"label": "Manufacture of rubber tyres and tubes; retreading and rebuilding of rubber tyres"
+},
+{
+"code": "C2219",
+"nace": "22.19",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other rubber products"
+},
+{
+"code": "C222",
+"nace": "22.2",
+"level": "group",
+"section": "C",
+"label": "Manufacture of plastics products"
+},
+{
+"code": "C2221",
+"nace": "22.21",
+"level": "class",
+"section": "C",
+"label": "Manufacture of plastic plates, sheets, tubes and profiles"
+},
+{
+"code": "C2222",
+"nace": "22.22",
+"level": "class",
+"section": "C",
+"label": "Manufacture of plastic packing goods"
+},
+{
+"code": "C2223",
+"nace": "22.23",
+"level": "class",
+"section": "C",
+"label": "Manufacture of builders' ware of plastic"
+},
+{
+"code": "C2229",
+"nace": "22.29",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other plastic products"
+},
+{
+"code": "C23",
+"nace": "23",
+"level": "division",
+"section": "C",
+"label": "Manufacture of other non-metallic mineral products"
+},
+{
+"code": "C231",
+"nace": "23.1",
+"level": "group",
+"section": "C",
+"label": "Manufacture of glass and glass products"
+},
+{
+"code": "C2311",
+"nace": "23.11",
+"level": "class",
+"section": "C",
+"label": "Manufacture of flat glass"
+},
+{
+"code": "C2312",
+"nace": "23.12",
+"level": "class",
+"section": "C",
+"label": "Shaping and processing of flat glass"
+},
+{
+"code": "C2313",
+"nace": "23.13",
+"level": "class",
+"section": "C",
+"label": "Manufacture of hollow glass"
+},
+{
+"code": "C2314",
+"nace": "23.14",
+"level": "class",
+"section": "C",
+"label": "Manufacture of glass fibres"
+},
+{
+"code": "C2319",
+"nace": "23.19",
+"level": "class",
+"section": "C",
+"label": "Manufacture and processing of other glass, including technical glassware"
+},
+{
+"code": "C232",
+"nace": "23.2",
+"level": "group",
+"section": "C",
+"label": "Manufacture of refractory products"
+},
+{
+"code": "C2320",
+"nace": "23.20",
+"level": "class",
+"section": "C",
+"label": "Manufacture of refractory products"
+},
+{
+"code": "C233",
+"nace": "23.3",
+"level": "group",
+"section": "C",
+"label": "Manufacture of clay building materials"
+},
+{
+"code": "C2331",
+"nace": "23.31",
+"level": "class",
+"section": "C",
+"label": "Manufacture of ceramic tiles and flags"
+},
+{
+"code": "C2332",
+"nace": "23.32",
+"level": "class",
+"section": "C",
+"label": "Manufacture of bricks, tiles and construction products, in baked clay"
+},
+{
+"code": "C234",
+"nace": "23.4",
+"level": "group",
+"section": "C",
+"label": "Manufacture of other porcelain and ceramic products"
+},
+{
+"code": "C2341",
+"nace": "23.41",
+"level": "class",
+"section": "C",
+"label": "Manufacture of ceramic household and ornamental articles"
+},
+{
+"code": "C2342",
+"nace": "23.42",
+"level": "class",
+"section": "C",
+"label": "Manufacture of ceramic sanitary fixtures"
+},
+{
+"code": "C2343",
+"nace": "23.43",
+"level": "class",
+"section": "C",
+"label": "Manufacture of ceramic insulators and insulating fittings"
+},
+{
+"code": "C2344",
+"nace": "23.44",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other technical ceramic products"
+},
+{
+"code": "C2349",
+"nace": "23.49",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other ceramic products"
+},
+{
+"code": "C235",
+"nace": "23.5",
+"level": "group",
+"section": "C",
+"label": "Manufacture of cement, lime and plaster"
+},
+{
+"code": "C2351",
+"nace": "23.51",
+"level": "class",
+"section": "C",
+"label": "Manufacture of cement"
+},
+{
+"code": "C2352",
+"nace": "23.52",
+"level": "class",
+"section": "C",
+"label": "Manufacture of lime and plaster"
+},
+{
+"code": "C236",
+"nace": "23.6",
+"level": "group",
+"section": "C",
+"label": "Manufacture of articles of concrete, cement and plaster"
+},
+{
+"code": "C2361",
+"nace": "23.61",
+"level": "class",
+"section": "C",
+"label": "Manufacture of concrete products for construction purposes"
+},
+{
+"code": "C2362",
+"nace": "23.62",
+"level": "class",
+"section": "C",
+"label": "Manufacture of plaster products for construction purposes"
+},
+{
+"code": "C2363",
+"nace": "23.63",
+"level": "class",
+"section": "C",
+"label": "Manufacture of ready-mixed concrete"
+},
+{
+"code": "C2364",
+"nace": "23.64",
+"level": "class",
+"section": "C",
+"label": "Manufacture of mortars"
+},
+{
+"code": "C2365",
+"nace": "23.65",
+"level": "class",
+"section": "C",
+"label": "Manufacture of fibre cement"
+},
+{
+"code": "C2369",
+"nace": "23.69",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other articles of concrete, plaster and cement"
+},
+{
+"code": "C237",
+"nace": "23.7",
+"level": "group",
+"section": "C",
+"label": "Cutting, shaping and finishing of stone"
+},
+{
+"code": "C2370",
+"nace": "23.70",
+"level": "class",
+"section": "C",
+"label": "Cutting, shaping and finishing of stone"
+},
+{
+"code": "C239",
+"nace": "23.9",
+"level": "group",
+"section": "C",
+"label": "Manufacture of abrasive products and non-metallic mineral products n.e.c."
+},
+{
+"code": "C2391",
+"nace": "23.91",
+"level": "class",
+"section": "C",
+"label": "Production of abrasive products"
+},
+{
+"code": "C2399",
+"nace": "23.99",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other non-metallic mineral products n.e.c."
+},
+{
+"code": "C24",
+"nace": "24",
+"level": "division",
+"section": "C",
+"label": "Manufacture of basic metals"
+},
+{
+"code": "C241",
+"nace": "24.1",
+"level": "group",
+"section": "C",
+"label": "Manufacture of basic iron and steel and of ferro-alloys"
+},
+{
+"code": "C2410",
+"nace": "24.10",
+"level": "class",
+"section": "C",
+"label": "Manufacture of basic iron and steel and of ferro-alloys"
+},
+{
+"code": "C242",
+"nace": "24.2",
+"level": "group",
+"section": "C",
+"label": "Manufacture of tubes, pipes, hollow profiles and related fittings, of steel"
+},
+{
+"code": "C2420",
+"nace": "24.20",
+"level": "class",
+"section": "C",
+"label": "Manufacture of tubes, pipes, hollow profiles and related fittings, of steel"
+},
+{
+"code": "C243",
+"nace": "24.3",
+"level": "group",
+"section": "C",
+"label": "Manufacture of other products of first processing of steel"
+},
+{
+"code": "C2431",
+"nace": "24.31",
+"level": "class",
+"section": "C",
+"label": "Cold drawing of bars"
+},
+{
+"code": "C2432",
+"nace": "24.32",
+"level": "class",
+"section": "C",
+"label": "Cold rolling of narrow strip"
+},
+{
+"code": "C2433",
+"nace": "24.33",
+"level": "class",
+"section": "C",
+"label": "Cold forming or folding"
+},
+{
+"code": "C2434",
+"nace": "24.34",
+"level": "class",
+"section": "C",
+"label": "Cold drawing of wire"
+},
+{
+"code": "C244",
+"nace": "24.4",
+"level": "group",
+"section": "C",
+"label": "Manufacture of basic precious and other non-ferrous metals"
+},
+{
+"code": "C2441",
+"nace": "24.41",
+"level": "class",
+"section": "C",
+"label": "Precious metals production"
+},
+{
+"code": "C2442",
+"nace": "24.42",
+"level": "class",
+"section": "C",
+"label": "Aluminium production"
+},
+{
+"code": "C2443",
+"nace": "24.43",
+"level": "class",
+"section": "C",
+"label": "Lead, zinc and tin production"
+},
+{
+"code": "C2444",
+"nace": "24.44",
+"level": "class",
+"section": "C",
+"label": "Copper production"
+},
+{
+"code": "C2445",
+"nace": "24.45",
+"level": "class",
+"section": "C",
+"label": "Other non-ferrous metal production"
+},
+{
+"code": "C2446",
+"nace": "24.46",
+"level": "class",
+"section": "C",
+"label": "Processing of nuclear fuel"
+},
+{
+"code": "C245",
+"nace": "24.5",
+"level": "group",
+"section": "C",
+"label": "Casting of metals"
+},
+{
+"code": "C2451",
+"nace": "24.51",
+"level": "class",
+"section": "C",
+"label": "Casting of iron"
+},
+{
+"code": "C2452",
+"nace": "24.52",
+"level": "class",
+"section": "C",
+"label": "Casting of steel"
+},
+{
+"code": "C2453",
+"nace": "24.53",
+"level": "class",
+"section": "C",
+"label": "Casting of light metals"
+},
+{
+"code": "C2454",
+"nace": "24.54",
+"level": "class",
+"section": "C",
+"label": "Casting of other non-ferrous metals"
+},
+{
+"code": "C25",
+"nace": "25",
+"level": "division",
+"section": "C",
+"label": "Manufacture of fabricated metal products, except machinery and equipment"
+},
+{
+"code": "C251",
+"nace": "25.1",
+"level": "group",
+"section": "C",
+"label": "Manufacture of structural metal products"
+},
+{
+"code": "C2511",
+"nace": "25.11",
+"level": "class",
+"section": "C",
+"label": "Manufacture of metal structures and parts of structures"
+},
+{
+"code": "C2512",
+"nace": "25.12",
+"level": "class",
+"section": "C",
+"label": "Manufacture of doors and windows of metal"
+},
+{
+"code": "C252",
+"nace": "25.2",
+"level": "group",
+"section": "C",
+"label": "Manufacture of tanks, reservoirs and containers of metal"
+},
+{
+"code": "C2521",
+"nace": "25.21",
+"level": "class",
+"section": "C",
+"label": "Manufacture of central heating radiators and boilers"
+},
+{
+"code": "C2529",
+"nace": "25.29",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other tanks, reservoirs and containers of metal"
+},
+{
+"code": "C253",
+"nace": "25.3",
+"level": "group",
+"section": "C",
+"label": "Manufacture of steam generators, except central heating hot water boilers"
+},
+{
+"code": "C2530",
+"nace": "25.30",
+"level": "class",
+"section": "C",
+"label": "Manufacture of steam generators, except central heating hot water boilers"
+},
+{
+"code": "C254",
+"nace": "25.4",
+"level": "group",
+"section": "C",
+"label": "Manufacture of weapons and ammunition"
+},
+{
+"code": "C2540",
+"nace": "25.40",
+"level": "class",
+"section": "C",
+"label": "Manufacture of weapons and ammunition"
+},
+{
+"code": "C255",
+"nace": "25.5",
+"level": "group",
+"section": "C",
+"label": "Forging, pressing, stamping and roll-forming of metal; powder metallurgy"
+},
+{
+"code": "C2550",
+"nace": "25.50",
+"level": "class",
+"section": "C",
+"label": "Forging, pressing, stamping and roll-forming of metal; powder metallurgy"
+},
+{
+"code": "C256",
+"nace": "25.6",
+"level": "group",
+"section": "C",
+"label": "Treatment and coating of metals; machining"
+},
+{
+"code": "C2561",
+"nace": "25.61",
+"level": "class",
+"section": "C",
+"label": "Treatment and coating of metals"
+},
+{
+"code": "C2562",
+"nace": "25.62",
+"level": "class",
+"section": "C",
+"label": "Machining"
+},
+{
+"code": "C257",
+"nace": "25.7",
+"level": "group",
+"section": "C",
+"label": "Manufacture of cutlery, tools and general hardware"
+},
+{
+"code": "C2571",
+"nace": "25.71",
+"level": "class",
+"section": "C",
+"label": "Manufacture of cutlery"
+},
+{
+"code": "C2572",
+"nace": "25.72",
+"level": "class",
+"section": "C",
+"label": "Manufacture of locks and hinges"
+},
+{
+"code": "C2573",
+"nace": "25.73",
+"level": "class",
+"section": "C",
+"label": "Manufacture of tools"
+},
+{
+"code": "C259",
+"nace": "25.9",
+"level": "group",
+"section": "C",
+"label": "Manufacture of other fabricated metal products"
+},
+{
+"code": "C2591",
+"nace": "25.91",
+"level": "class",
+"section": "C",
+"label": "Manufacture of steel drums and similar containers"
+},
+{
+"code": "C2592",
+"nace": "25.92",
+"level": "class",
+"section": "C",
+"label": "Manufacture of light metal packaging"
+},
+{
+"code": "C2593",
+"nace": "25.93",
+"level": "class",
+"section": "C",
+"label": "Manufacture of wire products, chain and springs"
+},
+{
+"code": "C2594",
+"nace": "25.94",
+"level": "class",
+"section": "C",
+"label": "Manufacture of fasteners and screw machine products"
+},
+{
+"code": "C2599",
+"nace": "25.99",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other fabricated metal products n.e.c."
+},
+{
+"code": "C26",
+"nace": "26",
+"level": "division",
+"section": "C",
+"label": "Manufacture of computer, electronic and optical products"
+},
+{
+"code": "C261",
+"nace": "26.1",
+"level": "group",
+"section": "C",
+"label": "Manufacture of electronic components and boards"
+},
+{
+"code": "C2611",
+"nace": "26.11",
+"level": "class",
+"section": "C",
+"label": "Manufacture of electronic components"
+},
+{
+"code": "C2612",
+"nace": "26.12",
+"level": "class",
+"section": "C",
+"label": "Manufacture of loaded electronic boards"
+},
+{
+"code": "C262",
+"nace": "26.2",
+"level": "group",
+"section": "C",
+"label": "Manufacture of computers and peripheral equipment"
+},
+{
+"code": "C2620",
+"nace": "26.20",
+"level": "class",
+"section": "C",
+"label": "Manufacture of computers and peripheral equipment"
+},
+{
+"code": "C263",
+"nace": "26.3",
+"level": "group",
+"section": "C",
+"label": "Manufacture of communication equipment"
+},
+{
+"code": "C2630",
+"nace": "26.30",
+"level": "class",
+"section": "C",
+"label": "Manufacture of communication equipment"
+},
+{
+"code": "C264",
+"nace": "26.4",
+"level": "group",
+"section": "C",
+"label": "Manufacture of consumer electronics"
+},
+{
+"code": "C2640",
+"nace": "26.40",
+"level": "class",
+"section": "C",
+"label": "Manufacture of consumer electronics"
+},
+{
+"code": "C265",
+"nace": "26.5",
+"level": "group",
+"section": "C",
+"label": "Manufacture of instruments and appliances for measuring, testing and navigation; watches and clocks"
+},
+{
+"code": "C2651",
+"nace": "26.51",
+"level": "class",
+"section": "C",
+"label": "Manufacture of instruments and appliances for measuring, testing and navigation"
+},
+{
+"code": "C2652",
+"nace": "26.52",
+"level": "class",
+"section": "C",
+"label": "Manufacture of watches and clocks"
+},
+{
+"code": "C266",
+"nace": "26.6",
+"level": "group",
+"section": "C",
+"label": "Manufacture of irradiation, electromedical and electrotherapeutic equipment"
+},
+{
+"code": "C2660",
+"nace": "26.60",
+"level": "class",
+"section": "C",
+"label": "Manufacture of irradiation, electromedical and electrotherapeutic equipment"
+},
+{
+"code": "C267",
+"nace": "26.7",
+"level": "group",
+"section": "C",
+"label": "Manufacture of optical instruments and photographic equipment"
+},
+{
+"code": "C2670",
+"nace": "26.70",
+"level": "class",
+"section": "C",
+"label": "Manufacture of optical instruments and photographic equipment"
+},
+{
+"code": "C268",
+"nace": "26.8",
+"level": "group",
+"section": "C",
+"label": "Manufacture of magnetic and optical media"
+},
+{
+"code": "C2680",
+"nace": "26.80",
+"level": "class",
+"section": "C",
+"label": "Manufacture of magnetic and optical media"
+},
+{
+"code": "C27",
+"nace": "27",
+"level": "division",
+"section": "C",
+"label": "Manufacture of electrical equipment"
+},
+{
+"code": "C271",
+"nace": "27.1",
+"level": "group",
+"section": "C",
+"label": "Manufacture of electric motors, generators, transformers and electricity distribution and control apparatus"
+},
+{
+"code": "C2711",
+"nace": "27.11",
+"level": "class",
+"section": "C",
+"label": "Manufacture of electric motors, generators and transformers"
+},
+{
+"code": "C2712",
+"nace": "27.12",
+"level": "class",
+"section": "C",
+"label": "Manufacture of electricity distribution and control apparatus"
+},
+{
+"code": "C272",
+"nace": "27.2",
+"level": "group",
+"section": "C",
+"label": "Manufacture of batteries and accumulators"
+},
+{
+"code": "C2720",
+"nace": "27.20",
+"level": "class",
+"section": "C",
+"label": "Manufacture of batteries and accumulators"
+},
+{
+"code": "C273",
+"nace": "27.3",
+"level": "group",
+"section": "C",
+"label": "Manufacture of wiring and wiring devices"
+},
+{
+"code": "C2731",
+"nace": "27.31",
+"level": "class",
+"section": "C",
+"label": "Manufacture of fibre optic cables"
+},
+{
+"code": "C2732",
+"nace": "27.32",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other electronic and electric wires and cables"
+},
+{
+"code": "C2733",
+"nace": "27.33",
+"level": "class",
+"section": "C",
+"label": "Manufacture of wiring devices"
+},
+{
+"code": "C274",
+"nace": "27.4",
+"level": "group",
+"section": "C",
+"label": "Manufacture of electric lighting equipment"
+},
+{
+"code": "C2740",
+"nace": "27.40",
+"level": "class",
+"section": "C",
+"label": "Manufacture of electric lighting equipment"
+},
+{
+"code": "C275",
+"nace": "27.5",
+"level": "group",
+"section": "C",
+"label": "Manufacture of domestic appliances"
+},
+{
+"code": "C2751",
+"nace": "27.51",
+"level": "class",
+"section": "C",
+"label": "Manufacture of electric domestic appliances"
+},
+{
+"code": "C2752",
+"nace": "27.52",
+"level": "class",
+"section": "C",
+"label": "Manufacture of non-electric domestic appliances"
+},
+{
+"code": "C279",
+"nace": "27.9",
+"level": "group",
+"section": "C",
+"label": "Manufacture of other electrical equipment"
+},
+{
+"code": "C2790",
+"nace": "27.90",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other electrical equipment"
+},
+{
+"code": "C28",
+"nace": "28",
+"level": "division",
+"section": "C",
+"label": "Manufacture of machinery and equipment n.e.c."
+},
+{
+"code": "C281",
+"nace": "28.1",
+"level": "group",
+"section": "C",
+"label": "Manufacture of general — purpose machinery"
+},
+{
+"code": "C2811",
+"nace": "28.11",
+"level": "class",
+"section": "C",
+"label": "Manufacture of engines and turbines, except aircraft, vehicle and cycle engines"
+},
+{
+"code": "C2812",
+"nace": "28.12",
+"level": "class",
+"section": "C",
+"label": "Manufacture of fluid power equipment"
+},
+{
+"code": "C2813",
+"nace": "28.13",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other pumps and compressors"
+},
+{
+"code": "C2814",
+"nace": "28.14",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other taps and valves"
+},
+{
+"code": "C2815",
+"nace": "28.15",
+"level": "class",
+"section": "C",
+"label": "Manufacture of bearings, gears, gearing and driving elements"
+},
+{
+"code": "C282",
+"nace": "28.2",
+"level": "group",
+"section": "C",
+"label": "Manufacture of other general-purpose machinery"
+},
+{
+"code": "C2821",
+"nace": "28.21",
+"level": "class",
+"section": "C",
+"label": "Manufacture of ovens, furnaces and furnace burners"
+},
+{
+"code": "C2822",
+"nace": "28.22",
+"level": "class",
+"section": "C",
+"label": "Manufacture of lifting and handling equipment"
+},
+{
+"code": "C2823",
+"nace": "28.23",
+"level": "class",
+"section": "C",
+"label": "Manufacture of office machinery and equipment (except computers and peripheral equipment)"
+},
+{
+"code": "C2824",
+"nace": "28.24",
+"level": "class",
+"section": "C",
+"label": "Manufacture of power-driven hand tools"
+},
+{
+"code": "C2825",
+"nace": "28.25",
+"level": "class",
+"section": "C",
+"label": "Manufacture of non-domestic cooling and ventilation equipment"
+},
+{
+"code": "C2829",
+"nace": "28.29",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other general-purpose machinery n.e.c."
+},
+{
+"code": "C283",
+"nace": "28.3",
+"level": "group",
+"section": "C",
+"label": "Manufacture of agricultural and forestry machinery"
+},
+{
+"code": "C2830",
+"nace": "28.30",
+"level": "class",
+"section": "C",
+"label": "Manufacture of agricultural and forestry machinery"
+},
+{
+"code": "C284",
+"nace": "28.4",
+"level": "group",
+"section": "C",
+"label": "Manufacture of metal forming machinery and machine tools"
+},
+{
+"code": "C2841",
+"nace": "28.41",
+"level": "class",
+"section": "C",
+"label": "Manufacture of metal forming machinery"
+},
+{
+"code": "C2849",
+"nace": "28.49",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other machine tools"
+},
+{
+"code": "C289",
+"nace": "28.9",
+"level": "group",
+"section": "C",
+"label": "Manufacture of other special-purpose machinery"
+},
+{
+"code": "C2891",
+"nace": "28.91",
+"level": "class",
+"section": "C",
+"label": "Manufacture of machinery for metallurgy"
+},
+{
+"code": "C2892",
+"nace": "28.92",
+"level": "class",
+"section": "C",
+"label": "Manufacture of machinery for mining, quarrying and construction"
+},
+{
+"code": "C2893",
+"nace": "28.93",
+"level": "class",
+"section": "C",
+"label": "Manufacture of machinery for food, beverage and tobacco processing"
+},
+{
+"code": "C2894",
+"nace": "28.94",
+"level": "class",
+"section": "C",
+"label": "Manufacture of machinery for textile, apparel and leather production"
+},
+{
+"code": "C2895",
+"nace": "28.95",
+"level": "class",
+"section": "C",
+"label": "Manufacture of machinery for paper and paperboard production"
+},
+{
+"code": "C2896",
+"nace": "28.96",
+"level": "class",
+"section": "C",
+"label": "Manufacture of plastic and rubber machinery"
+},
+{
+"code": "C2899",
+"nace": "28.99",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other special-purpose machinery n.e.c."
+},
+{
+"code": "C29",
+"nace": "29",
+"level": "division",
+"section": "C",
+"label": "Manufacture of motor vehicles, trailers and semi-trailers"
+},
+{
+"code": "C291",
+"nace": "29.1",
+"level": "group",
+"section": "C",
+"label": "Manufacture of motor vehicles"
+},
+{
+"code": "C2910",
+"nace": "29.10",
+"level": "class",
+"section": "C",
+"label": "Manufacture of motor vehicles"
+},
+{
+"code": "C292",
+"nace": "29.2",
+"level": "group",
+"section": "C",
+"label": "Manufacture of bodies (coachwork) for motor vehicles; manufacture of trailers and semi-trailers"
+},
+{
+"code": "C2920",
+"nace": "29.20",
+"level": "class",
+"section": "C",
+"label": "Manufacture of bodies (coachwork) for motor vehicles; manufacture of trailers and semi-trailers"
+},
+{
+"code": "C293",
+"nace": "29.3",
+"level": "group",
+"section": "C",
+"label": "Manufacture of parts and accessories for motor vehicles"
+},
+{
+"code": "C2931",
+"nace": "29.31",
+"level": "class",
+"section": "C",
+"label": "Manufacture of electrical and electronic equipment for motor vehicles"
+},
+{
+"code": "C2932",
+"nace": "29.32",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other parts and accessories for motor vehicles"
+},
+{
+"code": "C30",
+"nace": "30",
+"level": "division",
+"section": "C",
+"label": "Manufacture of other transport equipment"
+},
+{
+"code": "C301",
+"nace": "30.1",
+"level": "group",
+"section": "C",
+"label": "Building of ships and boats"
+},
+{
+"code": "C3011",
+"nace": "30.11",
+"level": "class",
+"section": "C",
+"label": "Building of ships and floating structures"
+},
+{
+"code": "C3012",
+"nace": "30.12",
+"level": "class",
+"section": "C",
+"label": "Building of pleasure and sporting boats"
+},
+{
+"code": "C302",
+"nace": "30.2",
+"level": "group",
+"section": "C",
+"label": "Manufacture of railway locomotives and rolling stock"
+},
+{
+"code": "C3020",
+"nace": "30.20",
+"level": "class",
+"section": "C",
+"label": "Manufacture of railway locomotives and rolling stock"
+},
+{
+"code": "C303",
+"nace": "30.3",
+"level": "group",
+"section": "C",
+"label": "Manufacture of air and spacecraft and related machinery"
+},
+{
+"code": "C3030",
+"nace": "30.30",
+"level": "class",
+"section": "C",
+"label": "Manufacture of air and spacecraft and related machinery"
+},
+{
+"code": "C304",
+"nace": "30.4",
+"level": "group",
+"section": "C",
+"label": "Manufacture of military fighting vehicles"
+},
+{
+"code": "C3040",
+"nace": "30.40",
+"level": "class",
+"section": "C",
+"label": "Manufacture of military fighting vehicles"
+},
+{
+"code": "C309",
+"nace": "30.9",
+"level": "group",
+"section": "C",
+"label": "Manufacture of transport equipment n.e.c."
+},
+{
+"code": "C3091",
+"nace": "30.91",
+"level": "class",
+"section": "C",
+"label": "Manufacture of motorcycles"
+},
+{
+"code": "C3092",
+"nace": "30.92",
+"level": "class",
+"section": "C",
+"label": "Manufacture of bicycles and invalid carriages"
+},
+{
+"code": "C3099",
+"nace": "30.99",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other transport equipment n.e.c."
+},
+{
+"code": "C31",
+"nace": "31",
+"level": "division",
+"section": "C",
+"label": "Manufacture of furniture"
+},
+{
+"code": "C310",
+"nace": "31.0",
+"level": "group",
+"section": "C",
+"label": "Manufacture of furniture"
+},
+{
+"code": "C3101",
+"nace": "31.01",
+"level": "class",
+"section": "C",
+"label": "Manufacture of office and shop furniture"
+},
+{
+"code": "C3102",
+"nace": "31.02",
+"level": "class",
+"section": "C",
+"label": "Manufacture of kitchen furniture"
+},
+{
+"code": "C3103",
+"nace": "31.03",
+"level": "class",
+"section": "C",
+"label": "Manufacture of mattresses"
+},
+{
+"code": "C3109",
+"nace": "31.09",
+"level": "class",
+"section": "C",
+"label": "Manufacture of other furniture"
+},
+{
+"code": "C32",
+"nace": "32",
+"level": "division",
+"section": "C",
+"label": "Other manufacturing"
+},
+{
+"code": "C321",
+"nace": "32.1",
+"level": "group",
+"section": "C",
+"label": "Manufacture of jewellery, bijouterie and related articles"
+},
+{
+"code": "C3211",
+"nace": "32.11",
+"level": "class",
+"section": "C",
+"label": "Striking of coins"
+},
+{
+"code": "C3212",
+"nace": "32.12",
+"level": "class",
+"section": "C",
+"label": "Manufacture of jewellery and related articles"
+},
+{
+"code": "C3213",
+"nace": "32.13",
+"level": "class",
+"section": "C",
+"label": "Manufacture of imitation jewellery and related articles"
+},
+{
+"code": "C322",
+"nace": "32.2",
+"level": "group",
+"section": "C",
+"label": "Manufacture of musical instruments"
+},
+{
+"code": "C3220",
+"nace": "32.20",
+"level": "class",
+"section": "C",
+"label": "Manufacture of musical instruments"
+},
+{
+"code": "C323",
+"nace": "32.3",
+"level": "group",
+"section": "C",
+"label": "Manufacture of sports goods"
+},
+{
+"code": "C3230",
+"nace": "32.30",
+"level": "class",
+"section": "C",
+"label": "Manufacture of sports goods"
+},
+{
+"code": "C324",
+"nace": "32.4",
+"level": "group",
+"section": "C",
+"label": "Manufacture of games and toys"
+},
+{
+"code": "C3240",
+"nace": "32.40",
+"level": "class",
+"section": "C",
+"label": "Manufacture of games and toys"
+},
+{
+"code": "C325",
+"nace": "32.5",
+"level": "group",
+"section": "C",
+"label": "Manufacture of medical and dental instruments and supplies"
+},
+{
+"code": "C3250",
+"nace": "32.50",
+"level": "class",
+"section": "C",
+"label": "Manufacture of medical and dental instruments and supplies"
+},
+{
+"code": "C329",
+"nace": "32.9",
+"level": "group",
+"section": "C",
+"label": "Manufacturing n.e.c."
+},
+{
+"code": "C3291",
+"nace": "32.91",
+"level": "class",
+"section": "C",
+"label": "Manufacture of brooms and brushes"
+},
+{
+"code": "C3299",
+"nace": "32.99",
+"level": "class",
+"section": "C",
+"label": "Other manufacturing n.e.c."
+},
+{
+"code": "C33",
+"nace": "33",
+"level": "division",
+"section": "C",
+"label": "Repair and installation of machinery and equipment"
+},
+{
+"code": "C331",
+"nace": "33.1",
+"level": "group",
+"section": "C",
+"label": "Repair of fabricated metal products, machinery and equipment"
+},
+{
+"code": "C3311",
+"nace": "33.11",
+"level": "class",
+"section": "C",
+"label": "Repair of fabricated metal products"
+},
+{
+"code": "C3312",
+"nace": "33.12",
+"level": "class",
+"section": "C",
+"label": "Repair of machinery"
+},
+{
+"code": "C3313",
+"nace": "33.13",
+"level": "class",
+"section": "C",
+"label": "Repair of electronic and optical equipment"
+},
+{
+"code": "C3314",
+"nace": "33.14",
+"level": "class",
+"section": "C",
+"label": "Repair of electrical equipment"
+},
+{
+"code": "C3315",
+"nace": "33.15",
+"level": "class",
+"section": "C",
+"label": "Repair and maintenance of ships and boats"
+},
+{
+"code": "C3316",
+"nace": "33.16",
+"level": "class",
+"section": "C",
+"label": "Repair and maintenance of aircraft and spacecraft"
+},
+{
+"code": "C3317",
+"nace": "33.17",
+"level": "class",
+"section": "C",
+"label": "Repair and maintenance of other transport equipment"
+},
+{
+"code": "C3319",
+"nace": "33.19",
+"level": "class",
+"section": "C",
+"label": "Repair of other equipment"
+},
+{
+"code": "C332",
+"nace": "33.2",
+"level": "group",
+"section": "C",
+"label": "Installation of industrial machinery and equipment"
+},
+{
+"code": "C3320",
+"nace": "33.20",
+"level": "class",
+"section": "C",
+"label": "Installation of industrial machinery and equipment"
+},
+{
+"code": "D",
+"nace": "D",
+"level": "section",
+"section": "D",
+"label": "Electricity, gas, steam and air conditioning supply"
+},
+{
+"code": "D35",
+"nace": "35",
+"level": "division",
+"section": "D",
+"label": "Electricity, gas, steam and air conditioning supply"
+},
+{
+"code": "D351",
+"nace": "35.1",
+"level": "group",
+"section": "D",
+"label": "Electric power generation, transmission and distribution"
+},
+{
+"code": "D3511",
+"nace": "35.11",
+"level": "class",
+"section": "D",
+"label": "Production of electricity"
+},
+{
+"code": "D3512",
+"nace": "35.12",
+"level": "class",
+"section": "D",
+"label": "Transmission of electricity"
+},
+{
+"code": "D3513",
+"nace": "35.13",
+"level": "class",
+"section": "D",
+"label": "Distribution of electricity"
+},
+{
+"code": "D3514",
+"nace": "35.14",
+"level": "class",
+"section": "D",
+"label": "Trade of electricity"
+},
+{
+"code": "D352",
+"nace": "35.2",
+"level": "group",
+"section": "D",
+"label": "Manufacture of gas; distribution of gaseous fuels through mains"
+},
+{
+"code": "D3521",
+"nace": "35.21",
+"level": "class",
+"section": "D",
+"label": "Manufacture of gas"
+},
+{
+"code": "D3522",
+"nace": "35.22",
+"level": "class",
+"section": "D",
+"label": "Distribution of gaseous fuels through mains"
+},
+{
+"code": "D3523",
+"nace": "35.23",
+"level": "class",
+"section": "D",
+"label": "Trade of gas through mains"
+},
+{
+"code": "D353",
+"nace": "35.3",
+"level": "group",
+"section": "D",
+"label": "Steam and air conditioning supply"
+},
+{
+"code": "D3530",
+"nace": "35.30",
+"level": "class",
+"section": "D",
+"label": "Steam and air conditioning supply"
+},
+{
+"code": "E",
+"nace": "E",
+"level": "section",
+"section": "E",
+"label": "Water supply; sewerage, waste management and remediation activities"
+},
+{
+"code": "E36",
+"nace": "36",
+"level": "division",
+"section": "E",
+"label": "Water collection, treatment and supply"
+},
+{
+"code": "E360",
+"nace": "36.0",
+"level": "group",
+"section": "E",
+"label": "Water collection, treatment and supply"
+},
+{
+"code": "E3600",
+"nace": "36.00",
+"level": "class",
+"section": "E",
+"label": "Water collection, treatment and supply"
+},
+{
+"code": "E37",
+"nace": "37",
+"level": "division",
+"section": "E",
+"label": "Sewerage"
+},
+{
+"code": "E370",
+"nace": "37.0",
+"level": "group",
+"section": "E",
+"label": "Sewerage"
+},
+{
+"code": "E3700",
+"nace": "37.00",
+"level": "class",
+"section": "E",
+"label": "Sewerage"
+},
+{
+"code": "E38",
+"nace": "38",
+"level": "division",
+"section": "E",
+"label": "Waste collection, treatment and disposal activities; materials recovery"
+},
+{
+"code": "E381",
+"nace": "38.1",
+"level": "group",
+"section": "E",
+"label": "Waste collection"
+},
+{
+"code": "E3811",
+"nace": "38.11",
+"level": "class",
+"section": "E",
+"label": "Collection of non-hazardous waste"
+},
+{
+"code": "E3812",
+"nace": "38.12",
+"level": "class",
+"section": "E",
+"label": "Collection of hazardous waste"
+},
+{
+"code": "E382",
+"nace": "38.2",
+"level": "group",
+"section": "E",
+"label": "Waste treatment and disposal"
+},
+{
+"code": "E3821",
+"nace": "38.21",
+"level": "class",
+"section": "E",
+"label": "Treatment and disposal of non-hazardous waste"
+},
+{
+"code": "E3822",
+"nace": "38.22",
+"level": "class",
+"section": "E",
+"label": "Treatment and disposal of hazardous waste"
+},
+{
+"code": "E383",
+"nace": "38.3",
+"level": "group",
+"section": "E",
+"label": "Materials recovery"
+},
+{
+"code": "E3831",
+"nace": "38.31",
+"level": "class",
+"section": "E",
+"label": "Dismantling of wrecks"
+},
+{
+"code": "E3832",
+"nace": "38.32",
+"level": "class",
+"section": "E",
+"label": "Recovery of sorted materials"
+},
+{
+"code": "E39",
+"nace": "39",
+"level": "division",
+"section": "E",
+"label": "Remediation activities and other waste management services"
+},
+{
+"code": "E390",
+"nace": "39.0",
+"level": "group",
+"section": "E",
+"label": "Remediation activities and other waste management services"
+},
+{
+"code": "E3900",
+"nace": "39.00",
+"level": "class",
+"section": "E",
+"label": "Remediation activities and other waste management services"
+},
+{
+"code": "F",
+"nace": "F",
+"level": "section",
+"section": "F",
+"label": "Construction"
+},
+{
+"code": "F41",
+"nace": "41",
+"level": "division",
+"section": "F",
+"label": "Construction of buildings"
+},
+{
+"code": "F411",
+"nace": "41.1",
+"level": "group",
+"section": "F",
+"label": "Development of building projects"
+},
+{
+"code": "F4110",
+"nace": "41.10",
+"level": "class",
+"section": "F",
+"label": "Development of building projects"
+},
+{
+"code": "F412",
+"nace": "41.2",
+"level": "group",
+"section": "F",
+"label": "Construction of residential and non-residential buildings"
+},
+{
+"code": "F4120",
+"nace": "41.20",
+"level": "class",
+"section": "F",
+"label": "Construction of residential and non-residential buildings"
+},
+{
+"code": "F42",
+"nace": "42",
+"level": "division",
+"section": "F",
+"label": "Civil engineering"
+},
+{
+"code": "F421",
+"nace": "42.1",
+"level": "group",
+"section": "F",
+"label": "Construction of roads and railways"
+},
+{
+"code": "F4211",
+"nace": "42.11",
+"level": "class",
+"section": "F",
+"label": "Construction of roads and motorways"
+},
+{
+"code": "F4212",
+"nace": "42.12",
+"level": "class",
+"section": "F",
+"label": "Construction of railways and underground railways"
+},
+{
+"code": "F4213",
+"nace": "42.13",
+"level": "class",
+"section": "F",
+"label": "Construction of bridges and tunnels"
+},
+{
+"code": "F422",
+"nace": "42.2",
+"level": "group",
+"section": "F",
+"label": "Construction of utility projects"
+},
+{
+"code": "F4221",
+"nace": "42.21",
+"level": "class",
+"section": "F",
+"label": "Construction of utility projects for fluids"
+},
+{
+"code": "F4222",
+"nace": "42.22",
+"level": "class",
+"section": "F",
+"label": "Construction of utility projects for electricity and telecommunications"
+},
+{
+"code": "F429",
+"nace": "42.9",
+"level": "group",
+"section": "F",
+"label": "Construction of other civil engineering projects"
+},
+{
+"code": "F4291",
+"nace": "42.91",
+"level": "class",
+"section": "F",
+"label": "Construction of water projects"
+},
+{
+"code": "F4299",
+"nace": "42.99",
+"level": "class",
+"section": "F",
+"label": "Construction of other civil engineering projects n.e.c."
+},
+{
+"code": "F43",
+"nace": "43",
+"level": "division",
+"section": "F",
+"label": "Specialised construction activities"
+},
+{
+"code": "F431",
+"nace": "43.1",
+"level": "group",
+"section": "F",
+"label": "Demolition and site preparation"
+},
+{
+"code": "F4311",
+"nace": "43.11",
+"level": "class",
+"section": "F",
+"label": "Demolition"
+},
+{
+"code": "F4312",
+"nace": "43.12",
+"level": "class",
+"section": "F",
+"label": "Site preparation"
+},
+{
+"code": "F4313",
+"nace": "43.13",
+"level": "class",
+"section": "F",
+"label": "Test drilling and boring"
+},
+{
+"code": "F432",
+"nace": "43.2",
+"level": "group",
+"section": "F",
+"label": "Electrical, plumbing and other construction installation activities"
+},
+{
+"code": "F4321",
+"nace": "43.21",
+"level": "class",
+"section": "F",
+"label": "Electrical installation"
+},
+{
+"code": "F4322",
+"nace": "43.22",
+"level": "class",
+"section": "F",
+"label": "Plumbing, heat and air conditioning installation"
+},
+{
+"code": "F4329",
+"nace": "43.29",
+"level": "class",
+"section": "F",
+"label": "Other construction installation"
+},
+{
+"code": "F433",
+"nace": "43.3",
+"level": "group",
+"section": "F",
+"label": "Building completion and finishing"
+},
+{
+"code": "F4331",
+"nace": "43.31",
+"level": "class",
+"section": "F",
+"label": "Plastering"
+},
+{
+"code": "F4332",
+"nace": "43.32",
+"level": "class",
+"section": "F",
+"label": "Joinery installation"
+},
+{
+"code": "F4333",
+"nace": "43.33",
+"level": "class",
+"section": "F",
+"label": "Floor and wall covering"
+},
+{
+"code": "F4334",
+"nace": "43.34",
+"level": "class",
+"section": "F",
+"label": "Painting and glazing"
+},
+{
+"code": "F4339",
+"nace": "43.39",
+"level": "class",
+"section": "F",
+"label": "Other building completion and finishing"
+},
+{
+"code": "F439",
+"nace": "43.9",
+"level": "group",
+"section": "F",
+"label": "Other specialised construction activities"
+},
+{
+"code": "F4391",
+"nace": "43.91",
+"level": "class",
+"section": "F",
+"label": "Roofing activities"
+},
+{
+"code": "F4399",
+"nace": "43.99",
+"level": "class",
+"section": "F",
+"label": "Other specialised construction activities n.e.c."
+},
+{
+"code": "G",
+"nace": "G",
+"level": "section",
+"section": "G",
+"label": "Wholesale and retail trade; repair of motor vehicles and motorcycles"
+},
+{
+"code": "G45",
+"nace": "45",
+"level": "division",
+"section": "G",
+"label": "Wholesale and retail trade and repair of motor vehicles and motorcycles"
+},
+{
+"code": "G451",
+"nace": "45.1",
+"level": "group",
+"section": "G",
+"label": "Sale of motor vehicles"
+},
+{
+"code": "G4511",
+"nace": "45.11",
+"level": "class",
+"section": "G",
+"label": "Sale of cars and light motor vehicles"
+},
+{
+"code": "G4519",
+"nace": "45.19",
+"level": "class",
+"section": "G",
+"label": "Sale of other motor vehicles"
+},
+{
+"code": "G452",
+"nace": "45.2",
+"level": "group",
+"section": "G",
+"label": "Maintenance and repair of motor vehicles"
+},
+{
+"code": "G4520",
+"nace": "45.20",
+"level": "class",
+"section": "G",
+"label": "Maintenance and repair of motor vehicles"
+},
+{
+"code": "G453",
+"nace": "45.3",
+"level": "group",
+"section": "G",
+"label": "Sale of motor vehicle parts and accessories"
+},
+{
+"code": "G4531",
+"nace": "45.31",
+"level": "class",
+"section": "G",
+"label": "Wholesale trade of motor vehicle parts and accessories"
+},
+{
+"code": "G4532",
+"nace": "45.32",
+"level": "class",
+"section": "G",
+"label": "Retail trade of motor vehicle parts and accessories"
+},
+{
+"code": "G454",
+"nace": "45.4",
+"level": "group",
+"section": "G",
+"label": "Sale, maintenance and repair of motorcycles and related parts and accessories"
+},
+{
+"code": "G4540",
+"nace": "45.40",
+"level": "class",
+"section": "G",
+"label": "Sale, maintenance and repair of motorcycles and related parts and accessories"
+},
+{
+"code": "G46",
+"nace": "46",
+"level": "division",
+"section": "G",
+"label": "Wholesale trade, except of motor vehicles and motorcycles"
+},
+{
+"code": "G461",
+"nace": "46.1",
+"level": "group",
+"section": "G",
+"label": "Wholesale on a fee or contract basis"
+},
+{
+"code": "G4611",
+"nace": "46.11",
+"level": "class",
+"section": "G",
+"label": "Agents involved in the sale of agricultural raw materials, live animals, textile raw materials and semi-finished goods"
+},
+{
+"code": "G4612",
+"nace": "46.12",
+"level": "class",
+"section": "G",
+"label": "Agents involved in the sale of fuels, ores, metals and industrial chemicals"
+},
+{
+"code": "G4613",
+"nace": "46.13",
+"level": "class",
+"section": "G",
+"label": "Agents involved in the sale of timber and building materials"
+},
+{
+"code": "G4614",
+"nace": "46.14",
+"level": "class",
+"section": "G",
+"label": "Agents involved in the sale of machinery, industrial equipment, ships and aircraft"
+},
+{
+"code": "G4615",
+"nace": "46.15",
+"level": "class",
+"section": "G",
+"label": "Agents involved in the sale of furniture, household goods, hardware and ironmongery"
+},
+{
+"code": "G4616",
+"nace": "46.16",
+"level": "class",
+"section": "G",
+"label": "Agents involved in the sale of textiles, clothing, fur, footwear and leather goods"
+},
+{
+"code": "G4617",
+"nace": "46.17",
+"level": "class",
+"section": "G",
+"label": "Agents involved in the sale of food, beverages and tobacco"
+},
+{
+"code": "G4618",
+"nace": "46.18",
+"level": "class",
+"section": "G",
+"label": "Agents specialised in the sale of other particular products"
+},
+{
+"code": "G4619",
+"nace": "46.19",
+"level": "class",
+"section": "G",
+"label": "Agents involved in the sale of a variety of goods"
+},
+{
+"code": "G462",
+"nace": "46.2",
+"level": "group",
+"section": "G",
+"label": "Wholesale of agricultural raw materials and live animals"
+},
+{
+"code": "G4621",
+"nace": "46.21",
+"level": "class",
+"section": "G",
+"label": "Wholesale of grain, unmanufactured tobacco, seeds and animal feeds"
+},
+{
+"code": "G4622",
+"nace": "46.22",
+"level": "class",
+"section": "G",
+"label": "Wholesale of flowers and plants"
+},
+{
+"code": "G4623",
+"nace": "46.23",
+"level": "class",
+"section": "G",
+"label": "Wholesale of live animals"
+},
+{
+"code": "G4624",
+"nace": "46.24",
+"level": "class",
+"section": "G",
+"label": "Wholesale of hides, skins and leather"
+},
+{
+"code": "G463",
+"nace": "46.3",
+"level": "group",
+"section": "G",
+"label": "Wholesale of food, beverages and tobacco"
+},
+{
+"code": "G4631",
+"nace": "46.31",
+"level": "class",
+"section": "G",
+"label": "Wholesale of fruit and vegetables"
+},
+{
+"code": "G4632",
+"nace": "46.32",
+"level": "class",
+"section": "G",
+"label": "Wholesale of meat and meat products"
+},
+{
+"code": "G4633",
+"nace": "46.33",
+"level": "class",
+"section": "G",
+"label": "Wholesale of dairy products, eggs and edible oils and fats"
+},
+{
+"code": "G4634",
+"nace": "46.34",
+"level": "class",
+"section": "G",
+"label": "Wholesale of beverages"
+},
+{
+"code": "G4635",
+"nace": "46.35",
+"level": "class",
+"section": "G",
+"label": "Wholesale of tobacco products"
+},
+{
+"code": "G4636",
+"nace": "46.36",
+"level": "class",
+"section": "G",
+"label": "Wholesale of sugar and chocolate and sugar confectionery"
+},
+{
+"code": "G4637",
+"nace": "46.37",
+"level": "class",
+"section": "G",
+"label": "Wholesale of coffee, tea, cocoa and spices"
+},
+{
+"code": "G4638",
+"nace": "46.38",
+"level": "class",
+"section": "G",
+"label": "Wholesale of other food, including fish, crustaceans and molluscs"
+},
+{
+"code": "G4639",
+"nace": "46.39",
+"level": "class",
+"section": "G",
+"label": "Non-specialised wholesale of food, beverages and tobacco"
+},
+{
+"code": "G464",
+"nace": "46.4",
+"level": "group",
+"section": "G",
+"label": "Wholesale of household goods"
+},
+{
+"code": "G4641",
+"nace": "46.41",
+"level": "class",
+"section": "G",
+"label": "Wholesale of textiles"
+},
+{
+"code": "G4642",
+"nace": "46.42",
+"level": "class",
+"section": "G",
+"label": "Wholesale of clothing and footwear"
+},
+{
+"code": "G4643",
+"nace": "46.43",
+"level": "class",
+"section": "G",
+"label": "Wholesale of electrical household appliances"
+},
+{
+"code": "G4644",
+"nace": "46.44",
+"level": "class",
+"section": "G",
+"label": "Wholesale of china and glassware and cleaning materials"
+},
+{
+"code": "G4645",
+"nace": "46.45",
+"level": "class",
+"section": "G",
+"label": "Wholesale of perfume and cosmetics"
+},
+{
+"code": "G4646",
+"nace": "46.46",
+"level": "class",
+"section": "G",
+"label": "Wholesale of pharmaceutical goods"
+},
+{
+"code": "G4647",
+"nace": "46.47",
+"level": "class",
+"section": "G",
+"label": "Wholesale of furniture, carpets and lighting equipment"
+},
+{
+"code": "G4648",
+"nace": "46.48",
+"level": "class",
+"section": "G",
+"label": "Wholesale of watches and jewellery"
+},
+{
+"code": "G4649",
+"nace": "46.49",
+"level": "class",
+"section": "G",
+"label": "Wholesale of other household goods"
+},
+{
+"code": "G465",
+"nace": "46.5",
+"level": "group",
+"section": "G",
+"label": "Wholesale of information and communication equipment"
+},
+{
+"code": "G4651",
+"nace": "46.51",
+"level": "class",
+"section": "G",
+"label": "Wholesale of computers, computer peripheral equipment and software"
+},
+{
+"code": "G4652",
+"nace": "46.52",
+"level": "class",
+"section": "G",
+"label": "Wholesale of electronic and telecommunications equipment and parts"
+},
+{
+"code": "G466",
+"nace": "46.6",
+"level": "group",
+"section": "G",
+"label": "Wholesale of other machinery, equipment and supplies"
+},
+{
+"code": "G4661",
+"nace": "46.61",
+"level": "class",
+"section": "G",
+"label": "Wholesale of agricultural machinery, equipment and supplies"
+},
+{
+"code": "G4662",
+"nace": "46.62",
+"level": "class",
+"section": "G",
+"label": "Wholesale of machine tools"
+},
+{
+"code": "G4663",
+"nace": "46.63",
+"level": "class",
+"section": "G",
+"label": "Wholesale of mining, construction and civil engineering machinery"
+},
+{
+"code": "G4664",
+"nace": "46.64",
+"level": "class",
+"section": "G",
+"label": "Wholesale of machinery for the textile industry and of sewing and knitting machines"
+},
+{
+"code": "G4665",
+"nace": "46.65",
+"level": "class",
+"section": "G",
+"label": "Wholesale of office furniture"
+},
+{
+"code": "G4666",
+"nace": "46.66",
+"level": "class",
+"section": "G",
+"label": "Wholesale of other office machinery and equipment"
+},
+{
+"code": "G4669",
+"nace": "46.69",
+"level": "class",
+"section": "G",
+"label": "Wholesale of other machinery and equipment"
+},
+{
+"code": "G467",
+"nace": "46.7",
+"level": "group",
+"section": "G",
+"label": "Other specialised wholesale"
+},
+{
+"code": "G4671",
+"nace": "46.71",
+"level": "class",
+"section": "G",
+"label": "Wholesale of solid, liquid and gaseous fuels and related products"
+},
+{
+"code": "G4672",
+"nace": "46.72",
+"level": "class",
+"section": "G",
+"label": "Wholesale of metals and metal ores"
+},
+{
+"code": "G4673",
+"nace": "46.73",
+"level": "class",
+"section": "G",
+"label": "Wholesale of wood, construction materials and sanitary equipment"
+},
+{
+"code": "G4674",
+"nace": "46.74",
+"level": "class",
+"section": "G",
+"label": "Wholesale of hardware, plumbing and heating equipment and supplies"
+},
+{
+"code": "G4675",
+"nace": "46.75",
+"level": "class",
+"section": "G",
+"label": "Wholesale of chemical products"
+},
+{
+"code": "G4676",
+"nace": "46.76",
+"level": "class",
+"section": "G",
+"label": "Wholesale of other intermediate products"
+},
+{
+"code": "G4677",
+"nace": "46.77",
+"level": "class",
+"section": "G",
+"label": "Wholesale of waste and scrap"
+},
+{
+"code": "G469",
+"nace": "46.9",
+"level": "group",
+"section": "G",
+"label": "Non-specialised wholesale trade"
+},
+{
+"code": "G4690",
+"nace": "46.90",
+"level": "class",
+"section": "G",
+"label": "Non-specialised wholesale trade"
+},
+{
+"code": "G47",
+"nace": "47",
+"level": "division",
+"section": "G",
+"label": "Retail trade, except of motor vehicles and motorcycles"
+},
+{
+"code": "G471",
+"nace": "47.1",
+"level": "group",
+"section": "G",
+"label": "Retail sale in non-specialised stores"
+},
+{
+"code": "G4711",
+"nace": "47.11",
+"level": "class",
+"section": "G",
+"label": "Retail sale in non-specialised stores with food, beverages or tobacco predominating"
+},
+{
+"code": "G4719",
+"nace": "47.19",
+"level": "class",
+"section": "G",
+"label": "Other retail sale in non-specialised stores"
+},
+{
+"code": "G472",
+"nace": "47.2",
+"level": "group",
+"section": "G",
+"label": "Retail sale of food, beverages and tobacco in specialised stores"
+},
+{
+"code": "G4721",
+"nace": "47.21",
+"level": "class",
+"section": "G",
+"label": "Retail sale of fruit and vegetables in specialised stores"
+},
+{
+"code": "G4722",
+"nace": "47.22",
+"level": "class",
+"section": "G",
+"label": "Retail sale of meat and meat products in specialised stores"
+},
+{
+"code": "G4723",
+"nace": "47.23",
+"level": "class",
+"section": "G",
+"label": "Retail sale of fish, crustaceans and molluscs in specialised stores"
+},
+{
+"code": "G4724",
+"nace": "47.24",
+"level": "class",
+"section": "G",
+"label": "Retail sale of bread, cakes, flour confectionery and sugar confectionery in specialised stores"
+},
+{
+"code": "G4725",
+"nace": "47.25",
+"level": "class",
+"section": "G",
+"label": "Retail sale of beverages in specialised stores"
+},
+{
+"code": "G4726",
+"nace": "47.26",
+"level": "class",
+"section": "G",
+"label": "Retail sale of tobacco products in specialised stores"
+},
+{
+"code": "G4729",
+"nace": "47.29",
+"level": "class",
+"section": "G",
+"label": "Other retail sale of food in specialised stores"
+},
+{
+"code": "G473",
+"nace": "47.3",
+"level": "group",
+"section": "G",
+"label": "Retail sale of automotive fuel in specialised stores"
+},
+{
+"code": "G4730",
+"nace": "47.30",
+"level": "class",
+"section": "G",
+"label": "Retail sale of automotive fuel in specialised stores"
+},
+{
+"code": "G474",
+"nace": "47.4",
+"level": "group",
+"section": "G",
+"label": "Retail sale of information and communication equipment in specialised stores"
+},
+{
+"code": "G4741",
+"nace": "47.41",
+"level": "class",
+"section": "G",
+"label": "Retail sale of computers, peripheral units and software in specialised stores"
+},
+{
+"code": "G4742",
+"nace": "47.42",
+"level": "class",
+"section": "G",
+"label": "Retail sale of telecommunications equipment in specialised stores"
+},
+{
+"code": "G4743",
+"nace": "47.43",
+"level": "class",
+"section": "G",
+"label": "Retail sale of audio and video equipment in specialised stores"
+},
+{
+"code": "G475",
+"nace": "47.5",
+"level": "group",
+"section": "G",
+"label": "Retail sale of other household equipment in specialised stores"
+},
+{
+"code": "G4751",
+"nace": "47.51",
+"level": "class",
+"section": "G",
+"label": "Retail sale of textiles in specialised stores"
+},
+{
+"code": "G4752",
+"nace": "47.52",
+"level": "class",
+"section": "G",
+"label": "Retail sale of hardware, paints and glass in specialised stores"
+},
+{
+"code": "G4753",
+"nace": "47.53",
+"level": "class",
+"section": "G",
+"label": "Retail sale of carpets, rugs, wall and floor coverings in specialised stores"
+},
+{
+"code": "G4754",
+"nace": "47.54",
+"level": "class",
+"section": "G",
+"label": "Retail sale of electrical household appliances in specialised stores"
+},
+{
+"code": "G4759",
+"nace": "47.59",
+"level": "class",
+"section": "G",
+"label": "Retail sale of furniture, lighting equipment and other household articles in specialised stores"
+},
+{
+"code": "G476",
+"nace": "47.6",
+"level": "group",
+"section": "G",
+"label": "Retail sale of cultural and recreation goods in specialised stores"
+},
+{
+"code": "G4761",
+"nace": "47.61",
+"level": "class",
+"section": "G",
+"label": "Retail sale of books in specialised stores"
+},
+{
+"code": "G4762",
+"nace": "47.62",
+"level": "class",
+"section": "G",
+"label": "Retail sale of newspapers and stationery in specialised stores"
+},
+{
+"code": "G4763",
+"nace": "47.63",
+"level": "class",
+"section": "G",
+"label": "Retail sale of music and video recordings in specialised stores"
+},
+{
+"code": "G4764",
+"nace": "47.64",
+"level": "class",
+"section": "G",
+"label": "Retail sale of sporting equipment in specialised stores"
+},
+{
+"code": "G4765",
+"nace": "47.65",
+"level": "class",
+"section": "G",
+"label": "Retail sale of games and toys in specialised stores"
+},
+{
+"code": "G477",
+"nace": "47.7",
+"level": "group",
+"section": "G",
+"label": "Retail sale of other goods in specialised stores"
+},
+{
+"code": "G4771",
+"nace": "47.71",
+"level": "class",
+"section": "G",
+"label": "Retail sale of clothing in specialised stores"
+},
+{
+"code": "G4772",
+"nace": "47.72",
+"level": "class",
+"section": "G",
+"label": "Retail sale of footwear and leather goods in specialised stores"
+},
+{
+"code": "G4773",
+"nace": "47.73",
+"level": "class",
+"section": "G",
+"label": "Dispensing chemist in specialised stores"
+},
+{
+"code": "G4774",
+"nace": "47.74",
+"level": "class",
+"section": "G",
+"label": "Retail sale of medical and orthopaedic goods in specialised stores"
+},
+{
+"code": "G4775",
+"nace": "47.75",
+"level": "class",
+"section": "G",
+"label": "Retail sale of cosmetic and toilet articles in specialised stores"
+},
+{
+"code": "G4776",
+"nace": "47.76",
+"level": "class",
+"section": "G",
+"label": "Retail sale of flowers, plants, seeds, fertilisers, pet animals and pet food in specialised stores"
+},
+{
+"code": "G4777",
+"nace": "47.77",
+"level": "class",
+"section": "G",
+"label": "Retail sale of watches and jewellery in specialised stores"
+},
+{
+"code": "G4778",
+"nace": "47.78",
+"level": "class",
+"section": "G",
+"label": "Other retail sale of new goods in specialised stores"
+},
+{
+"code": "G4779",
+"nace": "47.79",
+"level": "class",
+"section": "G",
+"label": "Retail sale of second-hand goods in stores"
+},
+{
+"code": "G478",
+"nace": "47.8",
+"level": "group",
+"section": "G",
+"label": "Retail sale via stalls and markets"
+},
+{
+"code": "G4781",
+"nace": "47.81",
+"level": "class",
+"section": "G",
+"label": "Retail sale via stalls and markets of food, beverages and tobacco products"
+},
+{
+"code": "G4782",
+"nace": "47.82",
+"level": "class",
+"section": "G",
+"label": "Retail sale via stalls and markets of textiles, clothing and footwear"
+},
+{
+"code": "G4789",
+"nace": "47.89",
+"level": "class",
+"section": "G",
+"label": "Retail sale via stalls and markets of other goods"
+},
+{
+"code": "G479",
+"nace": "47.9",
+"level": "group",
+"section": "G",
+"label": "Retail trade not in stores, stalls or markets"
+},
+{
+"code": "G4791",
+"nace": "47.91",
+"level": "class",
+"section": "G",
+"label": "Retail sale via mail order houses or via Internet"
+},
+{
+"code": "G4799",
+"nace": "47.99",
+"level": "class",
+"section": "G",
+"label": "Other retail sale not in stores, stalls or markets"
+},
+{
+"code": "H",
+"nace": "H",
+"level": "section",
+"section": "H",
+"label": "Transportation and storage"
+},
+{
+"code": "H49",
+"nace": "49",
+"level": "division",
+"section": "H",
+"label": "Land transport and transport via pipelines"
+},
+{
+"code": "H491",
+"nace": "49.1",
+"level": "group",
+"section": "H",
+"label": "Passenger rail transport, interurban"
+},
+{
+"code": "H4910",
+"nace": "49.10",
+"level": "class",
+"section": "H",
+"label": "Passenger rail transport, interurban"
+},
+{
+"code": "H492",
+"nace": "49.2",
+"level": "group",
+"section": "H",
+"label": "Freight rail transport"
+},
+{
+"code": "H4920",
+"nace": "49.20",
+"level": "class",
+"section": "H",
+"label": "Freight rail transport"
+},
+{
+"code": "H493",
+"nace": "49.3",
+"level": "group",
+"section": "H",
+"label": "Other passenger land transport"
+},
+{
+"code": "H4931",
+"nace": "49.31",
+"level": "class",
+"section": "H",
+"label": "Urban and suburban passenger land transport"
+},
+{
+"code": "H4932",
+"nace": "49.32",
+"level": "class",
+"section": "H",
+"label": "Taxi operation"
+},
+{
+"code": "H4939",
+"nace": "49.39",
+"level": "class",
+"section": "H",
+"label": "Other passenger land transport n.e.c."
+},
+{
+"code": "H494",
+"nace": "49.4",
+"level": "group",
+"section": "H",
+"label": "Freight transport by road and removal services"
+},
+{
+"code": "H4941",
+"nace": "49.41",
+"level": "class",
+"section": "H",
+"label": "Freight transport by road"
+},
+{
+"code": "H4942",
+"nace": "49.42",
+"level": "class",
+"section": "H",
+"label": "Removal services"
+},
+{
+"code": "H495",
+"nace": "49.5",
+"level": "group",
+"section": "H",
+"label": "Transport via pipeline"
+},
+{
+"code": "H4950",
+"nace": "49.50",
+"level": "class",
+"section": "H",
+"label": "Transport via pipeline"
+},
+{
+"code": "H50",
+"nace": "50",
+"level": "division",
+"section": "H",
+"label": "Water transport"
+},
+{
+"code": "H501",
+"nace": "50.1",
+"level": "group",
+"section": "H",
+"label": "Sea and coastal passenger water transport"
+},
+{
+"code": "H5010",
+"nace": "50.10",
+"level": "class",
+"section": "H",
+"label": "Sea and coastal passenger water transport"
+},
+{
+"code": "H502",
+"nace": "50.2",
+"level": "group",
+"section": "H",
+"label": "Sea and coastal freight water transport"
+},
+{
+"code": "H5020",
+"nace": "50.20",
+"level": "class",
+"section": "H",
+"label": "Sea and coastal freight water transport"
+},
+{
+"code": "H503",
+"nace": "50.3",
+"level": "group",
+"section": "H",
+"label": "Inland passenger water transport"
+},
+{
+"code": "H5030",
+"nace": "50.30",
+"level": "class",
+"section": "H",
+"label": "Inland passenger water transport"
+},
+{
+"code": "H504",
+"nace": "50.4",
+"level": "group",
+"section": "H",
+"label": "Inland freight water transport"
+},
+{
+"code": "H5040",
+"nace": "50.40",
+"level": "class",
+"section": "H",
+"label": "Inland freight water transport"
+},
+{
+"code": "H51",
+"nace": "51",
+"level": "division",
+"section": "H",
+"label": "Air transport"
+},
+{
+"code": "H511",
+"nace": "51.1",
+"level": "group",
+"section": "H",
+"label": "Passenger air transport"
+},
+{
+"code": "H5110",
+"nace": "51.10",
+"level": "class",
+"section": "H",
+"label": "Passenger air transport"
+},
+{
+"code": "H512",
+"nace": "51.2",
+"level": "group",
+"section": "H",
+"label": "Freight air transport and space transport"
+},
+{
+"code": "H5121",
+"nace": "51.21",
+"level": "class",
+"section": "H",
+"label": "Freight air transport"
+},
+{
+"code": "H5122",
+"nace": "51.22",
+"level": "class",
+"section": "H",
+"label": "Space transport"
+},
+{
+"code": "H52",
+"nace": "52",
+"level": "division",
+"section": "H",
+"label": "Warehousing and support activities for transportation"
+},
+{
+"code": "H521",
+"nace": "52.1",
+"level": "group",
+"section": "H",
+"label": "Warehousing and storage"
+},
+{
+"code": "H5210",
+"nace": "52.10",
+"level": "class",
+"section": "H",
+"label": "Warehousing and storage"
+},
+{
+"code": "H522",
+"nace": "52.2",
+"level": "group",
+"section": "H",
+"label": "Support activities for transportation"
+},
+{
+"code": "H5221",
+"nace": "52.21",
+"level": "class",
+"section": "H",
+"label": "Service activities incidental to land transportation"
+},
+{
+"code": "H5222",
+"nace": "52.22",
+"level": "class",
+"section": "H",
+"label": "Service activities incidental to water transportation"
+},
+{
+"code": "H5223",
+"nace": "52.23",
+"level": "class",
+"section": "H",
+"label": "Service activities incidental to air transportation"
+},
+{
+"code": "H5224",
+"nace": "52.24",
+"level": "class",
+"section": "H",
+"label": "Cargo handling"
+},
+{
+"code": "H5229",
+"nace": "52.29",
+"level": "class",
+"section": "H",
+"label": "Other transportation support activities"
+},
+{
+"code": "H53",
+"nace": "53",
+"level": "division",
+"section": "H",
+"label": "Postal and courier activities"
+},
+{
+"code": "H531",
+"nace": "53.1",
+"level": "group",
+"section": "H",
+"label": "Postal activities under universal service obligation"
+},
+{
+"code": "H5310",
+"nace": "53.10",
+"level": "class",
+"section": "H",
+"label": "Postal activities under universal service obligation"
+},
+{
+"code": "H532",
+"nace": "53.2",
+"level": "group",
+"section": "H",
+"label": "Other postal and courier activities"
+},
+{
+"code": "H5320",
+"nace": "53.20",
+"level": "class",
+"section": "H",
+"label": "Other postal and courier activities"
+},
+{
+"code": "I",
+"nace": "I",
+"level": "section",
+"section": "I",
+"label": "Accommodation and food service activities"
+},
+{
+"code": "I55",
+"nace": "55",
+"level": "division",
+"section": "I",
+"label": "Accommodation"
+},
+{
+"code": "I551",
+"nace": "55.1",
+"level": "group",
+"section": "I",
+"label": "Hotels and similar accommodation"
+},
+{
+"code": "I5510",
+"nace": "55.10",
+"level": "class",
+"section": "I",
+"label": "Hotels and similar accommodation"
+},
+{
+"code": "I552",
+"nace": "55.2",
+"level": "group",
+"section": "I",
+"label": "Holiday and other short-stay accommodation"
+},
+{
+"code": "I5520",
+"nace": "55.20",
+"level": "class",
+"section": "I",
+"label": "Holiday and other short-stay accommodation"
+},
+{
+"code": "I553",
+"nace": "55.3",
+"level": "group",
+"section": "I",
+"label": "Camping grounds, recreational vehicle parks and trailer parks"
+},
+{
+"code": "I5530",
+"nace": "55.30",
+"level": "class",
+"section": "I",
+"label": "Camping grounds, recreational vehicle parks and trailer parks"
+},
+{
+"code": "I559",
+"nace": "55.9",
+"level": "group",
+"section": "I",
+"label": "Other accommodation"
+},
+{
+"code": "I5590",
+"nace": "55.90",
+"level": "class",
+"section": "I",
+"label": "Other accommodation"
+},
+{
+"code": "I56",
+"nace": "56",
+"level": "division",
+"section": "I",
+"label": "Food and beverage service activities"
+},
+{
+"code": "I561",
+"nace": "56.1",
+"level": "group",
+"section": "I",
+"label": "Restaurants and mobile food service activities"
+},
+{
+"code": "I5610",
+"nace": "56.10",
+"level": "class",
+"section": "I",
+"label": "Restaurants and mobile food service activities"
+},
+{
+"code": "I562",
+"nace": "56.2",
+"level": "group",
+"section": "I",
+"label": "Event catering and other food service activities"
+},
+{
+"code": "I5621",
+"nace": "56.21",
+"level": "class",
+"section": "I",
+"label": "Event catering activities"
+},
+{
+"code": "I5629",
+"nace": "56.29",
+"level": "class",
+"section": "I",
+"label": "Other food service activities"
+},
+{
+"code": "I563",
+"nace": "56.3",
+"level": "group",
+"section": "I",
+"label": "Beverage serving activities"
+},
+{
+"code": "I5630",
+"nace": "56.30",
+"level": "class",
+"section": "I",
+"label": "Beverage serving activities"
+},
+{
+"code": "J",
+"nace": "J",
+"level": "section",
+"section": "J",
+"label": "Information and communication"
+},
+{
+"code": "J58",
+"nace": "58",
+"level": "division",
+"section": "J",
+"label": "Publishing activities"
+},
+{
+"code": "J581",
+"nace": "58.1",
+"level": "group",
+"section": "J",
+"label": "Publishing of books, periodicals and other publishing activities"
+},
+{
+"code": "J5811",
+"nace": "58.11",
+"level": "class",
+"section": "J",
+"label": "Book publishing"
+},
+{
+"code": "J5812",
+"nace": "58.12",
+"level": "class",
+"section": "J",
+"label": "Publishing of directories and mailing lists"
+},
+{
+"code": "J5813",
+"nace": "58.13",
+"level": "class",
+"section": "J",
+"label": "Publishing of newspapers"
+},
+{
+"code": "J5814",
+"nace": "58.14",
+"level": "class",
+"section": "J",
+"label": "Publishing of journals and periodicals"
+},
+{
+"code": "J5819",
+"nace": "58.19",
+"level": "class",
+"section": "J",
+"label": "Other publishing activities"
+},
+{
+"code": "J582",
+"nace": "58.2",
+"level": "group",
+"section": "J",
+"label": "Software publishing"
+},
+{
+"code": "J5821",
+"nace": "58.21",
+"level": "class",
+"section": "J",
+"label": "Publishing of computer games"
+},
+{
+"code": "J5829",
+"nace": "58.29",
+"level": "class",
+"section": "J",
+"label": "Other software publishing"
+},
+{
+"code": "J59",
+"nace": "59",
+"level": "division",
+"section": "J",
+"label": "Motion picture, video and television programme production, sound recording and music publishing activities"
+},
+{
+"code": "J591",
+"nace": "59.1",
+"level": "group",
+"section": "J",
+"label": "Motion picture, video and television programme activities"
+},
+{
+"code": "J5911",
+"nace": "59.11",
+"level": "class",
+"section": "J",
+"label": "Motion picture, video and television programme production activities"
+},
+{
+"code": "J5912",
+"nace": "59.12",
+"level": "class",
+"section": "J",
+"label": "Motion picture, video and television programme post-production activities"
+},
+{
+"code": "J5913",
+"nace": "59.13",
+"level": "class",
+"section": "J",
+"label": "Motion picture, video and television programme distribution activities"
+},
+{
+"code": "J5914",
+"nace": "59.14",
+"level": "class",
+"section": "J",
+"label": "Motion picture projection activities"
+},
+{
+"code": "J592",
+"nace": "59.2",
+"level": "group",
+"section": "J",
+"label": "Sound recording and music publishing activities"
+},
+{
+"code": "J5920",
+"nace": "59.20",
+"level": "class",
+"section": "J",
+"label": "Sound recording and music publishing activities"
+},
+{
+"code": "J60",
+"nace": "60",
+"level": "division",
+"section": "J",
+"label": "Programming and broadcasting activities"
+},
+{
+"code": "J601",
+"nace": "60.1",
+"level": "group",
+"section": "J",
+"label": "Radio broadcasting"
+},
+{
+"code": "J6010",
+"nace": "60.10",
+"level": "class",
+"section": "J",
+"label": "Radio broadcasting"
+},
+{
+"code": "J602",
+"nace": "60.2",
+"level": "group",
+"section": "J",
+"label": "Television programming and broadcasting activities"
+},
+{
+"code": "J6020",
+"nace": "60.20",
+"level": "class",
+"section": "J",
+"label": "Television programming and broadcasting activities"
+},
+{
+"code": "J61",
+"nace": "61",
+"level": "division",
+"section": "J",
+"label": "Telecommunications"
+},
+{
+"code": "J611",
+"nace": "61.1",
+"level": "group",
+"section": "J",
+"label": "Wired telecommunications activities"
+},
+{
+"code": "J6110",
+"nace": "61.10",
+"level": "class",
+"section": "J",
+"label": "Wired telecommunications activities"
+},
+{
+"code": "J612",
+"nace": "61.2",
+"level": "group",
+"section": "J",
+"label": "Wireless telecommunications activities"
+},
+{
+"code": "J6120",
+"nace": "61.20",
+"level": "class",
+"section": "J",
+"label": "Wireless telecommunications activities"
+},
+{
+"code": "J613",
+"nace": "61.3",
+"level": "group",
+"section": "J",
+"label": "Satellite telecommunications activities"
+},
+{
+"code": "J6130",
+"nace": "61.30",
+"level": "class",
+"section": "J",
+"label": "Satellite telecommunications activities"
+},
+{
+"code": "J619",
+"nace": "61.9",
+"level": "group",
+"section": "J",
+"label": "Other telecommunications activities"
+},
+{
+"code": "J6190",
+"nace": "61.90",
+"level": "class",
+"section": "J",
+"label": "Other telecommunications activities"
+},
+{
+"code": "J62",
+"nace": "62",
+"level": "division",
+"section": "J",
+"label": "Computer programming, consultancy and related activities"
+},
+{
+"code": "J620",
+"nace": "62.0",
+"level": "group",
+"section": "J",
+"label": "Computer programming, consultancy and related activities"
+},
+{
+"code": "J6201",
+"nace": "62.01",
+"level": "class",
+"section": "J",
+"label": "Computer programming activities"
+},
+{
+"code": "J6202",
+"nace": "62.02",
+"level": "class",
+"section": "J",
+"label": "Computer consultancy activities"
+},
+{
+"code": "J6203",
+"nace": "62.03",
+"level": "class",
+"section": "J",
+"label": "Computer facilities management activities"
+},
+{
+"code": "J6209",
+"nace": "62.09",
+"level": "class",
+"section": "J",
+"label": "Other information technology and computer service activities"
+},
+{
+"code": "J63",
+"nace": "63",
+"level": "division",
+"section": "J",
+"label": "Information service activities"
+},
+{
+"code": "J631",
+"nace": "63.1",
+"level": "group",
+"section": "J",
+"label": "Data processing, hosting and related activities; web portals"
+},
+{
+"code": "J6311",
+"nace": "63.11",
+"level": "class",
+"section": "J",
+"label": "Data processing, hosting and related activities"
+},
+{
+"code": "J6312",
+"nace": "63.12",
+"level": "class",
+"section": "J",
+"label": "Web portals"
+},
+{
+"code": "J639",
+"nace": "63.9",
+"level": "group",
+"section": "J",
+"label": "Other information service activities"
+},
+{
+"code": "J6391",
+"nace": "63.91",
+"level": "class",
+"section": "J",
+"label": "News agency activities"
+},
+{
+"code": "J6399",
+"nace": "63.99",
+"level": "class",
+"section": "J",
+"label": "Other information service activities n.e.c."
+},
+{
+"code": "K",
+"nace": "K",
+"level": "section",
+"section": "K",
+"label": "Financial and insurance activities"
+},
+{
+"code": "K64",
+"nace": "64",
+"level": "division",
+"section": "K",
+"label": "Financial service activities, except insurance and pension funding"
+},
+{
+"code": "K641",
+"nace": "64.1",
+"level": "group",
+"section": "K",
+"label": "Monetary intermediation"
+},
+{
+"code": "K6411",
+"nace": "64.11",
+"level": "class",
+"section": "K",
+"label": "Central banking"
+},
+{
+"code": "K6419",
+"nace": "64.19",
+"level": "class",
+"section": "K",
+"label": "Other monetary intermediation"
+},
+{
+"code": "K642",
+"nace": "64.2",
+"level": "group",
+"section": "K",
+"label": "Activities of holding companies"
+},
+{
+"code": "K6420",
+"nace": "64.20",
+"level": "class",
+"section": "K",
+"label": "Activities of holding companies"
+},
+{
+"code": "K643",
+"nace": "64.3",
+"level": "group",
+"section": "K",
+"label": "Trusts, funds and similar financial entities"
+},
+{
+"code": "K6430",
+"nace": "64.30",
+"level": "class",
+"section": "K",
+"label": "Trusts, funds and similar financial entities"
+},
+{
+"code": "K649",
+"nace": "64.9",
+"level": "group",
+"section": "K",
+"label": "Other financial service activities, except insurance and pension funding"
+},
+{
+"code": "K6491",
+"nace": "64.91",
+"level": "class",
+"section": "K",
+"label": "Financial leasing"
+},
+{
+"code": "K6492",
+"nace": "64.92",
+"level": "class",
+"section": "K",
+"label": "Other credit granting"
+},
+{
+"code": "K6499",
+"nace": "64.99",
+"level": "class",
+"section": "K",
+"label": "Other financial service activities, except insurance and pension funding n.e.c."
+},
+{
+"code": "K65",
+"nace": "65",
+"level": "division",
+"section": "K",
+"label": "Insurance, reinsurance and pension funding, except compulsory social security"
+},
+{
+"code": "K651",
+"nace": "65.1",
+"level": "group",
+"section": "K",
+"label": "Insurance"
+},
+{
+"code": "K6511",
+"nace": "65.11",
+"level": "class",
+"section": "K",
+"label": "Life insurance"
+},
+{
+"code": "K6512",
+"nace": "65.12",
+"level": "class",
+"section": "K",
+"label": "Non-life insurance"
+},
+{
+"code": "K652",
+"nace": "65.2",
+"level": "group",
+"section": "K",
+"label": "Reinsurance"
+},
+{
+"code": "K6520",
+"nace": "65.20",
+"level": "class",
+"section": "K",
+"label": "Reinsurance"
+},
+{
+"code": "K653",
+"nace": "65.3",
+"level": "group",
+"section": "K",
+"label": "Pension funding"
+},
+{
+"code": "K6530",
+"nace": "65.30",
+"level": "class",
+"section": "K",
+"label": "Pension funding"
+},
+{
+"code": "K66",
+"nace": "66",
+"level": "division",
+"section": "K",
+"label": "Activities auxiliary to financial services and insurance activities"
+},
+{
+"code": "K661",
+"nace": "66.1",
+"level": "group",
+"section": "K",
+"label": "Activities auxiliary to financial services, except insurance and pension funding"
+},
+{
+"code": "K6611",
+"nace": "66.11",
+"level": "class",
+"section": "K",
+"label": "Administration of financial markets"
+},
+{
+"code": "K6612",
+"nace": "66.12",
+"level": "class",
+"section": "K",
+"label": "Security and commodity contracts brokerage"
+},
+{
+"code": "K6619",
+"nace": "66.19",
+"level": "class",
+"section": "K",
+"label": "Other activities auxiliary to financial services, except insurance and pension funding"
+},
+{
+"code": "K662",
+"nace": "66.2",
+"level": "group",
+"section": "K",
+"label": "Activities auxiliary to insurance and pension funding"
+},
+{
+"code": "K6621",
+"nace": "66.21",
+"level": "class",
+"section": "K",
+"label": "Risk and damage evaluation"
+},
+{
+"code": "K6622",
+"nace": "66.22",
+"level": "class",
+"section": "K",
+"label": "Activities of insurance agents and brokers"
+},
+{
+"code": "K6629",
+"nace": "66.29",
+"level": "class",
+"section": "K",
+"label": "Other activities auxiliary to insurance and pension funding"
+},
+{
+"code": "K663",
+"nace": "66.3",
+"level": "group",
+"section": "K",
+"label": "Fund management activities"
+},
+{
+"code": "K6630",
+"nace": "66.30",
+"level": "class",
+"section": "K",
+"label": "Fund management activities"
+},
+{
+"code": "L",
+"nace": "L",
+"level": "section",
+"section": "L",
+"label": "Real estate activities"
+},
+{
+"code": "L68",
+"nace": "68",
+"level": "division",
+"section": "L",
+"label": "Real estate activities"
+},
+{
+"code": "L681",
+"nace": "68.1",
+"level": "group",
+"section": "L",
+"label": "Buying and selling of own real estate"
+},
+{
+"code": "L6810",
+"nace": "68.10",
+"level": "class",
+"section": "L",
+"label": "Buying and selling of own real estate"
+},
+{
+"code": "L682",
+"nace": "68.2",
+"level": "group",
+"section": "L",
+"label": "Renting and operating of own or leased real estate"
+},
+{
+"code": "L6820",
+"nace": "68.20",
+"level": "class",
+"section": "L",
+"label": "Renting and operating of own or leased real estate"
+},
+{
+"code": "L683",
+"nace": "68.3",
+"level": "group",
+"section": "L",
+"label": "Real estate activities on a fee or contract basis"
+},
+{
+"code": "L6831",
+"nace": "68.31",
+"level": "class",
+"section": "L",
+"label": "Real estate agencies"
+},
+{
+"code": "L6832",
+"nace": "68.32",
+"level": "class",
+"section": "L",
+"label": "Management of real estate on a fee or contract basis"
+},
+{
+"code": "M",
+"nace": "M",
+"level": "section",
+"section": "M",
+"label": "Professional, scientific and technical activities"
+},
+{
+"code": "M69",
+"nace": "69",
+"level": "division",
+"section": "M",
+"label": "Legal and accounting activities"
+},
+{
+"code": "M691",
+"nace": "69.1",
+"level": "group",
+"section": "M",
+"label": "Legal activities"
+},
+{
+"code": "M6910",
+"nace": "69.10",
+"level": "class",
+"section": "M",
+"label": "Legal activities"
+},
+{
+"code": "M692",
+"nace": "69.2",
+"level": "group",
+"section": "M",
+"label": "Accounting, bookkeeping and auditing activities; tax consultancy"
+},
+{
+"code": "M6920",
+"nace": "69.20",
+"level": "class",
+"section": "M",
+"label": "Accounting, bookkeeping and auditing activities; tax consultancy"
+},
+{
+"code": "M70",
+"nace": "70",
+"level": "division",
+"section": "M",
+"label": "Activities of head offices; management consultancy activities"
+},
+{
+"code": "M701",
+"nace": "70.1",
+"level": "group",
+"section": "M",
+"label": "Activities of head offices"
+},
+{
+"code": "M7010",
+"nace": "70.10",
+"level": "class",
+"section": "M",
+"label": "Activities of head offices"
+},
+{
+"code": "M702",
+"nace": "70.2",
+"level": "group",
+"section": "M",
+"label": "Management consultancy activities"
+},
+{
+"code": "M7021",
+"nace": "70.21",
+"level": "class",
+"section": "M",
+"label": "Public relations and communication activities"
+},
+{
+"code": "M7022",
+"nace": "70.22",
+"level": "class",
+"section": "M",
+"label": "Business and other management consultancy activities"
+},
+{
+"code": "M71",
+"nace": "71",
+"level": "division",
+"section": "M",
+"label": "Architectural and engineering activities; technical testing and analysis"
+},
+{
+"code": "M711",
+"nace": "71.1",
+"level": "group",
+"section": "M",
+"label": "Architectural and engineering activities and related technical consultancy"
+},
+{
+"code": "M7111",
+"nace": "71.11",
+"level": "class",
+"section": "M",
+"label": "Architectural activities"
+},
+{
+"code": "M7112",
+"nace": "71.12",
+"level": "class",
+"section": "M",
+"label": "Engineering activities and related technical consultancy"
+},
+{
+"code": "M712",
+"nace": "71.2",
+"level": "group",
+"section": "M",
+"label": "Technical testing and analysis"
+},
+{
+"code": "M7120",
+"nace": "71.20",
+"level": "class",
+"section": "M",
+"label": "Technical testing and analysis"
+},
+{
+"code": "M72",
+"nace": "72",
+"level": "division",
+"section": "M",
+"label": "Scientific research and development"
+},
+{
+"code": "M721",
+"nace": "72.1",
+"level": "group",
+"section": "M",
+"label": "Research and experimental development on natural sciences and engineering"
+},
+{
+"code": "M7211",
+"nace": "72.11",
+"level": "class",
+"section": "M",
+"label": "Research and experimental development on biotechnology"
+},
+{
+"code": "M7219",
+"nace": "72.19",
+"level": "class",
+"section": "M",
+"label": "Other research and experimental development on natural sciences and engineering"
+},
+{
+"code": "M722",
+"nace": "72.2",
+"level": "group",
+"section": "M",
+"label": "Research and experimental development on social sciences and humanities"
+},
+{
+"code": "M7220",
+"nace": "72.20",
+"level": "class",
+"section": "M",
+"label": "Research and experimental development on social sciences and humanities"
+},
+{
+"code": "M73",
+"nace": "73",
+"level": "division",
+"section": "M",
+"label": "Advertising and market research"
+},
+{
+"code": "M731",
+"nace": "73.1",
+"level": "group",
+"section": "M",
+"label": "Advertising"
+},
+{
+"code": "M7311",
+"nace": "73.11",
+"level": "class",
+"section": "M",
+"label": "Advertising agencies"
+},
+{
+"code": "M7312",
+"nace": "73.12",
+"level": "class",
+"section": "M",
+"label": "Media representation"
+},
+{
+"code": "M732",
+"nace": "73.2",
+"level": "group",
+"section": "M",
+"label": "Market research and public opinion polling"
+},
+{
+"code": "M7320",
+"nace": "73.20",
+"level": "class",
+"section": "M",
+"label": "Market research and public opinion polling"
+},
+{
+"code": "M74",
+"nace": "74",
+"level": "division",
+"section": "M",
+"label": "Other professional, scientific and technical activities"
+},
+{
+"code": "M741",
+"nace": "74.1",
+"level": "group",
+"section": "M",
+"label": "Specialised design activities"
+},
+{
+"code": "M7410",
+"nace": "74.10",
+"level": "class",
+"section": "M",
+"label": "Specialised design activities"
+},
+{
+"code": "M742",
+"nace": "74.2",
+"level": "group",
+"section": "M",
+"label": "Photographic activities"
+},
+{
+"code": "M7420",
+"nace": "74.20",
+"level": "class",
+"section": "M",
+"label": "Photographic activities"
+},
+{
+"code": "M743",
+"nace": "74.3",
+"level": "group",
+"section": "M",
+"label": "Translation and interpretation activities"
+},
+{
+"code": "M7430",
+"nace": "74.30",
+"level": "class",
+"section": "M",
+"label": "Translation and interpretation activities"
+},
+{
+"code": "M749",
+"nace": "74.9",
+"level": "group",
+"section": "M",
+"label": "Other professional, scientific and technical activities n.e.c."
+},
+{
+"code": "M7490",
+"nace": "74.90",
+"level": "class",
+"section": "M",
+"label": "Other professional, scientific and technical activities n.e.c."
+},
+{
+"code": "M75",
+"nace": "75",
+"level": "division",
+"section": "M",
+"label": "Veterinary activities"
+},
+{
+"code": "M750",
+"nace": "75.0",
+"level": "group",
+"section": "M",
+"label": "Veterinary activities"
+},
+{
+"code": "M7500",
+"nace": "75.00",
+"level": "class",
+"section": "M",
+"label": "Veterinary activities"
+},
+{
+"code": "N",
+"nace": "N",
+"level": "section",
+"section": "N",
+"label": "Administrative and support service activities"
+},
+{
+"code": "N77",
+"nace": "77",
+"level": "division",
+"section": "N",
+"label": "Rental and leasing activities"
+},
+{
+"code": "N771",
+"nace": "77.1",
+"level": "group",
+"section": "N",
+"label": "Renting and leasing of motor vehicles"
+},
+{
+"code": "N7711",
+"nace": "77.11",
+"level": "class",
+"section": "N",
+"label": "Renting and leasing of cars and light motor vehicles"
+},
+{
+"code": "N7712",
+"nace": "77.12",
+"level": "class",
+"section": "N",
+"label": "Renting and leasing of trucks"
+},
+{
+"code": "N772",
+"nace": "77.2",
+"level": "group",
+"section": "N",
+"label": "Renting and leasing of personal and household goods"
+},
+{
+"code": "N7721",
+"nace": "77.21",
+"level": "class",
+"section": "N",
+"label": "Renting and leasing of recreational and sports goods"
+},
+{
+"code": "N7722",
+"nace": "77.22",
+"level": "class",
+"section": "N",
+"label": "Renting of video tapes and disks"
+},
+{
+"code": "N7729",
+"nace": "77.29",
+"level": "class",
+"section": "N",
+"label": "Renting and leasing of other personal and household goods"
+},
+{
+"code": "N773",
+"nace": "77.3",
+"level": "group",
+"section": "N",
+"label": "Renting and leasing of other machinery, equipment and tangible goods"
+},
+{
+"code": "N7731",
+"nace": "77.31",
+"level": "class",
+"section": "N",
+"label": "Renting and leasing of agricultural machinery and equipment"
+},
+{
+"code": "N7732",
+"nace": "77.32",
+"level": "class",
+"section": "N",
+"label": "Renting and leasing of construction and civil engineering machinery and equipment"
+},
+{
+"code": "N7733",
+"nace": "77.33",
+"level": "class",
+"section": "N",
+"label": "Renting and leasing of office machinery and equipment (including computers)"
+},
+{
+"code": "N7734",
+"nace": "77.34",
+"level": "class",
+"section": "N",
+"label": "Renting and leasing of water transport equipment"
+},
+{
+"code": "N7735",
+"nace": "77.35",
+"level": "class",
+"section": "N",
+"label": "Renting and leasing of air transport equipment"
+},
+{
+"code": "N7739",
+"nace": "77.39",
+"level": "class",
+"section": "N",
+"label": "Renting and leasing of other machinery, equipment and tangible goods n.e.c."
+},
+{
+"code": "N774",
+"nace": "77.4",
+"level": "group",
+"section": "N",
+"label": "Leasing of intellectual property and similar products, except copyrighted works"
+},
+{
+"code": "N7740",
+"nace": "77.40",
+"level": "class",
+"section": "N",
+"label": "Leasing of intellectual property and similar products, except copyrighted works"
+},
+{
+"code": "N78",
+"nace": "78",
+"level": "division",
+"section": "N",
+"label": "Employment activities"
+},
+{
+"code": "N781",
+"nace": "78.1",
+"level": "group",
+"section": "N",
+"label": "Activities of employment placement agencies"
+},
+{
+"code": "N7810",
+"nace": "78.10",
+"level": "class",
+"section": "N",
+"label": "Activities of employment placement agencies"
+},
+{
+"code": "N782",
+"nace": "78.2",
+"level": "group",
+"section": "N",
+"label": "Temporary employment agency activities"
+},
+{
+"code": "N7820",
+"nace": "78.20",
+"level": "class",
+"section": "N",
+"label": "Temporary employment agency activities"
+},
+{
+"code": "N783",
+"nace": "78.3",
+"level": "group",
+"section": "N",
+"label": "Other human resources provision"
+},
+{
+"code": "N7830",
+"nace": "78.30",
+"level": "class",
+"section": "N",
+"label": "Other human resources provision"
+},
+{
+"code": "N79",
+"nace": "79",
+"level": "division",
+"section": "N",
+"label": "Travel agency, tour operator reservation service and related activities"
+},
+{
+"code": "N791",
+"nace": "79.1",
+"level": "group",
+"section": "N",
+"label": "Travel agency and tour operator activities"
+},
+{
+"code": "N7911",
+"nace": "79.11",
+"level": "class",
+"section": "N",
+"label": "Travel agency activities"
+},
+{
+"code": "N7912",
+"nace": "79.12",
+"level": "class",
+"section": "N",
+"label": "Tour operator activities"
+},
+{
+"code": "N799",
+"nace": "79.9",
+"level": "group",
+"section": "N",
+"label": "Other reservation service and related activities"
+},
+{
+"code": "N7990",
+"nace": "79.90",
+"level": "class",
+"section": "N",
+"label": "Other reservation service and related activities"
+},
+{
+"code": "N80",
+"nace": "80",
+"level": "division",
+"section": "N",
+"label": "Security and investigation activities"
+},
+{
+"code": "N801",
+"nace": "80.1",
+"level": "group",
+"section": "N",
+"label": "Private security activities"
+},
+{
+"code": "N8010",
+"nace": "80.10",
+"level": "class",
+"section": "N",
+"label": "Private security activities"
+},
+{
+"code": "N802",
+"nace": "80.2",
+"level": "group",
+"section": "N",
+"label": "Security systems service activities"
+},
+{
+"code": "N8020",
+"nace": "80.20",
+"level": "class",
+"section": "N",
+"label": "Security systems service activities"
+},
+{
+"code": "N803",
+"nace": "80.3",
+"level": "group",
+"section": "N",
+"label": "Investigation activities"
+},
+{
+"code": "N8030",
+"nace": "80.30",
+"level": "class",
+"section": "N",
+"label": "Investigation activities"
+},
+{
+"code": "N81",
+"nace": "81",
+"level": "division",
+"section": "N",
+"label": "Services to buildings and landscape activities"
+},
+{
+"code": "N811",
+"nace": "81.1",
+"level": "group",
+"section": "N",
+"label": "Combined facilities support activities"
+},
+{
+"code": "N8110",
+"nace": "81.10",
+"level": "class",
+"section": "N",
+"label": "Combined facilities support activities"
+},
+{
+"code": "N812",
+"nace": "81.2",
+"level": "group",
+"section": "N",
+"label": "Cleaning activities"
+},
+{
+"code": "N8121",
+"nace": "81.21",
+"level": "class",
+"section": "N",
+"label": "General cleaning of buildings"
+},
+{
+"code": "N8122",
+"nace": "81.22",
+"level": "class",
+"section": "N",
+"label": "Other building and industrial cleaning activities"
+},
+{
+"code": "N8129",
+"nace": "81.29",
+"level": "class",
+"section": "N",
+"label": "Other cleaning activities"
+},
+{
+"code": "N813",
+"nace": "81.3",
+"level": "group",
+"section": "N",
+"label": "Landscape service activities"
+},
+{
+"code": "N8130",
+"nace": "81.30",
+"level": "class",
+"section": "N",
+"label": "Landscape service activities"
+},
+{
+"code": "N82",
+"nace": "82",
+"level": "division",
+"section": "N",
+"label": "Office administrative, office support and other business support activities"
+},
+{
+"code": "N821",
+"nace": "82.1",
+"level": "group",
+"section": "N",
+"label": "Office administrative and support activities"
+},
+{
+"code": "N8211",
+"nace": "82.11",
+"level": "class",
+"section": "N",
+"label": "Combined office administrative service activities"
+},
+{
+"code": "N8219",
+"nace": "82.19",
+"level": "class",
+"section": "N",
+"label": "Photocopying, document preparation and other specialised office support activities"
+},
+{
+"code": "N822",
+"nace": "82.2",
+"level": "group",
+"section": "N",
+"label": "Activities of call centres"
+},
+{
+"code": "N8220",
+"nace": "82.20",
+"level": "class",
+"section": "N",
+"label": "Activities of call centres"
+},
+{
+"code": "N823",
+"nace": "82.3",
+"level": "group",
+"section": "N",
+"label": "Organisation of conventions and trade shows"
+},
+{
+"code": "N8230",
+"nace": "82.30",
+"level": "class",
+"section": "N",
+"label": "Organisation of conventions and trade shows"
+},
+{
+"code": "N829",
+"nace": "82.9",
+"level": "group",
+"section": "N",
+"label": "Business support service activities n.e.c."
+},
+{
+"code": "N8291",
+"nace": "82.91",
+"level": "class",
+"section": "N",
+"label": "Activities of collection agencies and credit bureaus"
+},
+{
+"code": "N8292",
+"nace": "82.92",
+"level": "class",
+"section": "N",
+"label": "Packaging activities"
+},
+{
+"code": "N8299",
+"nace": "82.99",
+"level": "class",
+"section": "N",
+"label": "Other business support service activities n.e.c."
+},
+{
+"code": "O",
+"nace": "O",
+"level": "section",
+"section": "O",
+"label": "Public administration and defence; compulsory social security"
+},
+{
+"code": "O84",
+"nace": "84",
+"level": "division",
+"section": "O",
+"label": "Public administration and defence; compulsory social security"
+},
+{
+"code": "O841",
+"nace": "84.1",
+"level": "group",
+"section": "O",
+"label": "Administration of the State and the economic and social policy of the community"
+},
+{
+"code": "O8411",
+"nace": "84.11",
+"level": "class",
+"section": "O",
+"label": "General public administration activities"
+},
+{
+"code": "O8412",
+"nace": "84.12",
+"level": "class",
+"section": "O",
+"label": "Regulation of the activities of providing health care, education, cultural services and other social services, excluding social security"
+},
+{
+"code": "O8413",
+"nace": "84.13",
+"level": "class",
+"section": "O",
+"label": "Regulation of and contribution to more efficient operation of businesses"
+},
+{
+"code": "O842",
+"nace": "84.2",
+"level": "group",
+"section": "O",
+"label": "Provision of services to the community as a whole"
+},
+{
+"code": "O8421",
+"nace": "84.21",
+"level": "class",
+"section": "O",
+"label": "Foreign affairs"
+},
+{
+"code": "O8422",
+"nace": "84.22",
+"level": "class",
+"section": "O",
+"label": "Defence activities"
+},
+{
+"code": "O8423",
+"nace": "84.23",
+"level": "class",
+"section": "O",
+"label": "Justice and judicial activities"
+},
+{
+"code": "O8424",
+"nace": "84.24",
+"level": "class",
+"section": "O",
+"label": "Public order and safety activities"
+},
+{
+"code": "O8425",
+"nace": "84.25",
+"level": "class",
+"section": "O",
+"label": "Fire service activities"
+},
+{
+"code": "O843",
+"nace": "84.3",
+"level": "group",
+"section": "O",
+"label": "Compulsory social security activities"
+},
+{
+"code": "O8430",
+"nace": "84.30",
+"level": "class",
+"section": "O",
+"label": "Compulsory social security activities"
+},
+{
+"code": "P",
+"nace": "P",
+"level": "section",
+"section": "P",
+"label": "Education"
+},
+{
+"code": "P85",
+"nace": "85",
+"level": "division",
+"section": "P",
+"label": "Education"
+},
+{
+"code": "P851",
+"nace": "85.1",
+"level": "group",
+"section": "P",
+"label": "Pre-primary education"
+},
+{
+"code": "P8510",
+"nace": "85.10",
+"level": "class",
+"section": "P",
+"label": "Pre-primary education"
+},
+{
+"code": "P852",
+"nace": "85.2",
+"level": "group",
+"section": "P",
+"label": "Primary education"
+},
+{
+"code": "P8520",
+"nace": "85.20",
+"level": "class",
+"section": "P",
+"label": "Primary education"
+},
+{
+"code": "P853",
+"nace": "85.3",
+"level": "group",
+"section": "P",
+"label": "Secondary education"
+},
+{
+"code": "P8531",
+"nace": "85.31",
+"level": "class",
+"section": "P",
+"label": "General secondary education"
+},
+{
+"code": "P8532",
+"nace": "85.32",
+"level": "class",
+"section": "P",
+"label": "Technical and vocational secondary education"
+},
+{
+"code": "P854",
+"nace": "85.4",
+"level": "group",
+"section": "P",
+"label": "Higher education"
+},
+{
+"code": "P8541",
+"nace": "85.41",
+"level": "class",
+"section": "P",
+"label": "Post-secondary non-tertiary education"
+},
+{
+"code": "P8542",
+"nace": "85.42",
+"level": "class",
+"section": "P",
+"label": "Tertiary education"
+},
+{
+"code": "P855",
+"nace": "85.5",
+"level": "group",
+"section": "P",
+"label": "Other education"
+},
+{
+"code": "P8551",
+"nace": "85.51",
+"level": "class",
+"section": "P",
+"label": "Sports and recreation education"
+},
+{
+"code": "P8552",
+"nace": "85.52",
+"level": "class",
+"section": "P",
+"label": "Cultural education"
+},
+{
+"code": "P8553",
+"nace": "85.53",
+"level": "class",
+"section": "P",
+"label": "Driving school activities"
+},
+{
+"code": "P8559",
+"nace": "85.59",
+"level": "class",
+"section": "P",
+"label": "Other education n.e.c."
+},
+{
+"code": "P856",
+"nace": "85.6",
+"level": "group",
+"section": "P",
+"label": "Educational support activities"
+},
+{
+"code": "P8560",
+"nace": "85.60",
+"level": "class",
+"section": "P",
+"label": "Educational support activities"
+},
+{
+"code": "Q",
+"nace": "Q",
+"level": "section",
+"section": "Q",
+"label": "Human health and social work activities"
+},
+{
+"code": "Q86",
+"nace": "86",
+"level": "division",
+"section": "Q",
+"label": "Human health activities"
+},
+{
+"code": "Q861",
+"nace": "86.1",
+"level": "group",
+"section": "Q",
+"label": "Hospital activities"
+},
+{
+"code": "Q8610",
+"nace": "86.10",
+"level": "class",
+"section": "Q",
+"label": "Hospital activities"
+},
+{
+"code": "Q862",
+"nace": "86.2",
+"level": "group",
+"section": "Q",
+"label": "Medical and dental practice activities"
+},
+{
+"code": "Q8621",
+"nace": "86.21",
+"level": "class",
+"section": "Q",
+"label": "General medical practice activities"
+},
+{
+"code": "Q8622",
+"nace": "86.22",
+"level": "class",
+"section": "Q",
+"label": "Specialist medical practice activities"
+},
+{
+"code": "Q8623",
+"nace": "86.23",
+"level": "class",
+"section": "Q",
+"label": "Dental practice activities"
+},
+{
+"code": "Q869",
+"nace": "86.9",
+"level": "group",
+"section": "Q",
+"label": "Other human health activities"
+},
+{
+"code": "Q8690",
+"nace": "86.90",
+"level": "class",
+"section": "Q",
+"label": "Other human health activities"
+},
+{
+"code": "Q87",
+"nace": "87",
+"level": "division",
+"section": "Q",
+"label": "Residential care activities"
+},
+{
+"code": "Q871",
+"nace": "87.1",
+"level": "group",
+"section": "Q",
+"label": "Residential nursing care activities"
+},
+{
+"code": "Q8710",
+"nace": "87.10",
+"level": "class",
+"section": "Q",
+"label": "Residential nursing care activities"
+},
+{
+"code": "Q872",
+"nace": "87.2",
+"level": "group",
+"section": "Q",
+"label": "Residential care activities for mental retardation, mental health and substance abuse"
+},
+{
+"code": "Q8720",
+"nace": "87.20",
+"level": "class",
+"section": "Q",
+"label": "Residential care activities for mental retardation, mental health and substance abuse"
+},
+{
+"code": "Q873",
+"nace": "87.3",
+"level": "group",
+"section": "Q",
+"label": "Residential care activities for the elderly and disabled"
+},
+{
+"code": "Q8730",
+"nace": "87.30",
+"level": "class",
+"section": "Q",
+"label": "Residential care activities for the elderly and disabled"
+},
+{
+"code": "Q879",
+"nace": "87.9",
+"level": "group",
+"section": "Q",
+"label": "Other residential care activities"
+},
+{
+"code": "Q8790",
+"nace": "87.90",
+"level": "class",
+"section": "Q",
+"label": "Other residential care activities"
+},
+{
+"code": "Q88",
+"nace": "88",
+"level": "division",
+"section": "Q",
+"label": "Social work activities without accommodation"
+},
+{
+"code": "Q881",
+"nace": "88.1",
+"level": "group",
+"section": "Q",
+"label": "Social work activities without accommodation for the elderly and disabled"
+},
+{
+"code": "Q8810",
+"nace": "88.10",
+"level": "class",
+"section": "Q",
+"label": "Social work activities without accommodation for the elderly and disabled"
+},
+{
+"code": "Q889",
+"nace": "88.9",
+"level": "group",
+"section": "Q",
+"label": "Other social work activities without accommodation"
+},
+{
+"code": "Q8891",
+"nace": "88.91",
+"level": "class",
+"section": "Q",
+"label": "Child day-care activities"
+},
+{
+"code": "Q8899",
+"nace": "88.99",
+"level": "class",
+"section": "Q",
+"label": "Other social work activities without accommodation n.e.c."
+},
+{
+"code": "R",
+"nace": "R",
+"level": "section",
+"section": "R",
+"label": "Arts, entertainment and recreation"
+},
+{
+"code": "R90",
+"nace": "90",
+"level": "division",
+"section": "R",
+"label": "Creative, arts and entertainment activities"
+},
+{
+"code": "R900",
+"nace": "90.0",
+"level": "group",
+"section": "R",
+"label": "Creative, arts and entertainment activities"
+},
+{
+"code": "R9001",
+"nace": "90.01",
+"level": "class",
+"section": "R",
+"label": "Performing arts"
+},
+{
+"code": "R9002",
+"nace": "90.02",
+"level": "class",
+"section": "R",
+"label": "Support activities to performing arts"
+},
+{
+"code": "R9003",
+"nace": "90.03",
+"level": "class",
+"section": "R",
+"label": "Artistic creation"
+},
+{
+"code": "R9004",
+"nace": "90.04",
+"level": "class",
+"section": "R",
+"label": "Operation of arts facilities"
+},
+{
+"code": "R91",
+"nace": "91",
+"level": "division",
+"section": "R",
+"label": "Libraries, archives, museums and other cultural activities"
+},
+{
+"code": "R910",
+"nace": "91.0",
+"level": "group",
+"section": "R",
+"label": "Libraries, archives, museums and other cultural activities"
+},
+{
+"code": "R9101",
+"nace": "91.01",
+"level": "class",
+"section": "R",
+"label": "Library and archives activities"
+},
+{
+"code": "R9102",
+"nace": "91.02",
+"level": "class",
+"section": "R",
+"label": "Museums activities"
+},
+{
+"code": "R9103",
+"nace": "91.03",
+"level": "class",
+"section": "R",
+"label": "Operation of historical sites and buildings and similar visitor attractions"
+},
+{
+"code": "R9104",
+"nace": "91.04",
+"level": "class",
+"section": "R",
+"label": "Botanical and zoological gardens and nature reserves activities"
+},
+{
+"code": "R92",
+"nace": "92",
+"level": "division",
+"section": "R",
+"label": "Gambling and betting activities"
+},
+{
+"code": "R920",
+"nace": "92.0",
+"level": "group",
+"section": "R",
+"label": "Gambling and betting activities"
+},
+{
+"code": "R9200",
+"nace": "92.00",
+"level": "class",
+"section": "R",
+"label": "Gambling and betting activities"
+},
+{
+"code": "R93",
+"nace": "93",
+"level": "division",
+"section": "R",
+"label": "Sports activities and amusement and recreation activities"
+},
+{
+"code": "R931",
+"nace": "93.1",
+"level": "group",
+"section": "R",
+"label": "Sports activities"
+},
+{
+"code": "R9311",
+"nace": "93.11",
+"level": "class",
+"section": "R",
+"label": "Operation of sports facilities"
+},
+{
+"code": "R9312",
+"nace": "93.12",
+"level": "class",
+"section": "R",
+"label": "Activities of sport clubs"
+},
+{
+"code": "R9313",
+"nace": "93.13",
+"level": "class",
+"section": "R",
+"label": "Fitness facilities"
+},
+{
+"code": "R9319",
+"nace": "93.19",
+"level": "class",
+"section": "R",
+"label": "Other sports activities"
+},
+{
+"code": "R932",
+"nace": "93.2",
+"level": "group",
+"section": "R",
+"label": "Amusement and recreation activities"
+},
+{
+"code": "R9321",
+"nace": "93.21",
+"level": "class",
+"section": "R",
+"label": "Activities of amusement parks and theme parks"
+},
+{
+"code": "R9329",
+"nace": "93.29",
+"level": "class",
+"section": "R",
+"label": "Other amusement and recreation activities"
+},
+{
+"code": "S",
+"nace": "S",
+"level": "section",
+"section": "S",
+"label": "Other service activities"
+},
+{
+"code": "S94",
+"nace": "94",
+"level": "division",
+"section": "S",
+"label": "Activities of membership organisations"
+},
+{
+"code": "S941",
+"nace": "94.1",
+"level": "group",
+"section": "S",
+"label": "Activities of business, employers and professional membership organisations"
+},
+{
+"code": "S9411",
+"nace": "94.11",
+"level": "class",
+"section": "S",
+"label": "Activities of business and employers membership organisations"
+},
+{
+"code": "S9412",
+"nace": "94.12",
+"level": "class",
+"section": "S",
+"label": "Activities of professional membership organisations"
+},
+{
+"code": "S942",
+"nace": "94.2",
+"level": "group",
+"section": "S",
+"label": "Activities of trade unions"
+},
+{
+"code": "S9420",
+"nace": "94.20",
+"level": "class",
+"section": "S",
+"label": "Activities of trade unions"
+},
+{
+"code": "S949",
+"nace": "94.9",
+"level": "group",
+"section": "S",
+"label": "Activities of other membership organisations"
+},
+{
+"code": "S9491",
+"nace": "94.91",
+"level": "class",
+"section": "S",
+"label": "Activities of religious organisations"
+},
+{
+"code": "S9492",
+"nace": "94.92",
+"level": "class",
+"section": "S",
+"label": "Activities of political organisations"
+},
+{
+"code": "S9499",
+"nace": "94.99",
+"level": "class",
+"section": "S",
+"label": "Activities of other membership organisations n.e.c."
+},
+{
+"code": "S95",
+"nace": "95",
+"level": "division",
+"section": "S",
+"label": "Repair of computers and personal and household goods"
+},
+{
+"code": "S951",
+"nace": "95.1",
+"level": "group",
+"section": "S",
+"label": "Repair of computers and communication equipment"
+},
+{
+"code": "S9511",
+"nace": "95.11",
+"level": "class",
+"section": "S",
+"label": "Repair of computers and peripheral equipment"
+},
+{
+"code": "S9512",
+"nace": "95.12",
+"level": "class",
+"section": "S",
+"label": "Repair of communication equipment"
+},
+{
+"code": "S952",
+"nace": "95.2",
+"level": "group",
+"section": "S",
+"label": "Repair of personal and household goods"
+},
+{
+"code": "S9521",
+"nace": "95.21",
+"level": "class",
+"section": "S",
+"label": "Repair of consumer electronics"
+},
+{
+"code": "S9522",
+"nace": "95.22",
+"level": "class",
+"section": "S",
+"label": "Repair of household appliances and home and garden equipment"
+},
+{
+"code": "S9523",
+"nace": "95.23",
+"level": "class",
+"section": "S",
+"label": "Repair of footwear and leather goods"
+},
+{
+"code": "S9524",
+"nace": "95.24",
+"level": "class",
+"section": "S",
+"label": "Repair of furniture and home furnishings"
+},
+{
+"code": "S9525",
+"nace": "95.25",
+"level": "class",
+"section": "S",
+"label": "Repair of watches, clocks and jewellery"
+},
+{
+"code": "S9529",
+"nace": "95.29",
+"level": "class",
+"section": "S",
+"label": "Repair of other personal and household goods"
+},
+{
+"code": "S96",
+"nace": "96",
+"level": "division",
+"section": "S",
+"label": "Other personal service activities"
+},
+{
+"code": "S960",
+"nace": "96.0",
+"level": "group",
+"section": "S",
+"label": "Other personal service activities"
+},
+{
+"code": "S9601",
+"nace": "96.01",
+"level": "class",
+"section": "S",
+"label": "Washing and (dry-)cleaning of textile and fur products"
+},
+{
+"code": "S9602",
+"nace": "96.02",
+"level": "class",
+"section": "S",
+"label": "Hairdressing and other beauty treatment"
+},
+{
+"code": "S9603",
+"nace": "96.03",
+"level": "class",
+"section": "S",
+"label": "Funeral and related activities"
+},
+{
+"code": "S9604",
+"nace": "96.04",
+"level": "class",
+"section": "S",
+"label": "Physical well-being activities"
+},
+{
+"code": "S9609",
+"nace": "96.09",
+"level": "class",
+"section": "S",
+"label": "Other personal service activities n.e.c."
+},
+{
+"code": "T",
+"nace": "T",
+"level": "section",
+"section": "T",
+"label": "Activities of households as employers; undifferentiated goods- and services-producing activities of households for own use"
+},
+{
+"code": "T97",
+"nace": "97",
+"level": "division",
+"section": "T",
+"label": "Activities of households as employers of domestic personnel"
+},
+{
+"code": "T970",
+"nace": "97.0",
+"level": "group",
+"section": "T",
+"label": "Activities of households as employers of domestic personnel"
+},
+{
+"code": "T9700",
+"nace": "97.00",
+"level": "class",
+"section": "T",
+"label": "Activities of households as employers of domestic personnel"
+},
+{
+"code": "T98",
+"nace": "98",
+"level": "division",
+"section": "T",
+"label": "Undifferentiated goods- and services-producing activities of private households for own use"
+},
+{
+"code": "T981",
+"nace": "98.1",
+"level": "group",
+"section": "T",
+"label": "Undifferentiated goods-producing activities of private households for own use"
+},
+{
+"code": "T9810",
+"nace": "98.10",
+"level": "class",
+"section": "T",
+"label": "Undifferentiated goods-producing activities of private households for own use"
+},
+{
+"code": "T982",
+"nace": "98.2",
+"level": "group",
+"section": "T",
+"label": "Undifferentiated service-producing activities of private households for own use"
+},
+{
+"code": "T9820",
+"nace": "98.20",
+"level": "class",
+"section": "T",
+"label": "Undifferentiated service-producing activities of private households for own use"
+},
+{
+"code": "U",
+"nace": "U",
+"level": "section",
+"section": "U",
+"label": "Activities of extraterritorial organisations and bodies",
+"supplement": "Not in the supplied PDF; added from NACE Rev. 2 section U"
+},
+{
+"code": "U99",
+"nace": "99",
+"level": "division",
+"section": "U",
+"label": "Activities of extraterritorial organisations and bodies",
+"supplement": "Not in the supplied PDF; added from NACE Rev. 2 section U"
+},
+{
+"code": "U990",
+"nace": "99.0",
+"level": "group",
+"section": "U",
+"label": "Activities of extraterritorial organisations and bodies",
+"supplement": "Not in the supplied PDF; added from NACE Rev. 2 section U"
+},
+{
+"code": "U9900",
+"nace": "99.00",
+"level": "class",
+"section": "U",
+"label": "Activities of extraterritorial organisations and bodies",
+"supplement": "Not in the supplied PDF; added from NACE Rev. 2 section U"
+}
+]
+}

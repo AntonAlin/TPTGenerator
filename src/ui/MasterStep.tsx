@@ -5,6 +5,7 @@ import type { ResolveResult, ResolvedHolding } from '../derive/resolve.ts';
 import type { Resolved, Scalar } from '../derive/provenance.ts';
 import { parseCic } from '../data/cic.ts';
 import { countries } from '../data/iso.ts';
+import { naceItems, naceLookup, naceClassification } from '../data/nace.ts';
 import { SOURCE_LABEL, SourceBadge, display } from './fields.tsx';
 import { downloadBlob } from './session.ts';
 
@@ -217,8 +218,11 @@ function parseInput(attr: AttrDef, raw: string): { value?: Scalar; error?: strin
       const c = parseCic(s);
       return c.valid ? { value: c.code } : { error: c.errors.join(' ') };
     }
-    case 'nace':
-      return isNaceFormat(s) ? { value: s.toUpperCase() } : { error: 'Section letter plus up to 4 digits, no dots (e.g. K6419).' };
+    case 'nace': {
+      const code = s.split(/\s/)[0].toUpperCase();
+      if (!isNaceFormat(code)) return { error: 'Section letter plus up to 4 digits, no dots (e.g. K6419).' };
+      return naceLookup(code) ? { value: code } : { error: `${code} is not in the ${naceClassification} list.` };
+    }
     default:
       return { value: s };
   }
@@ -260,7 +264,25 @@ function AttrEditor({ attr, r, all, current, master, onDone }: { attr: AttrDef; 
           ))}
         </select>
       ) : (
-        <input type={attr.kind === 'date' ? 'date' : 'text'} value={raw} onInput={(e) => setRaw((e.target as HTMLInputElement).value)} placeholder={attr.kind === 'cic' ? 'e.g. SE21' : attr.kind === 'nace' ? 'e.g. K6419' : ''} />
+        <>
+          <input
+            type={attr.kind === 'date' ? 'date' : 'text'}
+            value={raw}
+            list={attr.kind === 'nace' ? 'nace-list' : undefined}
+            onInput={(e) => setRaw((e.target as HTMLInputElement).value)}
+            placeholder={attr.kind === 'cic' ? 'e.g. SE21' : attr.kind === 'nace' ? 'Type a code or words, e.g. bank' : ''}
+          />
+          {attr.kind === 'nace' && (
+            <>
+              <datalist id="nace-list">
+                {naceItems.map((n) => (
+                  <option key={n.code} value={`${n.code} ${n.label}`} />
+                ))}
+              </datalist>
+              {naceLookup(raw.split(/\s/)[0] ?? '') && <span class="muted small">{naceLookup(raw.split(/\s/)[0])!.label}</span>}
+            </>
+          )}
+        </>
       )}
       {attr.key === 'cic' && r.cicAlternatives.length > 0 && (
         <div class="small">

@@ -6,6 +6,7 @@
 import { parseCic } from '../data/cic.ts';
 import { isCountry, isTptCurrency } from '../data/iso.ts';
 import { isNaceFormat } from '../master/attributes.ts';
+import { naceClassification, naceLookup } from '../data/nace.ts';
 import type { SpecField } from './types.ts';
 
 export function validateFieldValue(f: SpecField, value: unknown): string | undefined {
@@ -31,7 +32,8 @@ export function validateFieldValue(f: SpecField, value: unknown): string | undef
       return r.valid ? undefined : `${f.id}: ${r.errors.join(' ')}`;
     }
     case 'nace':
-      return isNaceFormat(s) ? undefined : `${f.id}: "${s}" is not in NACE format (section letter plus up to 4 digits, no dots).`;
+      if (!isNaceFormat(s)) return `${f.id}: "${s}" is not in NACE format (section letter plus up to 4 digits, no dots).`;
+      return naceLookup(s) ? undefined : `${f.id}: "${s}" is not a code in the bundled ${naceClassification} list.`;
     case 'code':
       if (f.codeList && !f.codeList.some((c) => c.code === s)) return `${f.id}: "${s}" is not one of ${f.codeList.map((c) => c.code).join(', ')}.`;
       return undefined;

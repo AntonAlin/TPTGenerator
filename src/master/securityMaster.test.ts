@@ -74,3 +74,21 @@ describe('SecurityMaster', () => {
     await expect(m.import({ foo: 1 })).rejects.toThrow(/Not a TPT Generator/);
   });
 });
+
+describe('NACE list', async () => {
+  const { naceItems, naceLookup } = await import('../data/nace.ts');
+  const { validateFieldValue } = await import('../spec/validate.ts');
+  const { field } = await import('../spec/index.ts');
+  it('has the full NACE Rev. 2 structure in TPT format', () => {
+    const count = (l: string) => naceItems.filter((i) => i.level === l).length;
+    expect([count('section'), count('division'), count('group'), count('class')]).toEqual([21, 88, 272, 615]);
+    expect(naceLookup('k6419')?.label).toBe('Other monetary intermediation');
+    expect(naceLookup('U9900')?.supplement).toMatch(/Not in the supplied PDF/);
+    expect(naceItems.every((i) => /^[A-U](\d{2}|\d{3}|\d{4})?$/.test(i.code))).toBe(true);
+  });
+  it('field 148 validation checks the list', () => {
+    expect(validateFieldValue(field('148'), 'K6419')).toBeUndefined();
+    expect(validateFieldValue(field('148'), 'K6499')).toBeUndefined();
+    expect(validateFieldValue(field('148'), 'K6488')).toMatch(/not a code/);
+  });
+});
