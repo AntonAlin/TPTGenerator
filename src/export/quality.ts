@@ -90,7 +90,7 @@ export interface QualityReport {
 }
 
 const PORTFOLIO_LEVEL = /Portfolio Characteristics/i;
-const empty = (): Record<Source, number> => ({ file: 0, master: 0, user: 0, derived: 0, missing: 0 });
+const empty = (): Record<Source, number> => ({ file: 0, user: 0, derived: 0, missing: 0 });
 
 /** Whether a field applies to a holding with this CIC, per the template's CIC applicability columns. */
 export function applies(f: SpecField, cic: unknown): boolean {

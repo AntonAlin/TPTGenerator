@@ -1,17 +1,15 @@
 /**
  * Field resolution: for every holding and attribute, take the value from
  *   1. the input file,
- *   2. the user's security master (a master value marked "override" beats the file),
- *   3. a derivation (with method and confidence),
- *   4. otherwise leave it blank,
+ *   2. a derivation (with method and confidence),
+ *   3. otherwise leave it blank,
  * and record the source of every value.
  */
 import { parseCic } from '../data/cic.ts';
 import { isCountry } from '../data/iso.ts';
 import { economicZone } from '../data/regions.ts';
 import { isValidIsin, isValidLei, looksLikeIsin } from '../ingest/identifiers.ts';
-import { ATTRS, ATTR, type AttrKey } from '../master/attributes.ts';
-import { instrumentKey, issuerKey, type MasterRecord, type SecurityMaster } from '../master/securityMaster.ts';
+import { ATTRS, type AttrKey } from './attributes.ts';
 import { ASSET_CLASSES, inferAssetClass, type AssetClass, type AssetClassResult } from './assetClass.ts';
 import { deriveCic, quotationZoneFromCic, underlyingCategoryFromCic } from './cicDerive.ts';
 import { bondAnalytics, type BondAnalytics, type DayCount, type Frequency } from './fixedIncome.ts';
@@ -20,7 +18,6 @@ import { ROLE_LABEL, type AmountRole } from './amounts.ts';
 import {
   derived,
   fromFile,
-  fromMaster,
   hasValue,
   minConfidence,
   missing,
@@ -36,7 +33,7 @@ export interface Conventions {
   /** Whether market values in the file include accrued interest. */
   mvConvention: MvConvention;
   dayCount: DayCount;
-  /** Coupon frequency assumed for analytics when the master has none, by currency ("*" = default). */
+  /** Coupon frequency assumed for analytics when the file does not give it, by currency ("*" = default). */
   frequencyByCurrency: Record<string, Frequency>;
   /** Estimate issuer country from the ISIN prefix when nothing better is available (flagged as estimated). */
   issuerCountryFromIsin: boolean;
@@ -53,13 +50,10 @@ export interface ResolveContext extends Conventions {
   fx: Record<string, FxEntry>;
   /** Net asset value in portfolio currency entered by the user. */
   nav?: number;
-  master?: SecurityMaster;
 }
 
 export interface ResolvedHolding {
   holding: Holding;
-  instrumentKey?: string;
-  issuerKey?: string;
   assetClass: AssetClassResult;
   effectiveClass: AssetClass;
   cicAlternatives: string[];
@@ -85,10 +79,6 @@ export function cicToAssetClass(cic: string): AssetClass | undefined {
   const sub = cic[3];
   const entries = Object.entries(ASSET_CLASSES) as [AssetClass, (typeof ASSET_CLASSES)[AssetClass]][];
   return (entries.find(([, i]) => i.cic[0] === cat && i.cic[1] === sub) ?? entries.find(([, i]) => i.cic[0] === cat))?.[0];
-}
-
-function masterValue(rec: MasterRecord | undefined, attr: AttrKey) {
-  return rec?.attrs[attr];
 }
 
 const round = (x: number, d = 10) => Math.round(x * 10 ** d) / 10 ** d;
@@ -173,15 +163,9 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
   const isinShaped = !!f.isin && looksLikeIsin(f.isin);
   const isin = isinShaped && isValidIsin(f.isin) ? f.isin : undefined;
   if (isinShaped && !isin) issues.push(`"${f.isin}" is not a valid ISIN (check digit fails).`);
-  const iKey = instrumentKey({ isin, otherId: f.other_identifier ?? (isin ? undefined : f.isin), name: f.security_name });
-  const inst = ctx.master?.get('instrument', iKey);
-
-  /** file → master → derived, with master "override" beating the file. */
-  const pick = (attr: AttrKey, fileVal: Resolved | undefined, derivedVal?: Resolved, rec?: MasterRecord): Resolved => {
-    const m = masterValue(rec ?? (ATTR[attr].master === 'issuer' ? undefined : inst), attr);
-    if (m?.override) return fromMaster(m.value, 'Security master (overrides the file)');
+  /** file → derived → blank. */
+  const pick = (fileVal: Resolved | undefined, derivedVal?: Resolved): Resolved => {
     if (hasValue(fileVal)) return fileVal;
-    if (m) return fromMaster(m.value);
     if (hasValue(derivedVal)) return derivedVal;
     return derivedVal ?? missing();
   };
@@ -201,18 +185,16 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
   };
 
   // --- Identification -------------------------------------------------------
-  attrs.identifier = pick('identifier', f.isin ? fromFile(f.isin) : f.other_identifier ? fromFile(f.other_identifier) : undefined, missing('No identifier in the file: set one in the security master (e.g. an internal code, type 99).'));
+  attrs.identifier = pick(f.isin ? fromFile(f.isin) : f.other_identifier ? fromFile(f.other_identifier) : undefined, missing('No identifier in the file.'));
   attrs.id_type = pick(
-    'id_type',
     undefined,
     isin && attrs.identifier.value === f.isin
       ? derived('1', 'Valid ISIN → type 1 (ISO 6166)', 'high')
-      : missing(f.other_identifier || (f.isin && !isinShaped) ? 'Identifier is not an ISIN: choose the identification type in the security master.' : undefined),
+      : missing(f.other_identifier || (f.isin && !isinShaped) ? 'Identifier is not an ISIN: its identification type is unknown.' : undefined),
   );
   attrs.name = f.security_name ? fromFile(f.security_name) : missing();
 
   // --- Asset class & CIC ----------------------------------------------------
-  const masterCic = masterValue(inst, 'cic');
   const fileCic = f.cic && parseCic(f.cic).valid ? f.cic : undefined;
   if (f.cic && !fileCic) issues.push(`CIC "${f.cic}" in the file is not valid: ${parseCic(f.cic).errors.join(' ')}`);
   const ac = inferAssetClass({
@@ -227,9 +209,9 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
     valuationDate: ctx.valuationDate,
   });
   const derivedCic = deriveCic({ assetClass: ac.assetClass, assetClassConfidence: ac.confidence, isEtf: ac.isEtf, isin: f.isin, fileCountry: f.country, derivativeSub: ac.derivativeSub });
-  attrs.cic = pick('cic', file(fileCic), derivedCic.cic);
+  attrs.cic = pick(file(fileCic), derivedCic.cic);
   const finalCic = typeof attrs.cic.value === 'string' ? attrs.cic.value : undefined;
-  const effectiveClass = (finalCic && (fileCic || masterCic) ? cicToAssetClass(finalCic) : undefined) ?? ac.assetClass;
+  const effectiveClass = (finalCic && fileCic ? cicToAssetClass(finalCic) : undefined) ?? ac.assetClass;
   const info = ASSET_CLASSES[effectiveClass];
   attrs.asset_class = derived(info.label, ac.evidence.join('; '), effectiveClass === ac.assetClass ? ac.confidence : 'high');
   attrs.quotation_zone = quotationZoneFromCic(finalCic) ?? missing('No CIC.');
@@ -250,12 +232,10 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
   // --- Interest rate characteristics ----------------------------------------
   const pn = ac.parsedName;
   attrs.coupon = pick(
-    'coupon',
     file(f.coupon),
     isFI && pn.coupon && !floating ? derived(pn.coupon.value, `Parsed from name ("${pn.coupon.text}")`, pn.coupon.confidence) : floating && isFI ? missing('Floating-rate note: current coupon (last fixing + margin) is not in the file.') : undefined,
   );
   attrs.maturity = pick(
-    'maturity',
     file(f.maturity_date),
     pn.maturity && (isFI || effectiveClass === 'future' || effectiveClass === 'forward')
       ? derived(pn.maturity.value, `Parsed from name ("${pn.maturity.text}")`, pn.maturity.confidence, pn.maturity.note)
@@ -270,7 +250,6 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
     issues.push(`Coupon in the file (${f.coupon}) differs from the name (${pn.coupon.value}).`);
   }
   attrs.interest_rate_type = pick(
-    'interest_rate_type',
     undefined,
     !isFI
       ? undefined
@@ -282,17 +261,16 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
             ? derived('Fixed', 'Has a coupon and no floating/inflation keyword', attrs.coupon.confidence === 'high' ? 'medium' : 'low')
             : undefined,
   );
-  attrs.coupon_frequency = pick('coupon_frequency', undefined);
+  attrs.coupon_frequency = pick(undefined);
   for (const k of ['redemption_type', 'redemption_rate', 'callable', 'call_date', 'securitisation', 'guarantee', 'cqs', 'rating_agency'] as AttrKey[]) {
-    attrs[k] = pick(k, undefined);
+    attrs[k] = pick(undefined);
   }
-  attrs.covered = pick('covered', undefined, ['covered_bond', 'gov_covered_bond'].includes(effectiveClass) ? derived('C', 'Classified as a covered bond', 'medium') : undefined);
+  attrs.covered = pick(undefined, ['covered_bond', 'gov_covered_bond'].includes(effectiveClass) ? derived('C', 'Classified as a covered bond', 'medium') : undefined);
   attrs.subordinated = pick(
-    'subordinated',
     undefined,
     ['subordinated_bond', 'hybrid_bond'].includes(effectiveClass) ? derived('Y', 'Subordinated/hybrid keyword in the name', 'medium') : undefined,
   );
-  attrs.credit_rating = pick('credit_rating', file(f.rating));
+  attrs.credit_rating = pick(file(f.rating));
 
   // --- Valuation --------------------------------------------------------------
   const fxEntry = ccy ? (ccy === ctx.portfolioCurrency ? { rate: 1, source: 'identity' as const } : ctx.fx[ccy]) : undefined;
@@ -315,15 +293,15 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
   // Bond analytics (accrued, yield, duration) — fixed coupon bonds only.
   const coupon = typeof attrs.coupon.value === 'number' ? attrs.coupon.value : undefined;
   const maturity = typeof attrs.maturity.value === 'string' ? attrs.maturity.value : undefined;
-  const freqMaster = attrs.coupon_frequency.value !== undefined ? Number(attrs.coupon_frequency.value) : undefined;
-  const frequency = ([1, 2, 4, 12].includes(freqMaster ?? 0) ? freqMaster : ctx.frequencyByCurrency[ccy ?? ''] ?? ctx.frequencyByCurrency['*'] ?? 1) as Frequency;
+  const freqKnown = attrs.coupon_frequency.value !== undefined ? Number(attrs.coupon_frequency.value) : undefined;
+  const frequency = ([1, 2, 4, 12].includes(freqKnown ?? 0) ? freqKnown : ctx.frequencyByCurrency[ccy ?? ''] ?? ctx.frequencyByCurrency['*'] ?? 1) as Frequency;
   let analytics: BondAnalytics | undefined;
   const fixedRate = attrs.interest_rate_type.value === 'Fixed' || (attrs.interest_rate_type.value === undefined && coupon !== undefined && !floating);
   if (info.isFixedIncome && fixedRate && coupon !== undefined && maturity && ctx.valuationDate) {
     analytics = bondAnalytics({ coupon, maturity, settlement: ctx.valuationDate, cleanPrice: f.price, frequency, dayCount: ctx.dayCount });
   }
-  const inputConf = minConfidence(attrs.coupon.confidence, attrs.maturity.confidence, freqMaster ? 'high' : 'medium');
-  const freqNote = freqMaster ? '' : ` Coupon frequency ${frequency}/year is an assumption (set it in the security master).`;
+  const inputConf = minConfidence(attrs.coupon.confidence, attrs.maturity.confidence, freqKnown ? 'high' : 'medium');
+  const freqNote = freqKnown ? '' : ` Coupon frequency ${frequency}/year is an assumption (change it in step 3).`;
 
   let accrued: Resolved<number>;
   if (f.accrued_interest !== undefined) accrued = fromFile(f.accrued_interest, 'Input file (assumed quotation currency)');
@@ -406,15 +384,13 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
   }
 
   // --- Issuer ------------------------------------------------------------------
-  attrs.issuer_name = pick('issuer_name', file(f.issuer_name));
+  attrs.issuer_name = pick(file(f.issuer_name));
   const lei = f.issuer_lei && isValidLei(f.issuer_lei) ? f.issuer_lei : undefined;
   if (f.issuer_lei && !lei) issues.push(`Issuer LEI "${f.issuer_lei}" fails the ISO 17442 check.`);
-  const eKey = issuerKey({ lei, name: typeof attrs.issuer_name.value === 'string' ? attrs.issuer_name.value : undefined });
-  const iss = ctx.master?.get('issuer', eKey);
-  attrs.issuer_id = pick('issuer_id', lei ? fromFile(lei, 'Issuer LEI from the file') : undefined, undefined, iss);
+  attrs.issuer_id = pick(lei ? fromFile(lei, 'Issuer LEI from the file') : undefined);
   const idVal = typeof attrs.issuer_id.value === 'string' ? attrs.issuer_id.value : undefined;
-  attrs.issuer_id_type = pick('issuer_id_type', undefined, idVal && isValidLei(idVal) ? derived('1', 'Issuer id is a valid LEI → type 1', 'high') : undefined, iss);
-  for (const k of ['group_name', 'group_id', 'group_id_type', 'nace'] as AttrKey[]) attrs[k] = pick(k, undefined, undefined, iss);
+  attrs.issuer_id_type = pick(undefined, idVal && isValidLei(idVal) ? derived('1', 'Issuer id is a valid LEI → type 1', 'high') : undefined);
+  for (const k of ['group_name', 'group_id', 'group_id_type', 'nace'] as AttrKey[]) attrs[k] = missing();
 
   const isinCountry = f.isin?.slice(0, 2);
   let countryDerived: Resolved | undefined;
@@ -425,15 +401,13 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
     countryDerived = derived(isinCountry, `ISIN prefix ${isinCountry}`, 'low', 'Estimated: the ISIN prefix is not always the issuer country (e.g. depositary receipts, foreign-registered issues).');
   }
   attrs.issuer_country = pick(
-    'issuer_country',
     f.country && isCountry(f.country) ? fromFile(f.country, 'Country column in the file (assumed to be the issuer country)') : undefined,
-    countryDerived ?? missing(effectiveClass === 'cash' ? 'Cash: issuer is the depositary bank — enter its country.' : undefined),
-    iss,
+    countryDerived ?? missing(effectiveClass === 'cash' ? 'Cash: the issuer is the depositary bank, whose country is not in the file.' : undefined),
   );
   const zone = economicZone(typeof attrs.issuer_country.value === 'string' ? attrs.issuer_country.value : undefined);
   attrs.issuer_area = zone ? derived(zone, `Issuer country ${attrs.issuer_country.value} → economic area ${zone}`, minConfidence(attrs.issuer_country.confidence, 'high')) : missing();
 
-  return { holding: h, instrumentKey: iKey, issuerKey: eKey, assetClass: ac, effectiveClass, cicAlternatives: derivedCic.alternatives, attrs, analytics, issues };
+  return { holding: h, assetClass: ac, effectiveClass, cicAlternatives: derivedCic.alternatives, attrs, analytics, issues };
 }
 
 /** Confidence label helper for UIs. */

@@ -7,8 +7,8 @@ custodians, works at fund or share-class level, and does not do look-through.
 There is no market data, reference data vendor or API behind it. Every TPT cell is one of the following, and
 the app always shows which:
 
-- **taken from the input file**,
-- **taken from your own security master** (data you entered earlier),
+- **taken from the input file** (amount cells are sorted into the right field first, see below),
+- **entered by you** in the fund form,
 - **derived** from data in the file, with the method and a confidence level, or
 - **left blank and flagged**.
 
@@ -21,7 +21,7 @@ Live app: <https://tptgenerator.alin.one> (GitHub Pages).
   `connect-src 'none'`: the browser refuses any request from the app, so portfolio data cannot be sent
   anywhere even by mistake. The browser end-to-end test checks this.
 - **Uploaded files stay in memory** and are gone when you close the tab.
-- **What you choose to save** (source profiles, fund profiles, the security master) is stored in your
+- **What you choose to save** (source profiles and fund profiles) is stored in your
   browser's IndexedDB on your computer only. Clearing site data deletes it, so export it regularly. Each
   store has JSON export and import, which is also how you move it to another computer or share it with
   colleagues.
@@ -33,8 +33,7 @@ Live app: <https://tptgenerator.alin.one> (GitHub Pages).
 | 1. Upload | Reads xlsx/xls/csv. Finds the header row (also two-row merged headers) and skips titles, blank rows, section headings, totals/subtotals, repeated headers and notes. Shows every skipped row with the reason. |
 | 2. Map columns | Classifies each column (ISIN, name, quantity, market value, weight, …) from its header and its values. Shows a confidence and the evidence, and highlights low-confidence mappings. A confirmed mapping can be saved as a *source profile* and is reused for files from the same source. |
 | 3. Fund / share class | Fund-level TPT fields (form generated from the template), share classes, valuation date, portfolio currency, FX rates, conventions. Reusable *fund profiles*. |
-| 4. Security master | Every holding with every value and where it came from. You fill in or correct instrument and issuer data (LEI, NACE, CIC, rating, …). Saved for future files. |
-| 5. Export | TPT as xlsx (optional *Source* sheet showing the origin of every cell) or csv, plus a completeness and data quality report. |
+| 4. Export | TPT as xlsx (optional *Source* sheet showing the origin of every cell) or csv, plus a completeness and data quality report. |
 
 ## Quick start
 
@@ -84,7 +83,6 @@ src/spec/             Spec parser, generated tpt_spec.json, field validation
 src/ingest/           File reading, table detection, number/date parsing, ISIN/LEI/CUSIP/SEDOL validation
 src/detect/           Canonical fields, synonym dictionary, features, model.json, classifier
 src/derive/           Name parsing, asset class, CIC, fixed income, valuation/FX, field resolution
-src/master/           Security master (attributes, IndexedDB-backed store)
 src/portfolio/        Fund/share-class data and fund profiles
 src/profiles/         Source profiles and the key-value store (IndexedDB / memory)
 src/export/           TPT builder, quality report, xlsx/csv writers
@@ -227,12 +225,10 @@ decimal style of the rest of the file.
 
 ## Derivations
 
-Every value carries its source (file, master, user, derived, missing). Derived values also carry the method
+Every value carries its source (file, user, derived, missing). Derived values also carry the method
 and a confidence (high / medium / low). Per attribute (`src/derive/resolve.ts`):
 
-**input file → your security master → derivation → blank**
-
-A master value marked "override file" also beats the file.
+**input file → derivation → blank**
 
 | Module | What it does |
 | --- | --- |
@@ -247,23 +243,19 @@ Assumptions you can change in step 3:
 
 - whether file market values include accrued interest (auto-detected per bond);
 - the day count;
-- the coupon frequency per currency (used only inside calculations; field 38 is filled only from your master);
+- the coupon frequency per currency (used only inside calculations; field 38 is filled only from the file);
 - whether to estimate the issuer country from the ISIN prefix.
 
 **Never derived:** credit quality step, NACE, issuer group, securitisation type, state guarantee, redemption
-type, call dates, rating agency. These are left blank unless you enter them.
+type, call dates, rating agency. These come only from the file; otherwise they are left blank and listed in the report.
 
-## Security master, source profiles and fund profiles
+## Source profiles and fund profiles
 
-- **Security master** (`src/master/`):
-  - instrument records keyed by ISIN (else identifier, else name);
-  - issuer records keyed by LEI (else issuer name), so an issuer's LEI, group, country and NACE are entered
-    once and apply to all its holdings;
-  - "apply to all holdings of this issuer" for instrument-level values;
-  - option lists come from the spec, and NACE is a searchable picklist.
 - **Source profiles** remember column mappings per source.
 - **Fund profiles** remember identification, management company and conventions. NAV, dates and FX rates
   change every period, so they are not saved.
+
+Both are stored in the browser (IndexedDB) and can be exported and imported as JSON.
 
 ## Export and quality report
 
@@ -274,7 +266,7 @@ type, call dates, rating agency. These are left blank unless you enter them.
 
 Formats and fixed rules:
 
-- **xlsx:** sheet `TPT`, plus an optional `Source` sheet with each cell's origin (`file`, `master`, `user`,
+- **xlsx:** sheet `TPT`, plus an optional `Source` sheet with each cell's origin (`file`, `user`,
   `derived (confidence) #n`) and a `Source notes` sheet with the full method for every `#n`.
 - **csv:** comma or semicolon, decimal point, no thousands separators, ISO dates, UTF-8 with BOM.
 - **Share classes:** holdings are shared across classes. Amounts in portfolio currency (24, 25, 28) are
@@ -284,10 +276,10 @@ Formats and fixed rules:
   the field definitions. FX forwards, FRAs and CDS use the notional.
 - **SCR contribution fields (97–105b)** are always blank, and field 11 is `N`.
 
-The quality report (`src/export/quality.ts`) is shown in step 5 and downloadable as xlsx. It contains:
+The quality report (`src/export/quality.ts`) is shown in step 4 and downloadable as xlsx. It contains:
 
 - **Completeness per field:** % filled over the rows where the field applies (per the template's CIC
-  columns), split by source (file / master / user / derived / missing).
+  columns), split by source (file / user / derived / missing).
 - **Missing mandatory fields**, per holding. Portfolio fields are listed once.
 - **Estimated values:** every derived value with its method and confidence.
 - **Validation:**
@@ -312,14 +304,14 @@ The quality report (`src/export/quality.ts`) is shown in step 5 and downloadable
   - spec parsing, CSV/xlsx reading, number and date parsing;
   - ISIN/LEI/CUSIP/SEDOL checks, table detection, header matching and the classifier;
   - name parsing, asset class and CIC, fixed-income maths (against reference values), valuation, resolution;
-  - security master, profiles, portfolio fields, field validation, export and the quality report.
+  - mixed amount interpretation, profiles, portfolio fields, field validation, export and the quality report.
 - **Pipeline end-to-end tests** (`tests/e2e.test.ts`, `tests/samples.test.ts`) run every file in `/samples`
   through the whole pipeline. They read the written TPT back and check:
   - the spec headers;
   - that every value passes validation;
   - weights summing to 100%;
   - the Source sheet;
-  - sample-specific results such as share-class conversion, master values and derivative exposure.
+  - sample-specific results such as share-class conversion, mixed amounts and derivative exposure.
 - **Browser end-to-end test** (`npm run e2e`, `scripts/e2e-browser.ts`) drives the production build in
   Chromium. It checks:
   - the workflow end to end;
@@ -351,7 +343,7 @@ The app produces a TPT from what is in the file and what you enter. It is not a 
 data or for your own review. In particular:
 
 - **No market or reference data.** Issuer and group LEIs, management company data, NACE codes, credit
-  quality steps, ratings and similar fields come only from the file or from your security master. Expect
+  quality steps, ratings and similar fields come only from the file. Expect
   them to be missing on first use; the quality report lists them.
 - **Estimated values are estimates.** They are always flagged and listed with their method in the report,
   and you should review them:
@@ -362,7 +354,7 @@ data or for your own review. In particular:
   - clean/dirty detection;
   - NAV as the sum of holdings when none is entered.
 - **Bond analytics are simplified.** Yield and duration assume bullet redemption at 100, the chosen day count,
-  and the coupon frequency from your master or a per-currency assumption. They are not computed for
+  and a per-currency coupon frequency assumption. They are not computed for
   floating-rate notes, perpetuals, callable, sinking, inflation-linked or PIK bonds.
 - **Not computed:**
   - look-through;
@@ -377,7 +369,7 @@ data or for your own review. In particular:
   - NACE is Rev. 2. TPT V8 asks for the latest NACE version in force, which may be Rev. 2.1.
   - The CIC table was supplied and is not verified against the Official Journal.
   - EEA/OECD membership is as of November 2026.
-- **Local storage only.** The security master and profiles live in one browser. There is no sync, and
+- **Local storage only.** Source and fund profiles live in one browser. There is no sync, and
   clearing browser data deletes them, so export regularly.
 - **Size.** Processing runs on the page's main thread. 5,000 holdings take about 1 s to process and 2 s to
   export.

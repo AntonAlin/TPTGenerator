@@ -2,9 +2,10 @@
  * Browser end-to-end test of the production build (run: `npm run e2e`).
  *
  * Drives the real app in headless Chromium through the whole workflow and checks:
- *  - upload → skipped rows → column mapping → source profile → fund form → security master → export,
+ *  - upload → skipped rows → column mapping → source profile → fund form → export,
+ *  - mixed amount columns re-read cell by cell (Amounts tab),
  *  - downloaded TPT / quality report files are valid and have the spec layout,
- *  - IndexedDB persistence (profile and security master survive a page reload),
+ *  - IndexedDB persistence (the source profile survives a page reload),
  *  - no page or console errors, no request to any other origin,
  *  - the Content-Security-Policy blocks network requests from the page.
  */
@@ -93,18 +94,8 @@ try {
     await page.fill('label:has-text("5 · Net asset valuation") input', '50241000');
   });
 
-  await step('security master: give the cash line an identifier', async () => {
-    await page.click('text=Continue to security master');
-    await page.click('text=All holdings');
-    await page.click('td:has-text("Likvida medel SEK")');
-    await page.click('.detail-table tr:has-text("Identifier") button:has-text("Edit")');
-    await page.fill('.editor input', 'CASH-SEK-01');
-    await page.click('text=Save to master');
-    await page.waitForSelector('.detail-table tr:has-text("CASH-SEK-01")');
-  });
-
   await step('export: TPT xlsx, csv and quality report', async () => {
-    await page.click('text=5. Export & quality report');
+    await page.click('text=Continue to export');
     await page.waitForSelector('text=Mandatory cells filled');
     assert.ok(await page.isVisible('text=0 errors'));
     const x = await download(page, 'Download TPT (.xlsx)');
@@ -114,7 +105,10 @@ try {
     const rows = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets.TPT, { header: 1, defval: null });
     assert.deepEqual(rows[0], headers);
     assert.equal(rows.length, 8);
-    assert.ok(rows.some((r) => r[colOf('14')] === 'CASH-SEK-01'));
+    // "Antal" holds the nominal for bonds: read as nominal (field 19), not quantity (field 18).
+    const sgb = rows.find((r) => r[colOf('17')] === 'SWEDEN 0.75% 12/11/2029')!;
+    assert.equal(sgb[colOf('19')], 10_000_000);
+    assert.equal(sgb[colOf('18')], null);
     assert.equal(rows[1][colOf('1000')], spec.meta.versionFieldValue);
     const csv = await download(page, 'Download TPT (.csv)');
     assert.equal(csv.bytes.toString('utf8').replace(/^﻿/, '').split('\r\n')[0], headers.join(','));
@@ -122,23 +116,29 @@ try {
     assert.deepEqual(XLSX.read(q.bytes).SheetNames, ['Summary', 'Field completeness', 'Missing mandatory', 'Estimated values', 'Validation', 'Not derivable', 'Amount interpretation']);
   });
 
-  await step('after a reload: source profile and security master are remembered (IndexedDB)', async () => {
+  await step('after a reload: the source profile is remembered (IndexedDB)', async () => {
     await page.reload();
     await upload(page, 'se_custodian_holdings.xlsx');
     await page.click('text=Continue to column mapping');
     await page.waitForSelector('text=Mapping loaded from source profile');
+  });
+
+  await step('mixed amounts: forward notional shown as market value is re-read (Amounts tab)', async () => {
+    await upload(page, 'en_custodian_mixed_amounts.xlsx');
+    await page.click('text=Continue to column mapping');
     await page.click('text=Confirm mapping');
-    await page.click('text=Use SEK');
-    await page.click('text=4. Security master');
-    await page.click('text=All holdings');
-    await page.waitForSelector('td:has-text("CASH-SEK-01")');
+    await page.click('text=Use EUR');
+    await page.click('text=4. Export & quality report');
+    await page.click('button[role=tab]:has-text("Amounts")');
+    await page.waitForSelector('text=matches after re-reading 1 cell');
+    await page.waitForSelector('td:has-text("FX FWD EUR/USD 15-DEC-2026")');
   });
 
   await step('legacy .xls multi-asset file with derivatives exports without errors', async () => {
     await upload(page, 'en_multi_asset.xls');
     await page.click('text=Continue to column mapping');
     await page.click('text=Confirm mapping');
-    await page.click('text=5. Export & quality report');
+    await page.click('text=4. Export & quality report');
     await page.waitForSelector('text=Mandatory cells filled');
     assert.ok(await page.isVisible('text=0 errors'));
   });

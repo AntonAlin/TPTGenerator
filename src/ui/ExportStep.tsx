@@ -20,7 +20,7 @@ interface Props {
 
 type Tab = 'validation' | 'amounts' | 'missing' | 'estimated' | 'fields' | 'notDerived';
 const XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-const SOURCES: Source[] = ['file', 'master', 'user', 'derived', 'missing'];
+const SOURCES: Source[] = ['file', 'user', 'derived', 'missing'];
 const pct = (a: number, b: number) => (b ? `${((a / b) * 100).toFixed(1)}%` : '–');
 
 export function ExportStep({ result, portfolio, fx, fxMissing, amountNotes }: Props) {
@@ -212,7 +212,7 @@ export function ExportStep({ result, portfolio, fx, fxMissing, amountNotes }: Pr
           )}
           {tab === 'fields' && (
             <Table
-              head={['Field', 'Req.', 'Applies to', 'Filled', 'File', 'Master', 'User', 'Derived', 'Missing']}
+              head={['Field', 'Req.', 'Applies to', 'Filled', 'File', 'User', 'Derived', 'Missing']}
               rows={report.fields
                 .filter((f) => !f.mustBeEmpty)
                 .map((f) => [
@@ -226,7 +226,6 @@ export function ExportStep({ result, portfolio, fx, fxMissing, amountNotes }: Pr
                     {f.applicable ? `${Math.round(f.pctFilled * 100)}%` : '–'}
                   </span>,
                   f.counts.file || '',
-                  f.counts.master || '',
                   f.counts.user || '',
                   f.counts.derived || '',
                   f.counts.missing || '',

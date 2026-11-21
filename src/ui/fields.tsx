@@ -10,7 +10,6 @@ const REQ_SHORT: Record<string, string> = { mandatory: 'M', conditional: 'C', op
 
 export const SOURCE_LABEL: Record<Source, string> = {
   file: 'From file',
-  master: 'From your security master',
   user: 'Entered by you',
   derived: 'Derived',
   missing: 'Missing',

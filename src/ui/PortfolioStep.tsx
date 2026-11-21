@@ -105,7 +105,7 @@ export function PortfolioStep({ portfolio: p, setPortfolio, fx, implied, derivat
             </select>
           </label>
           <div class="field">
-            <span class="field-label">Assumed coupon frequency (when not in the security master)</span>
+            <span class="field-label">Assumed coupon frequency (for accrued interest, yield and duration)</span>
             <div class="freq-list">
               {Object.entries(p.conventions.frequencyByCurrency).map(([c, f]) => (
                 <label key={c} class="small">
@@ -243,7 +243,7 @@ export function PortfolioStep({ portfolio: p, setPortfolio, fx, implied, derivat
 
       <div>
         <button type="button" class="primary" onClick={onContinue}>
-          Continue to security master →
+          Continue to export →
         </button>
       </div>
     </section>

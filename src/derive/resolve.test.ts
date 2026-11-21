@@ -7,8 +7,6 @@ import { classifyColumns } from '../detect/classify.ts';
 import { normalizeHoldings, type Holding } from './holdings.ts';
 import { buildFxTable, guessPortfolioCurrency, impliedFxRates, detectCleanDirty } from './valuation.ts';
 import { DEFAULT_CONVENTIONS, resolveHoldings, cicToAssetClass } from './resolve.ts';
-import { SecurityMaster } from '../master/securityMaster.ts';
-import { MemoryStore } from '../profiles/store.ts';
 
 function load(file: string) {
   const wb = readWorkbook(new Uint8Array(readFileSync(resolvePath(import.meta.dirname, '../../samples', file))), file);
@@ -106,24 +104,6 @@ describe('resolveHoldings', () => {
     expect(portfolio.nav.source).toBe('derived');
     expect(portfolio.cashRatio.value).toBeCloseTo(0.0599, 6);
     expect(portfolio.modifiedDuration.value).toBeGreaterThan(0);
-  });
-
-  it('applies the security master: fills gaps, file still wins unless override', async () => {
-    const master = await SecurityMaster.open(new MemoryStore());
-    await master.set('cic', 'isin:SE0000108656', 'Ericsson B', 'SE31');
-    await master.set('credit_rating', 'isin:SE0000108656', 'Ericsson B', 'BBB');
-    await master.set('issuer_name', 'isin:SE0000108656', 'Ericsson B', 'Telefonaktiebolaget LM Ericsson');
-    await master.set('nace', 'name:TELEFONAKTIEBOLAGET LM ERICSSON', 'LM Ericsson', 'C2630');
-    await master.set('issuer_country', 'name:TELEFONAKTIEBOLAGET LM ERICSSON', 'LM Ericsson', 'SE');
-    const h = mk({ isin: 'SE0000108656', security_name: 'Ericsson B', currency: 'SEK', market_value_local: 100, rating: 'BB+' });
-    const { rows } = resolveHoldings([h], { ...ctxBase, fx: {}, master });
-    const r = rows[0].attrs;
-    expect(r.cic).toMatchObject({ value: 'SE31', source: 'master' });
-    expect(r.credit_rating).toMatchObject({ value: 'BB+', source: 'file' });
-    expect(r.nace).toMatchObject({ value: 'C2630', source: 'master' });
-    expect(r.issuer_country).toMatchObject({ value: 'SE', source: 'master' });
-    await master.set('credit_rating', 'isin:SE0000108656', 'Ericsson B', 'BBB', true);
-    expect(resolveHoldings([h], { ...ctxBase, fx: {}, master }).rows[0].attrs.credit_rating).toMatchObject({ value: 'BBB', source: 'master' });
   });
 
   it('derives values from FX and quantity × price, and weights from an entered NAV', () => {

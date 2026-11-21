@@ -5,7 +5,7 @@
  */
 import { parseCic } from '../data/cic.ts';
 import { isCountry, isTptCurrency } from '../data/iso.ts';
-import { isNaceFormat } from '../master/attributes.ts';
+import { isNaceFormat } from '../derive/attributes.ts';
 import { naceClassification, naceLookup } from '../data/nace.ts';
 import type { SpecField } from './types.ts';
 

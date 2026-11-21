@@ -18,7 +18,6 @@ import { baseCurrencyOf, emptyPortfolio, fundNav, type PortfolioState } from '..
 import { buildTptFiles } from '../src/export/buildTpt.ts';
 import { buildQualityReport } from '../src/export/quality.ts';
 import { writeQualityXlsx, writeTptCsv, writeTptXlsx } from '../src/export/write.ts';
-import type { SecurityMaster } from '../src/master/securityMaster.ts';
 import { spec } from '../src/spec/index.ts';
 import { dateFromMetadata } from '../src/ui/session.ts';
 
@@ -29,7 +28,6 @@ export interface PipelineOptions {
   portfolio?: (p: PortfolioState) => void;
   /** Column mapping overrides by header. */
   mapping?: Record<string, CanonicalField>;
-  master?: SecurityMaster;
   fxUser?: Record<string, number>;
 }
 
@@ -65,7 +63,6 @@ export function runPipeline(file: string, opts: PipelineOptions = {}) {
     portfolioCurrency: base,
     fx: fx.table,
     nav,
-    master: opts.master,
   });
   const files = buildTptFiles(result, portfolio, fx.table, { today: '2026-10-05', freeText: 'e2e' });
   const reports = files.map(buildQualityReport);

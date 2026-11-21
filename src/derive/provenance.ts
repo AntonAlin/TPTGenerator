@@ -1,10 +1,9 @@
 /**
  * Every value in the app carries where it came from. The TPT export and the
  * quality report rely on this to show, per cell, whether a value was taken
- * from the input file, the user's security master, entered by the user,
- * derived (with method and confidence), or left blank.
+ * from the input file, entered by the user, derived (with method and confidence), or left blank.
  */
-export type Source = 'file' | 'master' | 'user' | 'derived' | 'missing';
+export type Source = 'file' | 'user' | 'derived' | 'missing';
 export type Confidence = 'high' | 'medium' | 'low';
 
 export type Scalar = string | number;
@@ -20,7 +19,6 @@ export interface Resolved<T extends Scalar = Scalar> {
 }
 
 export const fromFile = <T extends Scalar>(value: T, method = 'Input file'): Resolved<T> => ({ value, source: 'file', method, confidence: 'high' });
-export const fromMaster = <T extends Scalar>(value: T, method = 'Security master'): Resolved<T> => ({ value, source: 'master', method, confidence: 'high' });
 export const fromUser = <T extends Scalar>(value: T, method = 'Entered by user'): Resolved<T> => ({ value, source: 'user', method, confidence: 'high' });
 export const derived = <T extends Scalar>(value: T, method: string, confidence: Confidence, note?: string): Resolved<T> => ({
   value,

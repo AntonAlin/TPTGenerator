@@ -42,7 +42,7 @@ export function sourceAoa(file: TptFile): { cells: Aoa; notes: Aoa } {
   ];
   const notes: Aoa = [
     ['Ref', 'Method / reason'],
-    ['', 'Legend: "file" = taken from the input file; "master" = your security master; "user" = entered in the app; "derived (confidence) #n" = computed or estimated, method below. Blank = no value (see the quality report for why).'],
+    ['', 'Legend: "file" = taken from the input file (#n: how a mixed amount cell was read); "user" = entered in the app; "derived (confidence) #n" = computed or estimated, method below. Blank = no value (see the quality report for why).'],
     ...[...ids].map(([text, id]) => [`#${id}`, text]),
   ];
   return { cells, notes };
@@ -94,7 +94,6 @@ export function writeQualityXlsx(r: QualityReport): Uint8Array<ArrayBuffer> {
         ['Mandatory cells filled', `${s.mandatoryFilled} / ${s.mandatoryCells}`, pct(s.mandatoryFilled, s.mandatoryCells)],
         ['All applicable cells filled', `${s.filledCells} / ${s.applicableCells}`, pct(s.filledCells, s.applicableCells)],
         ['From file', s.bySource.file],
-        ['From security master', s.bySource.master],
         ['Entered by user', s.bySource.user],
         ['Derived (estimated)', s.bySource.derived],
         ['Missing', s.bySource.missing],
@@ -111,8 +110,8 @@ export function writeQualityXlsx(r: QualityReport): Uint8Array<ArrayBuffer> {
     wb,
     sheet(
       [
-        ['Field', 'Header', 'Requirement', 'Applicable rows', 'Filled %', 'File', 'Master', 'User', 'Derived', 'Missing', 'Note'],
-        ...r.fields.map((f) => [f.id, f.header, f.requirementRaw, f.applicable, f.applicable ? Math.round(f.pctFilled * 1000) / 10 : undefined, f.counts.file, f.counts.master, f.counts.user, f.counts.derived, f.counts.missing, f.mustBeEmpty ? 'Must be empty (no longer maintained)' : undefined]),
+        ['Field', 'Header', 'Requirement', 'Applicable rows', 'Filled %', 'File', 'User', 'Derived', 'Missing', 'Note'],
+        ...r.fields.map((f) => [f.id, f.header, f.requirementRaw, f.applicable, f.applicable ? Math.round(f.pctFilled * 1000) / 10 : undefined, f.counts.file, f.counts.user, f.counts.derived, f.counts.missing, f.mustBeEmpty ? 'Must be empty (no longer maintained)' : undefined]),
       ],
       [7, 60, 11, 10, 9, 7, 7, 7, 8, 8, 34],
     ),

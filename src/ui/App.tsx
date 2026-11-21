@@ -4,12 +4,10 @@ import { SpecBrowser } from './SpecBrowser.tsx';
 import { UploadStep } from './UploadStep.tsx';
 import { MappingStep } from './MappingStep.tsx';
 import { PortfolioStep } from './PortfolioStep.tsx';
-import { MasterStep } from './MasterStep.tsx';
 import { ExportStep } from './ExportStep.tsx';
 import { dateFromMetadata, type LoadedSheet } from './session.ts';
 import { ProfileRepository } from '../profiles/profiles.ts';
 import { openStore } from '../profiles/store.ts';
-import { SecurityMaster } from '../master/securityMaster.ts';
 import { FundProfileRepository, baseCurrencyOf, emptyPortfolio, fundNav, type PortfolioState } from '../portfolio/portfolio.ts';
 import type { CanonicalField } from '../detect/canonical.ts';
 import { normalizeHoldings } from '../derive/holdings.ts';
@@ -17,7 +15,7 @@ import { buildFxTable, guessPortfolioCurrency, impliedFxRates } from '../derive/
 import { resolveHoldings } from '../derive/resolve.ts';
 import { interpretAmounts } from '../derive/amounts.ts';
 
-type StepId = 'upload' | 'mapping' | 'fund' | 'master' | 'export' | 'spec';
+type StepId = 'upload' | 'mapping' | 'fund' | 'export' | 'spec';
 
 interface Step {
   id: StepId;
@@ -29,15 +27,13 @@ const STEPS: Step[] = [
   { id: 'upload', label: '1. Upload holdings' },
   { id: 'mapping', label: '2. Map columns' },
   { id: 'fund', label: '3. Fund / share class' },
-  { id: 'master', label: '4. Security master' },
-  { id: 'export', label: '5. Export & quality report' },
+  { id: 'export', label: '4. Export & quality report' },
   { id: 'spec', label: `TPT ${spec.meta.version} field reference` },
 ];
 
 interface Stores {
   profiles: ProfileRepository;
   funds: FundProfileRepository;
-  master: SecurityMaster;
   persistent: boolean;
 }
 
@@ -47,12 +43,11 @@ export function App() {
   const [mapping, setMapping] = useState<CanonicalField[] | null>(null);
   const [portfolio, setPortfolio] = useState<PortfolioState>(emptyPortfolio);
   const [stores, setStores] = useState<Stores | null>(null);
-  const [masterVersion, setMasterVersion] = useState(0);
 
   useEffect(() => {
     (async () => {
       const s = await openStore();
-      setStores({ profiles: new ProfileRepository(s), funds: new FundProfileRepository(s), master: await SecurityMaster.open(s), persistent: s.persistent });
+      setStores({ profiles: new ProfileRepository(s), funds: new FundProfileRepository(s), persistent: s.persistent });
     })();
   }, []);
 
@@ -92,17 +87,15 @@ export function App() {
             portfolioCurrency: base,
             fx: fx.table,
             nav: navInfo.nav,
-            master: stores.master,
           })
         : null,
-    // masterVersion forces re-resolution after security master edits.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [amounts, portfolio, base, fx, navInfo.nav, stores, masterVersion],
+    [amounts, portfolio, base, fx, navInfo.nav, stores],
   );
 
   const step = STEPS.find((s) => s.id === active)!;
   const enabled = (id: StepId) =>
-    id === 'upload' || id === 'spec' || (id === 'mapping' && !!loaded) || ((id === 'fund' || id === 'master' || id === 'export') && !!result) || !!STEPS.find((s) => s.id === id)?.comingInPhase;
+    id === 'upload' || id === 'spec' || (id === 'mapping' && !!loaded) || ((id === 'fund' || id === 'export') && !!result) || !!STEPS.find((s) => s.id === id)?.comingInPhase;
 
   let body;
   if (active === 'spec') body = <SpecBrowser />;
@@ -140,11 +133,9 @@ export function App() {
         navNote={navInfo.note}
         suggestions={suggestions}
         fundRepo={stores.funds}
-        onContinue={() => setActive('master')}
+        onContinue={() => setActive('export')}
       />
     );
-  else if (active === 'master' && result && stores)
-    body = <MasterStep result={result} master={stores.master} persistent={stores.persistent} onChanged={() => setMasterVersion((v) => v + 1)} onContinue={() => setActive('export')} />;
   else if (active === 'export' && result)
     body = <ExportStep result={result} portfolio={portfolio} fx={fx.table} fxMissing={fx.missing} amountNotes={amounts?.notes ?? []} />;
   else

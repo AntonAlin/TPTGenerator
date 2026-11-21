@@ -6,7 +6,7 @@
  */
 import { spec } from '../spec/index.ts';
 import type { SpecField } from '../spec/types.ts';
-import { ATTRS, type AttrKey } from '../master/attributes.ts';
+import { ATTRS, type AttrKey } from '../derive/attributes.ts';
 import type { ResolveResult, ResolvedHolding } from '../derive/resolve.ts';
 import { derived, hasValue, minConfidence, missing, type Resolved } from '../derive/provenance.ts';
 import { PORTFOLIO_FIELDS, baseCurrencyOf, resolvePortfolioField, type PortfolioState } from '../portfolio/portfolio.ts';
@@ -95,7 +95,7 @@ export function buildTptFiles(
           return PORTFOLIO_CCY_FIELDS.has(f.id) ? convert(e, classRate, classCcy, base) : e;
         }
         const attr = ATTR_BY_FIELD.get(f.id);
-        if (!attr) return missing('Not in the file, the security master or the derivations.');
+        if (!attr) return missing('Not in the file and not derivable.');
         const r = h.attrs[attr];
         return PORTFOLIO_CCY_FIELDS.has(f.id) ? convert(r, classRate, classCcy, base) : r;
       }),

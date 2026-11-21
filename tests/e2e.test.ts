@@ -9,8 +9,6 @@ import { readdirSync } from 'node:fs';
 import * as XLSX from 'xlsx';
 import { spec, field } from '../src/spec/index.ts';
 import { validateFieldValue } from '../src/spec/validate.ts';
-import { SecurityMaster } from '../src/master/securityMaster.ts';
-import { MemoryStore } from '../src/profiles/store.ts';
 import { col, roundTripXlsx, runPipeline, SAMPLES, writeQualityXlsx, writeTptCsv } from './pipeline.ts';
 
 const SCR_IDS = spec.fields.filter((f) => /SCR/i.test(f.section)).map((f) => f.id);
@@ -104,7 +102,7 @@ describe.each(CASES)('$file', ({ file, holdings, options }) => {
       src[i].forEach((s, j) => {
         const v = tpt[i][j];
         if (v === null) expect(s).toBeNull();
-        else expect(s).toMatch(/^(file|master|user|derived \((high|medium|low)\))( #\d+)?$/);
+        else expect(s).toMatch(/^(file|user|derived \((high|medium|low)\))( #\d+)?$/);
       });
     }
   });
@@ -197,24 +195,6 @@ describe('sample-specific results', () => {
     expect(b.rows[1][col('24')].value).toBeCloseTo(11050000 / 11.5, 1);
     expect(b.rows[1][col('4')].value).toBe('EUR');
     expect(b.rows[1][col('26')].value).toBe(a.rows[1][col('26')].value);
-  });
-
-  it('security master values flow into the TPT and the Source sheet', async () => {
-    const master = await SecurityMaster.open(new MemoryStore());
-    await master.set('identifier', 'name:LIKVIDA MEDEL SEK', 'Likvida medel SEK', 'CASH-SEK-01');
-    await master.set('id_type', 'name:LIKVIDA MEDEL SEK', 'Likvida medel SEK', '99');
-    await master.set('issuer_name', 'isin:SE0000108656', 'Ericsson B', 'Telefonaktiebolaget LM Ericsson');
-    await master.set('nace', 'name:TELEFONAKTIEBOLAGET LM ERICSSON', 'LM Ericsson', 'C2630');
-    const run = runPipeline('se_custodian_holdings.xlsx', { master });
-    const cash = rowOf(run, /Likvida/);
-    expect(cash[col('14')]).toMatchObject({ value: 'CASH-SEK-01', source: 'master' });
-    expect(cash[col('15')].value).toBe('99');
-    const eric = rowOf(run, /Ericsson/);
-    expect(eric[col('148')]).toMatchObject({ value: 'C2630', source: 'master' });
-    const { wb } = roundTripXlsx(run.files[0]);
-    const src = XLSX.utils.sheet_to_json<(string | null)[]>(wb.Sheets.Source, { header: 1, defval: null });
-    expect(src[1][col('148')]).toMatch(/^master/);
-    expect(run.reports[0].missingMandatory.some((m) => m.fieldId === '14' && /Likvida/.test(m.name))).toBe(false);
   });
 
   it('mixed "Holding" column and a forward notional shown as market value', () => {
