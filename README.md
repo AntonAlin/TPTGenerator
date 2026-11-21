@@ -78,6 +78,10 @@ outdated npm registry package, so `npm install` needs access to `cdn.sheetjs.com
 
 The Vite `base` is relative (`./`), so the site works under any repository name or domain.
 
+The source is not public. The production build has no source maps (`build.sourcemap: false`), so the
+site serves only the minified bundle, and the app links to no repository. The browser end-to-end test
+checks both.
+
 **Troubleshooting a blank page.** If the live site shows a blank page and serves files such as `/README.md`
 or `/src/main.tsx`, Pages is publishing the raw repository ("Deploy from a branch") instead of the
 built app. Set **Source** to **GitHub Actions** and deploy a *new* commit: Pages identifies deployments by

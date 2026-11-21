@@ -40,7 +40,9 @@ export default defineConfig({
   plugins: [preact(), cspPlugin()],
   build: {
     target: 'es2022',
-    sourcemap: true,
+    // No source maps in the published build: the source is not public, and a .map file would
+    // publish all of it, comments included.
+    sourcemap: false,
     // One bundle of ~270 kB gzipped, most of it SheetJS. Everything runs offline once loaded,
     // so splitting would not make the tool faster to use.
     chunkSizeWarningLimit: 1200,

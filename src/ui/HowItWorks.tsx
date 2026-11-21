@@ -11,7 +11,7 @@ import { CANONICAL_INFO } from '../detect/canonical.ts';
 import synonyms from '../detect/synonyms.json';
 import type { AmountRole } from '../derive/amounts.ts';
 import { runExample } from './howItWorksExample.ts';
-import { NEXUS_URL, REPO_URL } from './links.ts';
+import { NEXUS_URL } from './links.ts';
 
 const pct = (x: number, digits = 1) => `${(x * 100).toFixed(digits)}%`;
 const num = (v: unknown) => (typeof v === 'number' ? v.toLocaleString('en-US', { maximumFractionDigits: 3 }) : v instanceof Date ? v.toISOString().slice(0, 10) : String(v ?? ''));
@@ -360,11 +360,8 @@ export function HowItWorks() {
         <p>
           Your file never leaves this tab. There is no server behind the app, no analytics and no tracking. The page's Content-Security-Policy forbids it from making
           network requests at all, so it could not send your data even by mistake. Saved source and fund profiles stay in this browser's storage. The affiliate
-          banner's image is served from this site: nothing is requested from the advertiser unless you click it.{' '}
-          <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
-            The source code is public
-          </a>
-          , so all of this can be checked.
+          banner's image is served from this site: nothing is requested from the advertiser unless you click it. You can check this yourself: open your
+          browser's developer tools, go to the Network tab and use the app. No request carries your file.
         </p>
       </section>
 

@@ -12,7 +12,7 @@
  *  - the Content-Security-Policy blocks network requests from the page.
  */
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { preview } from 'vite';
@@ -62,6 +62,13 @@ async function download(p: Page, label: string) {
 try {
   console.log(`Browser e2e against ${url}`);
   await page.goto(url);
+
+  await step('the published build has no source maps', async () => {
+    const files = readdirSync(join(root, 'dist'), { recursive: true }).map(String);
+    assert.deepEqual(files.filter((f) => f.endsWith('.map')), []);
+    const js = files.filter((f) => f.endsWith('.js')).map((f) => readFileSync(join(root, 'dist', f), 'utf8'));
+    assert.ok(js.length && js.every((s) => !s.includes('sourceMappingURL')));
+  });
 
   await step('CSP blocks network requests from the page', async () => {
     const csp = await page.getAttribute('meta[http-equiv="Content-Security-Policy"]', 'content');
@@ -167,6 +174,8 @@ try {
     assert.ok(await page.locator('#how-nexus h3').isVisible());
     assert.ok(await page.locator('#how-nexus').evaluate((el) => { const r = el.getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0; }));
     assert.equal(await page.getAttribute('#how-nexus a:has-text("Open Nexus Portfolio Lab")', 'href'), 'https://nexus.alin.one/');
+    // The source is not public: no link to the repository anywhere in the app.
+    assert.equal(await page.locator('a[href*="github.com"]').count(), 0);
     // Opening the address directly shows the page; leaving it clears the address.
     await page.goto(`${url}#how-it-works`);
     await page.waitForSelector('h2:has-text("How it works")');
