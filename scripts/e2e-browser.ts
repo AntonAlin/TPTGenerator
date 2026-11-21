@@ -4,6 +4,7 @@
  * Drives the real app in headless Chromium through the whole workflow and checks:
  *  - upload → skipped rows → column mapping → source profile → fund form → export,
  *  - mixed amount columns re-read cell by cell (Amounts tab),
+ *  - the "How it works" page and its live example,
  *  - downloaded TPT / quality report files are valid and have the spec layout,
  *  - IndexedDB persistence (the source profile survives a page reload),
  *  - the affiliate banner is labelled, its image is self-hosted, its link sends no referrer,
@@ -145,6 +146,21 @@ try {
     await page.click('button[role=tab]:has-text("Amounts")');
     await page.waitForSelector('text=matches after re-reading 1 cell');
     await page.waitForSelector('td:has-text("FX FWD EUR/USD 15-DEC-2026")');
+  });
+
+  await step('"How it works" page: linkable, live example computed by the engine', async () => {
+    await page.click('header a:has-text("How it works")');
+    await page.waitForSelector('h2:has-text("How it works")');
+    assert.equal(new URL(page.url()).hash, '#how-it-works');
+    // The example tables are computed by the real pipeline when the page opens.
+    await page.waitForSelector('td:has-text("Amount (mixed")');
+    assert.ok(await page.isVisible('text=matches after re-reading 1 cell'));
+    assert.ok(await page.isVisible('td:has-text("total row (kept for checks)")'));
+    // Opening the address directly shows the page; leaving it clears the address.
+    await page.goto(`${url}#how-it-works`);
+    await page.waitForSelector('h2:has-text("How it works")');
+    await page.click('text=1. Upload holdings');
+    assert.equal(new URL(page.url()).hash, '');
   });
 
   await step('legacy .xls multi-asset file with derivatives exports without errors', async () => {

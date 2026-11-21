@@ -116,10 +116,12 @@ export function rowKind(cls: AssetClass): RowKind {
   return 'units';
 }
 
+// Cash: the template applies field 19 (nominal) to CIC 7 and field 18 (quantity) not at all, so a
+// cash balance in a holding column is its nominal amount, not a number of units.
 const KIND_PRIOR: Record<RowKind, Record<AmountRole, number>> = {
   units: { quantity: 0.5, nominal: -1.5, mv_local: 0, mv_port: 0, other: -2.5 },
   bond: { quantity: -0.7, nominal: 0.5, mv_local: 0, mv_port: 0, other: -2.5 },
-  cash: { quantity: -0.5, nominal: -0.3, mv_local: 0.5, mv_port: 0.2, other: -2.5 },
+  cash: { quantity: -2, nominal: 0.5, mv_local: 0.5, mv_port: 0.2, other: -2.5 },
   listed: { quantity: 0.5, nominal: -0.3, mv_local: 0, mv_port: 0, other: -2.5 },
   otc: { quantity: -1.5, nominal: 0.5, mv_local: 0, mv_port: 0, other: -2.5 },
   unknown: { quantity: 0, nominal: 0, mv_local: 0, mv_port: 0, other: -2.5 },

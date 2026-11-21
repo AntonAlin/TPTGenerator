@@ -31,6 +31,11 @@ Live app: <https://tptgenerator.alin.one> (GitHub Pages).
 
 ## How it works
 
+The app has a **How it works** page (<https://tptgenerator.alin.one/#how-it-works>) that explains all of this for
+users. Its worked example is a small sheet that the real engine processes when the page opens
+(`src/ui/howItWorksExample.ts`), and its figures (field count, model size and accuracy, synonym count) are
+read from the code, so the page stays true as the code changes.
+
 | Step | What happens |
 | --- | --- |
 | 1. Upload | Reads xlsx/xls/csv. Finds the header row (also two-row merged headers) and skips titles, blank rows, section headings, totals/subtotals, repeated headers and notes. Shows every skipped row with the reason. |
@@ -153,7 +158,7 @@ combines three kinds of signal:
    - ISO 4217, ISO 3166 and CIC codes, ratings, dates (many formats);
    - decimal comma/point, percentages, columns summing to ~100% or ~1, row numbers, text vs numbers;
    - cross-column checks: value = quantity × price, weight = value ÷ total.
-3. **Model.** Multinomial logistic regression over 62 features. Weights are in `src/detect/model.json` and
+3. **Model.** Multinomial logistic regression over 67 features. Weights are in `src/detect/model.json` and
    inference is a few lines of TypeScript: no ML runtime in the browser.
 
 Each field except `ignore` goes to at most one column. Mappings below 60% confidence are highlighted, and
@@ -334,7 +339,8 @@ The quality report (`src/export/quality.ts`) is shown in step 4 and downloadable
   - equities, government, corporate and covered bonds, FRNs, funds, ETFs, cash, FX forwards and futures;
   - a mixed "holding" column, and sometimes a forward whose notional is shown as its market value.
 
-  The script runs each file through the same pipeline as the app, with no manual input. It scores the column
+  `tests/random.test.ts` runs 24 of them on every `npm test`; the script runs larger batches.
+  It runs each file through the same pipeline as the app, with no manual input. It scores the column
   mapping, holding placement (field 18 vs 19), clean market values (23, 25), CIC category, portfolio currency and
   valuation date. It writes the first file's TPT and quality report to `random-portfolios/`.
   On 950 random portfolios (about 18,700 holdings, of which 500 portfolios were never used for tuning) every

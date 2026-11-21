@@ -15,8 +15,9 @@ import { buildFxTable, guessPortfolioCurrency, impliedFxRates } from '../derive/
 import { resolveHoldings } from '../derive/resolve.ts';
 import { interpretAmounts } from '../derive/amounts.ts';
 import { Promo } from './Promo.tsx';
+import { HowItWorks } from './HowItWorks.tsx';
 
-type StepId = 'upload' | 'mapping' | 'fund' | 'export' | 'spec';
+type StepId = 'upload' | 'mapping' | 'fund' | 'export' | 'spec' | 'how';
 
 interface Step {
   id: StepId;
@@ -30,7 +31,12 @@ const STEPS: Step[] = [
   { id: 'fund', label: '3. Fund / share class' },
   { id: 'export', label: '4. Export & quality report' },
   { id: 'spec', label: `TPT ${spec.meta.version} field reference` },
+  { id: 'how', label: 'How it works' },
 ];
+
+/** The "How it works" page has an address of its own, so it can be linked to. */
+const HOW_HASH = '#how-it-works';
+const stepFromHash = (): StepId => (typeof location !== 'undefined' && location.hash === HOW_HASH ? 'how' : 'upload');
 
 interface Stores {
   profiles: ProfileRepository;
@@ -39,7 +45,19 @@ interface Stores {
 }
 
 export function App() {
-  const [active, setActive] = useState<StepId>('upload');
+  const [active, setActiveState] = useState<StepId>(stepFromHash);
+  const setActive = (id: StepId) => {
+    setActiveState(id);
+    // Keep the address in step with the page: #how-it-works only while that page is shown.
+    const want = id === 'how' ? HOW_HASH : '';
+    if (location.hash !== want) history.replaceState(null, '', `${location.pathname}${location.search}${want}`);
+    if (id === 'how') window.scrollTo(0, 0);
+  };
+  useEffect(() => {
+    const onHash = () => setActiveState((cur) => (location.hash === HOW_HASH ? 'how' : cur === 'how' ? 'upload' : cur));
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
   const [loaded, setLoaded] = useState<LoadedSheet | null>(null);
   const [mapping, setMapping] = useState<CanonicalField[] | null>(null);
   const [portfolio, setPortfolio] = useState<PortfolioState>(emptyPortfolio);
@@ -96,10 +114,11 @@ export function App() {
 
   const step = STEPS.find((s) => s.id === active)!;
   const enabled = (id: StepId) =>
-    id === 'upload' || id === 'spec' || (id === 'mapping' && !!loaded) || ((id === 'fund' || id === 'export') && !!result) || !!STEPS.find((s) => s.id === id)?.comingInPhase;
+    id === 'upload' || id === 'spec' || id === 'how' || (id === 'mapping' && !!loaded) || ((id === 'fund' || id === 'export') && !!result) || !!STEPS.find((s) => s.id === id)?.comingInPhase;
 
   let body;
   if (active === 'spec') body = <SpecBrowser />;
+  else if (active === 'how') body = <HowItWorks />;
   else if (active === 'upload')
     body = (
       <UploadStep
@@ -155,7 +174,8 @@ export function App() {
           <span class="muted">Solvency II Tripartite Template {spec.meta.version}</span>
         </div>
         <p class="privacy" role="note">
-          Your files are processed only in this browser tab. Nothing is uploaded and the app makes no network requests.
+          Your files are processed only in this browser tab. Nothing is uploaded and the app makes no network requests.{' '}
+          <a href={HOW_HASH}>How it works</a>
         </p>
       </header>
 

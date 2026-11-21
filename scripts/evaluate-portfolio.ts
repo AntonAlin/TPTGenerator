@@ -10,6 +10,7 @@
  */
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { generatePortfolio, type Truth, type TruthRow } from './random-portfolio.ts';
 import { runPipeline, col, writeQualityXlsx } from '../tests/pipeline.ts';
 import { writeTptXlsx } from '../src/export/write.ts';
@@ -60,7 +61,8 @@ export function evaluate(truth: Truth, outDir: string) {
         holdingOk = close(n, t.holding) && q === undefined;
         break;
       case 'cash':
-        holdingOk = q === undefined || close(q, t.holding);
+        // The template applies field 19 to cash (CIC 7) and field 18 not at all.
+        holdingOk = close(n, t.holding) && q === undefined;
         break;
     }
     const clean = val(row[col('23')]);
@@ -153,4 +155,5 @@ function main() {
   if (failures.length) console.log(`\nIssues:\n  ${failures.slice(0, 25).join('\n  ')}`);
 }
 
-main();
+// Run as a script only, not when the tests import evaluate().
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) main();
