@@ -38,7 +38,13 @@ export default defineConfig({
   // Relative base so the build works at https://<user>.github.io/<any-repo-name>/
   base: './',
   plugins: [preact(), cspPlugin()],
-  build: { target: 'es2022', sourcemap: true },
+  build: {
+    target: 'es2022',
+    sourcemap: true,
+    // One bundle of ~270 kB gzipped, most of it SheetJS. Everything runs offline once loaded,
+    // so splitting would not make the tool faster to use.
+    chunkSizeWarningLimit: 1200,
+  },
   test: {
     include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
     environment: 'node',

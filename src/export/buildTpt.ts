@@ -122,12 +122,3 @@ export function cellValue(f: SpecField, r: Resolved): string | number | undefine
   if ((f.dataType === 'number' || f.dataType === 'integer') && typeof r.value === 'string' && /^-?\d+(\.\d+)?$/.test(r.value)) return Number(r.value);
   return String(r.value);
 }
-
-/** Short provenance text for the "Source" sheet. */
-export function sourceText(r: Resolved): string {
-  if (r.source === 'missing') return r.note ? `missing: ${r.note}` : '';
-  const parts: string[] = [r.source];
-  if (r.source === 'derived' && r.confidence) parts.push(`(${r.confidence})`);
-  if (r.method && r.source !== 'file') parts.push(`– ${r.method}`);
-  return parts.join(' ');
-}

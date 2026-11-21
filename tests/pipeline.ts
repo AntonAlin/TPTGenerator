@@ -1,0 +1,79 @@
+/**
+ * Test helper: run a sample file through the whole pipeline exactly as the app does
+ * (read → detect table → classify columns → normalise → FX → resolve → build TPT →
+ * quality report → write xlsx/csv), without the UI.
+ */
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import * as XLSX from 'xlsx';
+import { readWorkbook } from '../src/ingest/readFile.ts';
+import { detectTable } from '../src/ingest/table.ts';
+import { classifyColumns } from '../src/detect/classify.ts';
+import type { CanonicalField } from '../src/detect/canonical.ts';
+import { normalizeHoldings } from '../src/derive/holdings.ts';
+import { buildFxTable, guessPortfolioCurrency, impliedFxRates } from '../src/derive/valuation.ts';
+import { DEFAULT_CONVENTIONS, resolveHoldings } from '../src/derive/resolve.ts';
+import { baseCurrencyOf, emptyPortfolio, fundNav, type PortfolioState } from '../src/portfolio/portfolio.ts';
+import { buildTptFiles } from '../src/export/buildTpt.ts';
+import { buildQualityReport } from '../src/export/quality.ts';
+import { writeQualityXlsx, writeTptCsv, writeTptXlsx } from '../src/export/write.ts';
+import type { SecurityMaster } from '../src/master/securityMaster.ts';
+import { spec } from '../src/spec/index.ts';
+import { dateFromMetadata } from '../src/ui/session.ts';
+
+export const SAMPLES = resolve(import.meta.dirname, '../samples');
+
+export interface PipelineOptions {
+  /** Portfolio data; defaults to fund level with the suggested currency and valuation date. */
+  portfolio?: (p: PortfolioState) => void;
+  /** Column mapping overrides by header. */
+  mapping?: Record<string, CanonicalField>;
+  master?: SecurityMaster;
+  fxUser?: Record<string, number>;
+}
+
+export function runPipeline(file: string, opts: PipelineOptions = {}) {
+  const wb = readWorkbook(new Uint8Array(readFileSync(resolve(SAMPLES, file))), file);
+  const sheet = wb.sheets[0];
+  const table = detectTable(sheet.rows);
+  const predictions = classifyColumns(table.headers.map((h, i) => ({ header: h, values: table.rows.map((r) => r.cells[i]) })));
+  const mapping = predictions.map((p) => opts.mapping?.[p.header] ?? p.field);
+  const norm = normalizeHoldings(table, mapping);
+  const implied = impliedFxRates(norm.holdings);
+  const guess = guessPortfolioCurrency(norm.holdings, norm.portfolioValueHeader);
+
+  const portfolio = emptyPortfolio();
+  portfolio.values['4'] = guess.currency ?? '';
+  portfolio.values['6'] = dateFromMetadata(table) ?? '2026-09-30';
+  portfolio.fxUser = opts.fxUser ?? {};
+  opts.portfolio?.(portfolio);
+
+  const base = baseCurrencyOf(portfolio);
+  const ccys = [
+    ...norm.holdings.map((h) => h.file.currency).filter((c): c is string => !!c),
+    ...(portfolio.level === 'share_class' ? portfolio.shareClasses.map((c) => c.values['4']).filter(Boolean) : []),
+    ...(base ? [base] : []),
+  ];
+  const fx = buildFxTable(ccys, base, implied, portfolio.fxUser);
+  const result = resolveHoldings(norm.holdings, {
+    ...portfolio.conventions,
+    ...DEFAULT_CONVENTIONS,
+    valuationDate: portfolio.values['6'] || undefined,
+    portfolioCurrency: base,
+    fx: fx.table,
+    nav: fundNav(portfolio, (c) => fx.table[c]?.rate).nav,
+    master: opts.master,
+  });
+  const files = buildTptFiles(result, portfolio, fx.table, { today: '2026-10-05', freeText: 'e2e' });
+  const reports = files.map(buildQualityReport);
+  return { wb, table, predictions, mapping, norm, implied, guess, portfolio, fx, result, files, reports };
+}
+
+/** Write the TPT workbook and read it back as a 2-D array (what a recipient would see). */
+export function roundTripXlsx(file: ReturnType<typeof runPipeline>['files'][number], includeSource = true) {
+  const wb = XLSX.read(writeTptXlsx(file, includeSource), { type: 'array' });
+  return { wb, tpt: XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets.TPT, { header: 1, defval: null }) };
+}
+
+export const col = (id: string) => spec.fields.findIndex((f) => f.id === id);
+export { writeTptCsv, writeQualityXlsx };

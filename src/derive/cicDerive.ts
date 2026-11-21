@@ -20,6 +20,8 @@ export interface CicInput {
   isin?: string;
   /** Country from the file's country column, if any. */
   fileCountry?: string;
+  /** Derivative sub-category from the underlying, if recognised. */
+  derivativeSub?: { sub: string; why: string };
 }
 
 export interface CicDerivation {
@@ -59,14 +61,20 @@ export function deriveCic(input: CicInput): CicDerivation {
       : 'No listing information → XL proposed, please confirm';
   }
 
-  const [cat, sub] = info.cic;
+  const cat = info.cic[0];
+  const fromUnderlying = input.derivativeSub && parseCic(`${loc}${cat}${input.derivativeSub.sub}`).valid ? input.derivativeSub : undefined;
+  const sub = fromUnderlying?.sub ?? info.cic[1];
   const code = `${loc}${cat}${sub}`;
   const check = parseCic(code);
   if (!check.valid) throw new Error(`Internal error: built invalid CIC ${code}: ${check.errors.join(' ')}`);
-  const subUncertain = (info.alternatives?.length ?? 0) > 0;
-  const confidence = minConfidence(input.assetClassConfidence, locConf, subUncertain ? 'medium' : 'high');
-  const alternatives = (info.alternatives ?? []).map((s) => `${loc}${cat}${s}`).filter((c) => parseCic(c).valid);
+  const subUncertain = !fromUnderlying && (info.alternatives?.length ?? 0) > 0;
+  const confidence = minConfidence(input.assetClassConfidence, locConf, subUncertain || fromUnderlying ? 'medium' : 'high');
+  const alternatives = [info.cic[1], ...(info.alternatives ?? [])]
+    .filter((s) => s !== sub)
+    .map((s) => `${loc}${cat}${s}`)
+    .filter((c) => parseCic(c).valid);
   const notes = [locationNote];
+  if (fromUnderlying) notes.push(`Sub-category ${sub} (${check.subcategory?.name}) from the underlying: ${fromUnderlying.why}.`);
   if (subUncertain) notes.push(`Sub-category ${sub} (${check.subcategory?.name}) is the most likely option; alternatives: ${alternatives.join(', ')}.`);
   return {
     cic: derived(code, `Built from asset class "${info.label}" and listing location`, confidence, notes.join(' ')),

@@ -147,6 +147,39 @@ export interface AssetClassResult {
   evidence: string[];
   isEtf: boolean;
   parsedName: ParsedName;
+  /** CIC sub-category implied by the derivative's underlying (e.g. FX forward → E2), when recognisable. */
+  derivativeSub?: { sub: string; why: string };
+}
+
+/** Underlying-based CIC sub-categories for derivatives (categories A–F). */
+const UNDERLYING: { re: RegExp; kind: 'equity' | 'rate' | 'fx' | 'commodity' | 'swaption' | 'irs' | 'ccs' | 'trs' | 'fra' | 'security_swap' }[] = [
+  { re: /\bSWAPTION/i, kind: 'swaption' },
+  { re: /\b(TRS|TOTAL RETURN)\b/i, kind: 'trs' },
+  { re: /\b(CCS|CROSS[- ]CURRENCY|CCIRS)\b/i, kind: 'ccs' },
+  { re: /\b(IRS|INTEREST RATE SWAP|OIS)\b/i, kind: 'irs' },
+  { re: /\b(FRA|FORWARD RATE AGREEMENT)\b/i, kind: 'fra' },
+  { re: /\b(FX|CURRENCY|VALUTA\w*|DEVISEN\w*)\b|\b[A-Z]{3}\/[A-Z]{3}\b/i, kind: 'fx' },
+  { re: /\b(BUND|BOBL|SCHATZ|BUXL|T-?NOTE|T-?BOND|TREASURY|GILT|OAT|BTP|\d+ ?YR|EURIBOR|SOFR|SONIA|STIR|BOND|RATE)\b/i, kind: 'rate' },
+  { re: /\b(OIL|BRENT|WTI|GOLD|SILVER|COPPER|GAS|COMMODIT\w*|WHEAT|CORN)\b/i, kind: 'commodity' },
+  { re: /\b(OMXS?\d*|STOXX|S&P|SPX|DAX|FTSE|NIKKEI|CAC|NASDAQ|MSCI|INDEX|EQUITY|AKTIE\w*)\b/i, kind: 'equity' },
+];
+const SUB_BY_CLASS: Partial<Record<AssetClass, Partial<Record<(typeof UNDERLYING)[number]['kind'], string>>>> = {
+  future: { equity: '1', rate: '2', fx: '3', commodity: '5' },
+  call_option: { equity: '1', rate: '2', fx: '3', commodity: '5', swaption: '6' },
+  put_option: { equity: '1', rate: '2', fx: '3', commodity: '5', swaption: '6' },
+  swap: { irs: '1', ccs: '3', fx: '2', trs: '4', security_swap: '5' },
+  forward: { fra: '1', fx: '2' },
+};
+
+function derivativeSub(cls: AssetClass, name: string | undefined): AssetClassResult['derivativeSub'] {
+  const table = SUB_BY_CLASS[cls];
+  if (!table || !name) return undefined;
+  for (const u of UNDERLYING) {
+    const m = u.re.exec(name);
+    const sub = m && table[u.kind];
+    if (sub) return { sub, why: `"${m[0]}" in the name → ${u.kind === 'fx' ? 'currency' : u.kind} underlying` };
+  }
+  return undefined;
 }
 
 function fromText(text: string | undefined): { cls?: AssetClass; etf: boolean; match?: string } {
@@ -173,6 +206,7 @@ function fundSubtype(h: Set<NameHint>): AssetClass {
 }
 
 const isFund = (c: AssetClass) => c.startsWith('fund_');
+const parsedHasBondTerms = (h: Set<NameHint>) => h.has('bond') || h.has('floating') || h.has('treasury_bill') || h.has('commercial_paper') || h.has('deposit');
 
 /** Refine a broad class using name hints (e.g. bond → covered bond, fund → debt fund). */
 function refine(base: AssetClass, h: Set<NameHint>, input: AssetClassInput): AssetClass {
@@ -216,7 +250,9 @@ export function inferAssetClass(input: AssetClassInput): AssetClassResult {
     const refined = refine(cls, h, input);
     if (refined !== cls) evidence.push(`Name keywords refine it to ${ASSET_CLASSES[refined].label.toLowerCase()}`);
     if (isEtf) evidence.push('ETF: classified as a collective investment undertaking (CIC 4x)');
-    return { assetClass: refined, confidence, evidence, isEtf, parsedName: parsed };
+    const sub = derivativeSub(refined, input.name);
+    if (sub) evidence.push(sub.why);
+    return { assetClass: refined, confidence, evidence, isEtf, parsedName: parsed, ...(sub ? { derivativeSub: sub } : {}) };
   };
 
   // 1. Explicit asset-type column in the file.
@@ -233,6 +269,7 @@ export function inferAssetClass(input: AssetClassInput): AssetClassResult {
   // 2. Strong name keywords.
   const nameRules: [boolean, AssetClass, Confidence, string][] = [
     [isEtf || h.has('fund'), fundSubtype(h), isEtf || h.has('fund') ? 'high' : 'medium', 'fund/ETF keyword in name'],
+    [h.has('money_market') && !fixedIncomeShape && !parsedHasBondTerms(h), 'fund_money_market', 'medium', 'money market fund keyword in name'],
     [h.has('cash'), 'cash', 'high', 'cash keyword in name'],
     [h.has('deposit'), 'deposit_short', 'medium', 'deposit keyword in name'],
     [h.has('cds'), 'credit_derivative', 'high', 'CDS keyword in name'],

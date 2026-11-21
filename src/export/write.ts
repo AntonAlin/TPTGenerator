@@ -2,7 +2,7 @@
  * Serialise TPT files and quality reports to xlsx / csv (in memory, for download).
  */
 import * as XLSX from 'xlsx';
-import { cellValue, sourceText, type TptFile } from './buildTpt.ts';
+import { cellValue, type TptFile } from './buildTpt.ts';
 import type { QualityReport } from './quality.ts';
 import { spec } from '../spec/index.ts';
 
@@ -12,8 +12,39 @@ export function tptAoa(file: TptFile): Aoa {
   return [file.fields.map((f) => f.header), ...file.rows.map((row) => row.map((c, j) => cellValue(file.fields[j], c)))];
 }
 
-export function sourceAoa(file: TptFile): Aoa {
-  return [file.fields.map((f) => f.header), ...file.rows.map((row) => row.map((c) => sourceText(c)))];
+/**
+ * Source sheet: per cell the source and confidence plus a reference (#n) to the
+ * full method/reason text, which is listed once in the notes sheet. Keeps large
+ * files small while every cell stays traceable.
+ */
+export function sourceAoa(file: TptFile): { cells: Aoa; notes: Aoa } {
+  const ids = new Map<string, number>();
+  const ref = (text: string) => {
+    let id = ids.get(text);
+    if (id === undefined) {
+      id = ids.size + 1;
+      ids.set(text, id);
+    }
+    return `#${id}`;
+  };
+  const cells: Aoa = [
+    file.fields.map((f) => f.header),
+    ...file.rows.map((row) =>
+      row.map((c) => {
+        if (c.source === 'missing') return undefined; // reasons per missing cell are in the quality report
+        if (c.source === 'file') return 'file';
+        const label = c.source === 'derived' ? `derived (${c.confidence ?? '?'})` : c.source;
+        const text = [c.method, c.note].filter(Boolean).join(' — ');
+        return text ? `${label} ${ref(text)}` : label;
+      }),
+    ),
+  ];
+  const notes: Aoa = [
+    ['Ref', 'Method / reason'],
+    ['', 'Legend: "file" = taken from the input file; "master" = your security master; "user" = entered in the app; "derived (confidence) #n" = computed or estimated, method below. Blank = no value (see the quality report for why).'],
+    ...[...ids].map(([text, id]) => [`#${id}`, text]),
+  ];
+  return { cells, notes };
 }
 
 function sheet(aoa: Aoa, widths?: number[]) {
@@ -26,8 +57,12 @@ function sheet(aoa: Aoa, widths?: number[]) {
 export function writeTptXlsx(file: TptFile, includeSource: boolean): Uint8Array<ArrayBuffer> {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, sheet(tptAoa(file)), 'TPT');
-  if (includeSource) XLSX.utils.book_append_sheet(wb, sheet(sourceAoa(file)), 'Source');
-  return new Uint8Array(XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer);
+  if (includeSource) {
+    const { cells, notes } = sourceAoa(file);
+    XLSX.utils.book_append_sheet(wb, sheet(cells), 'Source');
+    XLSX.utils.book_append_sheet(wb, sheet(notes, [8, 140]), 'Source notes');
+  }
+  return new Uint8Array(XLSX.write(wb, { type: 'array', bookType: 'xlsx', bookSST: true, compression: true }) as ArrayBuffer);
 }
 
 const csvEscape = (v: string | number | undefined, delimiter: string) => {
@@ -101,5 +136,5 @@ export function writeQualityXlsx(r: QualityReport): Uint8Array<ArrayBuffer> {
     'Validation',
   );
   XLSX.utils.book_append_sheet(wb, sheet([['Field', 'Header', 'Why left blank'], ...r.notDerived.map((n) => [n.fieldId, n.header, n.reason])], [7, 60, 90]), 'Not derivable');
-  return new Uint8Array(XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer);
+  return new Uint8Array(XLSX.write(wb, { type: 'array', bookType: 'xlsx', bookSST: true, compression: true }) as ArrayBuffer);
 }

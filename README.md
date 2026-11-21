@@ -1,130 +1,159 @@
 # TPT Generator
 
-A free, static web app that converts portfolio holdings files (xlsx, xls, csv) into the
-FinDatEx **Solvency II Tripartite Template (TPT)**. It is intended for fund managers and custodians
-and works at fund or share-class level. It does not do look-through.
+A free, static web app that turns a portfolio holdings file (xlsx, xls or csv) with unknown, inconsistent
+column names into a FinDatEx **Solvency II Tripartite Template (TPT)**. It is for fund managers and
+custodians, works at fund or share-class level, and does not do look-through.
 
-**Everything runs in your browser.** There is no backend and no telemetry. The production build ships a
-Content-Security-Policy with `connect-src 'none'`, so the browser itself blocks any network request
-from the app.
+There is no market data, reference data vendor or API behind it. Every TPT cell is one of the following, and
+the app always shows which:
 
-> Status: **Phase 4**: the full workflow works end to end: upload → column mapping → fund/share class
-> data → security master → TPT export and quality report. Phase 5 (tests, samples, README polish) follows.
+- **taken from the input file**,
+- **taken from your own security master** (data you entered earlier),
+- **derived** from data in the file, with the method and a confidence level, or
+- **left blank and flagged**.
 
-## Run locally
+Live app: <https://tptgenerator.alin.one> (GitHub Pages).
+
+## Privacy and data handling
+
+- **Everything runs in your browser tab.** There is no backend, no analytics and no telemetry.
+- **Network requests are blocked.** The production build has a Content-Security-Policy with
+  `connect-src 'none'`: the browser refuses any request from the app, so portfolio data cannot be sent
+  anywhere even by mistake. The browser end-to-end test checks this.
+- **Uploaded files stay in memory** and are gone when you close the tab.
+- **What you choose to save** (source profiles, fund profiles, the security master) is stored in your
+  browser's IndexedDB on your computer only. Clearing site data deletes it, so export it regularly. Each
+  store has JSON export and import, which is also how you move it to another computer or share it with
+  colleagues.
+
+## How it works
+
+| Step | What happens |
+| --- | --- |
+| 1. Upload | Reads xlsx/xls/csv. Finds the header row (also two-row merged headers) and skips titles, blank rows, section headings, totals/subtotals, repeated headers and notes. Shows every skipped row with the reason. |
+| 2. Map columns | Classifies each column (ISIN, name, quantity, market value, weight, …) from its header and its values. Shows a confidence and the evidence, and highlights low-confidence mappings. A confirmed mapping can be saved as a *source profile* and is reused for files from the same source. |
+| 3. Fund / share class | Fund-level TPT fields (form generated from the template), share classes, valuation date, portfolio currency, FX rates, conventions. Reusable *fund profiles*. |
+| 4. Security master | Every holding with every value and where it came from. You fill in or correct instrument and issuer data (LEI, NACE, CIC, rating, …). Saved for future files. |
+| 5. Export | TPT as xlsx (optional *Source* sheet showing the origin of every cell) or csv, plus a completeness and data quality report. |
+
+## Quick start
 
 Requires Node 20+ (22 recommended).
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
-npm test           # unit tests (Vitest)
-npm run build      # production build into dist/
-npm run preview    # serve dist/ locally
+npm run dev          # http://localhost:5173
 ```
 
+| Command | Purpose |
+| --- | --- |
+| `npm test` | Unit, pipeline and sample end-to-end tests (Vitest) |
+| `npm run e2e` | Builds, then drives the production build in headless Chromium (Playwright) |
+| `npm run build` | Checks the spec JSON is up to date, type-checks, builds `dist/` |
+| `npm run preview` | Serves `dist/` |
+| `npm run spec:build` | Regenerates `src/spec/tpt_spec.json` from the template in `/spec` |
+| `npm run samples` | Regenerates the synthetic files in `/samples` |
+
 SheetJS is installed from the official SheetJS CDN tarball (`https://cdn.sheetjs.com/`), not from the
-npm registry, so `npm install` needs access to `cdn.sheetjs.com`.
+outdated npm registry package, so `npm install` needs access to `cdn.sheetjs.com`.
+
+`npm run e2e` needs a Chromium for Playwright 1.63 (`npx playwright install chromium` once).
 
 ## Deploy to GitHub Pages
 
-1. In the GitHub repo, go to **Settings → Pages → Build and deployment → Source** and select **GitHub Actions**.
-2. Push to `main`. The workflow `.github/workflows/deploy.yml` checks the spec, runs the tests, builds,
-   and deploys `dist/` to Pages. Pull requests are built and tested but not deployed.
+1. In the repository, open **Settings → Pages → Build and deployment → Source** and choose **GitHub Actions**.
+   For a custom domain, enter it on the same page. `public/CNAME` is also shipped in the build.
+2. Push to `main`. `.github/workflows/deploy.yml` checks the spec, runs all tests including the browser
+   end-to-end test, builds, and deploys `dist/`. Pull requests are built and tested but not deployed.
 
-The Vite `base` is relative (`./`), so the site works under any repository name.
+The Vite `base` is relative (`./`), so the site works under any repository name or domain.
 
-## TPT specification
+## Project layout
 
-All field definitions come from the official FinDatEx template in `/spec`. None are hard-coded.
+```
+spec/                 Official FinDatEx template + annex, CIC and NACE sources, spec config/overrides
+scripts/              build-spec.ts, extract-features.ts, make-samples.ts, e2e-browser.ts, reference data builders
+training/             Synthetic data generator and model training (Python + numpy)
+samples/              Synthetic messy holdings files used by the tests
+src/spec/             Spec parser, generated tpt_spec.json, field validation
+src/ingest/           File reading, table detection, number/date parsing, ISIN/LEI/CUSIP/SEDOL validation
+src/detect/           Canonical fields, synonym dictionary, features, model.json, classifier
+src/derive/           Name parsing, asset class, CIC, fixed income, valuation/FX, field resolution
+src/master/           Security master (attributes, IndexedDB-backed store)
+src/portfolio/        Fund/share-class data and fund profiles
+src/profiles/         Source profiles and the key-value store (IndexedDB / memory)
+src/export/           TPT builder, quality report, xlsx/csv writers
+src/data/             Bundled reference data: ISO 3166/4217, CIC table, NACE, EEA/OECD lists
+src/ui/               Preact UI
+tests/                Pipeline end-to-end tests over every sample
+```
+
+## The TPT specification
+
+All field definitions come from the official FinDatEx template in `/spec`. None are typed in by hand.
 
 | File | Purpose |
 | --- | --- |
-| `spec/TPT_V8_post_consultation_261008V2.xlsx` | Official FinDatEx TPT V8.0 template. This is the source of truth. |
-| `spec/TPT_V8_Technical_Annex.pdf` | FinDatEx technical annex: key changes from V7 to V8. |
-| `spec/tpt_v8.overrides.json` | The few facts that are not in the Excel file (exact value for field 1000, the "no longer maintained" list). Each entry cites the annex. |
-| `spec/spec.config.json` | Which template, sheet and overrides file are active. |
+| `spec/TPT_V8_post_consultation_261008V2.xlsx` | Official FinDatEx TPT V8.0 template: the source of truth. |
+| `spec/TPT_V8_Technical_Annex.pdf` | FinDatEx technical annex (V7 → V8 changes). |
+| `spec/tpt_v8.overrides.json` | The few facts not in the Excel file (exact value of field 1000, list of fields that must stay empty), each citing the annex. |
+| `spec/spec.config.json` | The active template, sheet and overrides file. |
 | `scripts/build-spec.ts` | Parses the template into `src/spec/tpt_spec.json`. |
-| `src/spec/tpt_spec.json` | **Generated.** Do not edit by hand. The app reads only this file, through `src/spec/index.ts`. |
+| `src/spec/tpt_spec.json` | **Generated; do not edit.** The app reads only this file, through `src/spec/index.ts`. |
 
-For each field, the JSON contains:
+Per field, the JSON holds:
 
-- id, header, name and section
-- export order
-- definition, codification and comment, verbatim from the template
-- requirement level (M/C/O/I/N/A)
-- applicability per CIC category, plus the NW 675, SST and IORP columns
-- whether the field changed since the previous version
-- whether it must be left empty
-- a data type inferred from the codification text, plus any closed list found in it
+- id, header, name, section and export order;
+- definition, codification and comment, verbatim;
+- requirement level (M/C/O/I/N/A);
+- applicability per CIC category, plus the NW 675, SST and IORP columns;
+- whether the field changed since the previous version, and whether it must stay empty;
+- a data type and any closed list read from the codification text.
 
-The template has no data-type column, so the data type is read from the codification by fixed rules. Each field records which rule matched (`dataTypeRule`). Fields the rules cannot classify are marked `unknown`; the parser lists them as warnings rather than guessing a type.
+The template has no data-type column. The parser applies fixed, named rules (`dataTypeRule`) and reports what it cannot
+classify instead of guessing. The parser finds columns by header text (`NUM_DATA`, `CODIFICATION`,
+`(CIC x)`, …), not by column letters.
+
+Everything else in the app follows the spec, so a new version brings its changes automatically:
+
+- the export columns and headers;
+- the fund form;
+- the option lists;
+- validation;
+- applicability per CIC category.
 
 ### Updating the TPT version
 
-1. Put the new official template `.xlsx` in `/spec`. Add the technical annex too, if there is one.
-2. Edit `spec/spec.config.json` to point to the new template and sheet name.
-3. Create or update the overrides file from the new annex, citing sources. Remove it if nothing is needed.
+1. Put the new official template `.xlsx` (and its technical annex, if any) in `/spec`.
+2. Point `spec/spec.config.json` at the new file and sheet name.
+3. Create or update the overrides file from the annex, citing sources, or remove it if nothing is needed.
 4. Run `npm run spec:build` and review every warning it prints.
-5. Run `npm test`, then commit the template and the regenerated `src/spec/tpt_spec.json`.
+5. Run `npm test` and `npm run e2e`, then commit the template and the regenerated JSON.
 
-CI runs `npm run spec:check`, which fails if the committed JSON does not match the template.
-
-The parser finds columns by their header text (`NUM_DATA`, `DEFINITION`, `CODIFICATION`, `(CIC x)`,
-etc.), not by fixed column letters, so a moderately re-arranged template still parses.
-
-## Reading files
-
-`src/ingest/` reads xlsx, xls and csv files in the browser. SheetJS handles Excel files; CSV uses a small
-built-in parser. CSV handling:
-
-- Detects UTF-8 (with or without BOM), UTF-16, or Windows-1252.
-- Detects the delimiter: `;`, `,`, tab or `|`.
-
-The table detector (`src/ingest/table.ts`) then:
-
-- Finds the header row, including two-row headers built from merged cells (e.g. "Marknadsvärde" over
-  "Lokal | SEK").
-- Skips and reports every non-holding row, with the reason shown in the upload step:
-  - titles and metadata above the table
-  - blank rows
-  - section headings (kept as a hint for each row)
-  - totals and subtotals, in EN/SV/DE/FR
-  - unlabelled total rows, detected because their numbers equal the sum of the rows above
-  - repeated header rows (page breaks)
-  - notes and footers
-- Drops empty columns.
-
-Numbers are parsed with decimal comma or point, thousands separators, `%`, `(1,000)` and trailing minus. Dates
-are parsed from ISO, `dd/mm/yyyy`, `mm/dd/yyyy`, `dd.mm.yy`, `15-NOV-32`, month names in four languages, and
-Excel date cells.
+CI runs `npm run spec:check` and fails if the committed JSON does not match the template.
 
 ## Column detection
 
-Each input column is mapped to a canonical field (`src/detect/canonical.ts`), such as `isin`,
-`security_name`, `quantity`, `market_value_local`, `weight` or `ignore`. The mapping combines three things:
+Each input column is mapped to one of 21 canonical fields (`src/detect/canonical.ts`). The classifier
+combines three kinds of signal:
 
-1. **Header signals.** Fuzzy matching against `src/detect/synonyms.json`, in English, Swedish, German and
-   French. Matching ignores case, accents and punctuation. **Edit this file to add header variants**; changes
-   take effect without retraining. The `ignore` list holds headers that are usually not needed (comments,
+1. **Header signals.** Fuzzy matching against `src/detect/synonyms.json` (English, Swedish, German, French).
+   Matching ignores case, accents and punctuation. **Edit this file to add header variants.** Changes take
+   effect without retraining. The `ignore` list covers headers that are usually not needed (comments,
    sector, cost, P/L, …).
 2. **Value signals** (`src/detect/features.ts`):
-   - ISIN check digit (Luhn) and LEI check digits (ISO 17442 / ISO 7064)
-   - ISO 4217 currency and ISO 3166 country codes; CIC codes
-   - ratings and dates
-   - decimal style, percentages, columns summing to ~100 or ~1, row numbers, text vs numeric
-   - cross-column checks: a column equal to the product of two others (value = quantity × price), or to
-     another column divided by its total (weights)
-3. **Model.** Multinomial logistic regression over all 62 features. The weights are in
-   `src/detect/model.json`, and inference is a few lines of TypeScript.
+   - ISIN check digit (Luhn) and LEI check digits (ISO 17442);
+   - ISO 4217, ISO 3166 and CIC codes, ratings, dates (many formats);
+   - decimal comma/point, percentages, columns summing to ~100% or ~1, row numbers, text vs numbers;
+   - cross-column checks: value = quantity × price, weight = value ÷ total.
+3. **Model.** Multinomial logistic regression over 62 features. Weights are in `src/detect/model.json` and
+   inference is a few lines of TypeScript: no ML runtime in the browser.
 
-Each field except `ignore` is assigned to at most one column. Confidence is the model probability. Mappings below 60% are highlighted for review, and each mapping lists the evidence behind it.
+Each field except `ignore` goes to at most one column. Mappings below 60% confidence are highlighted, and
+every mapping lists its evidence.
 
-### Source profiles
-
-When you save a mapping, the app stores it in IndexedDB, keyed by a fingerprint of the normalised headers.
-The next file with the same headers, in any order, is mapped automatically. Profiles can be exported and
-imported as JSON from the mapping step. They stay in your browser.
+**Source profiles.** A confirmed mapping is saved under a fingerprint of the normalised headers. The next
+file with the same headers, in any order, is mapped automatically.
 
 ### Retraining the column model
 
@@ -135,112 +164,175 @@ training/retrain.sh            # TABLES=4000 SEED=7 by default
 npm test
 ```
 
-Retraining runs three steps:
-
-1. `training/generate.py` creates synthetic, messy holdings tables: random header variants and languages,
-   typos, generic "Column 7" headers, decimal comma/point, thousands separators, many date formats,
-   noise columns, and equity/bond/fund/cash mixes.
-2. `scripts/extract-features.ts` computes features with the **same TypeScript code the browser uses**, so
+1. `training/generate.py` creates synthetic messy tables. It varies:
+   - headers: dictionary and held-out variants, four languages, typos, generic "Column 7" names;
+   - number and date formats;
+   - noise columns and asset mixes.
+2. `scripts/extract-features.ts` computes features with **the same TypeScript code the browser uses**, so
    training and inference cannot drift apart.
-3. `training/train.py` trains with numpy alone and writes `src/detect/model.json`, including
-   validation metrics.
+3. `training/train.py` trains with numpy only and writes `src/detect/model.json` with validation metrics.
 
-Current model: 98.1% validation accuracy. On the 93% of columns predicted with ≥60% confidence, it is 99.7%.
-If you change the feature list, retrain; the app refuses to load a model trained on a different feature set.
+Current model:
 
-## Derivations and the security master
+- 98.1% validation accuracy;
+- 99.7% on the 93% of columns predicted with ≥ 60% confidence.
 
-Every value carries its **source**: file, security master, user, derived, or missing. Derived values also carry the **method**
-and a **confidence** (high / medium / low). The resolution order per attribute (`src/derive/resolve.ts`) is:
+If you change the feature list you must retrain: the app refuses a model trained on a different feature set.
+
+## Derivations
+
+Every value carries its source (file, master, user, derived, missing). Derived values also carry the method
+and a confidence (high / medium / low). Per attribute (`src/derive/resolve.ts`):
 
 **input file → your security master → derivation → blank**
 
-A security master value marked "override file" also beats the file.
+A master value marked "override file" also beats the file.
 
 | Module | What it does |
 | --- | --- |
-| `src/derive/parseName.ts` | Reads the coupon (`0.75%`, `4 1/8`, `3,5%`), the maturity (`12/11/2029`, `15-NOV-32`, `02/15/31`, ISO, `PERP` → `9999-12-31`) and instrument hints (ETF, fund, FRN, covered, subordinated, government, …) from security names. If the day/month order is ambiguous, the date gets low confidence and the note shows the alternative reading. A year alone ("FRN 2027") is never turned into a date. |
-| `src/derive/assetClass.ts` | Infers the asset class from the asset-type column, section headings, name keywords, coupon/maturity presence, price level and ISIN prefix. Each class maps to a CIC category and sub-category, plus alternatives. |
-| `src/derive/cicDerive.ts` | Builds the CIC: listing location + category + sub-category. The location comes from the file's country column, else the ISIN prefix (both flagged as estimated), else XL. Cash, deposits and OTC derivatives get XT. Non-ETF funds get XL. Also maps CIC → fields 13 and 131. |
-| `src/derive/fixedIncome.ts` | Coupon schedule, accrued interest (ACT/ACT ICMA, 30E/360, ACT/360, ACT/365F), yield to maturity (Newton with bisection fallback), and Macaulay and modified duration. Tests compare it against an independent implementation. FRNs and perpetuals are not computed. |
-| `src/derive/valuation.ts` | Implied FX per currency (portfolio value ÷ local value), a portfolio-currency guess, the FX table, and clean/dirty detection: nominal × price ÷ 100 compared with the file value. |
-| `src/derive/resolve.ts` | Applies the resolution order to every attribute. Also computes NAV (entered, else the sum of holdings, flagged), weights, the cash ratio (field 9) and portfolio duration (field 10). |
-| `src/portfolio/portfolio.ts` | Fund and share-class form generated from the spec's portfolio sections. Fund profiles save identification and conventions, without NAV, dates or FX. |
-| `src/master/` | The security master: instrument records keyed by ISIN (else id, else name) and issuer records keyed by LEI (else name), in IndexedDB, with JSON export/import. Option lists for coded attributes come from the spec. |
+| `parseName.ts` | Coupon (`0.75%`, `4 1/8`, `3,5%`), maturity (`12/11/2029`, `15-NOV-32`, `02/15/31`, ISO, `PERP` → `9999-12-31`) and instrument hints from security names. Ambiguous day/month order gets low confidence and the note shows the other reading. A year alone ("FRN 2027") never becomes a date. |
+| `assetClass.ts` | Asset class from the asset-type column, section headings, name keywords (ETF, fund, FRN, covered, government, futures, forwards, …), coupon/maturity, price level and ISIN prefix. Each class maps to a CIC category and sub-category. For derivatives, the sub-category comes from the underlying (e.g. FX forward → E2, index future → A1). |
+| `cicDerive.ts` | CIC = listing location + category + sub-category. The location comes from the file's country column, else the ISIN prefix (both marked estimated), else XL. XT for cash, deposits and OTC derivatives; XL for non-ETF funds. Unsure sub-categories show alternatives. Also maps CIC → fields 13 and 131. |
+| `fixedIncome.ts` | Coupon schedule; accrued interest (ACT/ACT ICMA, 30E/360, ACT/360, ACT/365F); yield to maturity (Newton with bisection fallback); Macaulay and modified duration. Verified against an independent implementation. |
+| `valuation.ts` | Implied FX per currency (portfolio ÷ local value), portfolio-currency guess, FX table. Detects whether market values are clean or dirty (nominal × price ÷ 100 vs the file value). |
+| `resolve.ts` | Applies the resolution order to every attribute. Also derives NAV (entered, else the sum of holdings, flagged), weights, cash ratio (field 9) and portfolio duration (field 10). |
 
-Assumptions you can change in step 3: whether file market values include accrued interest (auto-detected per
-bond by default), the day count, the coupon frequency per currency, and whether to estimate the issuer country
-from the ISIN prefix. The assumed coupon frequency is used only inside calculations: field 38 is filled only
-from your security master.
+Assumptions you can change in step 3:
 
-**Never derived (left blank unless you enter them):** credit quality step, NACE, issuer group, securitisation
-type, state guarantee, redemption type, call dates, rating agency, and anything that would need market or reference data.
-NACE codes come from a picklist and are validated against it (see Static reference data).
+- whether file market values include accrued interest (auto-detected per bond);
+- the day count;
+- the coupon frequency per currency (used only inside calculations; field 38 is filled only from your master);
+- whether to estimate the issuer country from the ISIN prefix.
 
-`src/data/regions.json` lists EEA and OECD members (as of November 2026) for the economic-zone fields 13, 53, 74 and 87. Review it when
-membership changes.
+**Never derived:** credit quality step, NACE, issuer group, securitisation type, state guarantee, redemption
+type, call dates, rating agency. These are left blank unless you enter them.
+
+## Security master, source profiles and fund profiles
+
+- **Security master** (`src/master/`):
+  - instrument records keyed by ISIN (else identifier, else name);
+  - issuer records keyed by LEI (else issuer name), so an issuer's LEI, group, country and NACE are entered
+    once and apply to all its holdings;
+  - "apply to all holdings of this issuer" for instrument-level values;
+  - option lists come from the spec, and NACE is a searchable picklist.
+- **Source profiles** remember column mappings per source.
+- **Fund profiles** remember identification, management company and conventions. NAV, dates and FX rates
+  change every period, so they are not saved.
 
 ## Export and quality report
 
-`src/export/buildTpt.ts` builds one TPT per fund, or one per share class. It uses the exact column order and
-headers of the active spec, with column names on the first line only, as the template requires. Files are named
-per the template's convention, e.g. `20260930_TPTV8_SE0000108656_20261005_Exempelfonden`.
+`src/export/buildTpt.ts` builds one TPT per fund or per share class:
 
-- **xlsx:** sheet `TPT`, plus an optional `Source` sheet giving the origin of every cell for audit (`file`,
-  `master`, `user`, `derived (confidence) – method`, or `missing: reason`).
-- **csv:** decimal point, no thousands separators, ISO dates, UTF-8 with BOM. The delimiter can be a comma or a semicolon.
-- **Share classes:** holdings are shared across classes. Portfolio-currency amounts (24, 25, 28) are converted to each
-  class currency with the FX table. Weights are relative to the total fund NAV.
+- exact column order and headers of the active spec, column names on the first line only;
+- file names follow the template convention (`20260930_TPTV8_SE0000108656_20261005_Free-text`).
+
+Formats and fixed rules:
+
+- **xlsx:** sheet `TPT`, plus an optional `Source` sheet with each cell's origin (`file`, `master`, `user`,
+  `derived (confidence) #n`) and a `Source notes` sheet with the full method for every `#n`.
+- **csv:** comma or semicolon, decimal point, no thousands separators, ISO dates, UTF-8 with BOM.
+- **Share classes:** holdings are shared across classes. Amounts in portfolio currency (24, 25, 28) are
+  converted to each class currency. Weights are relative to the total fund NAV.
 - **Field 1000** gets the exact version value. Fields FinDatEx no longer maintains are always empty.
-- **Exposure (27, 28, 30):** for non-derivatives, equal to the market valuation incl. accrued, per the field
-  definitions. For FX forwards, FRAs and CDS: the notional. Other derivatives and convertibles are left blank,
-  because they need delta or underlying data.
-- **Always left blank:** the SCR contribution fields (97–105b), with field 11 set to `N`. The report says so.
+- **Exposure (27, 28, 30)** for non-derivatives equals the market valuation including accrued interest, per
+  the field definitions. FX forwards, FRAs and CDS use the notional.
+- **SCR contribution fields (97–105b)** are always blank, and field 11 is `N`.
 
-The quality report (`src/export/quality.ts`) is shown in step 5 and can be downloaded as xlsx. It contains:
+The quality report (`src/export/quality.ts`) is shown in step 5 and downloadable as xlsx. It contains:
 
-- per field: applicable rows (from the template's CIC applicability columns), % filled, and counts by source
-- every missing mandatory field, per holding; portfolio fields are listed once
-- every estimated (derived) value, with its method and confidence
-- validation errors and warnings:
-  - every cell checked against its spec data type and closed list (CIC, ISO codes, NACE, dates)
-  - invalid ISINs and LEIs, invalid CICs in the file
-  - weights not summing to 100%
-  - NAV differing from the sum of holdings
-  - duplicate identifiers
-  - maturities before the valuation date
-- the fields left blank on purpose, with the reason
+- **Completeness per field:** % filled over the rows where the field applies (per the template's CIC
+  columns), split by source (file / master / user / derived / missing).
+- **Missing mandatory fields**, per holding. Portfolio fields are listed once.
+- **Estimated values:** every derived value with its method and confidence.
+- **Validation:**
+  - every value against its spec data type and closed list (CIC, ISO codes, NACE, dates);
+  - invalid ISINs, LEIs and CICs;
+  - weights not summing to 100%, NAV vs sum of holdings;
+  - duplicate identifiers, maturities before the valuation date.
+- **Fields left blank on purpose**, with the reason.
 
-## Samples
+## Reference data
 
-`samples/` contains synthetic test files, generated by `npx tsx scripts/make-samples.ts`. The data is
-fictional, apart from a few well-known public equity ISINs. `tests/samples.test.ts` checks detection and
-mapping on each file, and `npx tsx scripts/check-samples.ts` prints what the app detects.
+| File | Content and source |
+| --- | --- |
+| `src/data/iso3166.json`, `iso4217.json` | ISO 3166-1 countries (249) and ISO 4217 currencies (178), generated by `scripts/build_reference_data.py` from pycountry (Debian iso-codes). The non-ISO currency codes the TPT allows (CNH, …) come from the spec. |
+| `src/data/cic_table.json` | CIC table per Commission Implementing Regulation (EU) 2023/894, Annex VI: 16 categories, 115 sub-categories, XL/XT. Supplied by the project owner; not verified against the Official Journal. Tests cross-check it with the TPT spec. |
+| `src/data/nace.json` | NACE Rev. 2 (21 sections, 88 divisions, 272 groups, 615 classes) in TPT field 148 format (`K6419`), built by `scripts/build_nace.py` from `spec/nace/NACE_Rev2_Sept2019.pdf`. Section U, missing from that PDF, is added as a marked supplement. Used for picking and validation only, never guessed. |
+| `src/data/regions.json` | EEA and OECD members as of November 2026, for the economic-zone fields 13, 53, 74 and 87. |
+
+## Testing
+
+- **Unit tests** (`src/**/*.test.ts`) cover every parser, validator and derivation:
+  - spec parsing, CSV/xlsx reading, number and date parsing;
+  - ISIN/LEI/CUSIP/SEDOL checks, table detection, header matching and the classifier;
+  - name parsing, asset class and CIC, fixed-income maths (against reference values), valuation, resolution;
+  - security master, profiles, portfolio fields, field validation, export and the quality report.
+- **Pipeline end-to-end tests** (`tests/e2e.test.ts`, `tests/samples.test.ts`) run every file in `/samples`
+  through the whole pipeline. They read the written TPT back and check:
+  - the spec headers;
+  - that every value passes validation;
+  - weights summing to 100%;
+  - the Source sheet;
+  - sample-specific results such as share-class conversion, master values and derivative exposure.
+- **Browser end-to-end test** (`npm run e2e`, `scripts/e2e-browser.ts`) drives the production build in
+  Chromium. It checks:
+  - the workflow end to end;
+  - the downloaded files;
+  - persistence across a reload;
+  - no page errors;
+  - no requests to other origins;
+  - that the Content-Security-Policy blocks network calls.
+
+### Samples
+
+Synthetic files generated by `npm run samples`. The data is fictional apart from a few public equity ISINs.
 
 | File | What it exercises |
 | --- | --- |
-| `se_custodian_holdings.xlsx` | Swedish headers, title rows, merged two-row header, section headings, subtotals and total, notes column, footer, second sheet |
-| `en_bond_portfolio.csv` | English, comma CSV, quoted thousands, text dates (`15-Nov-2032`), blank row, total |
+| `se_custodian_holdings.xlsx` | Swedish headers, title rows, merged two-row header, section headings, subtotals, total, notes column, footer, second sheet |
 | `se_fund_admin_semicolon.csv` | Swedish, semicolon CSV, Windows-1252, decimal comma, `%` weights, unlabelled total row |
-| `de_depot_statement.xlsx` | German headers, header on row 3, repeated header after a page break, `Summe` row |
-| `generic_headers.xlsx` | Meaningless headers (`Col1`…); detection from values only |
+| `en_bond_portfolio.csv` | English, comma CSV, quoted thousands, text dates, blank row, total, no portfolio-currency column |
+| `en_multi_asset.xls` | Legacy xls, English, FX forward, index future, ETF, covered bond, CIC and LEI columns, fraction weights, subtotals, two cash currencies |
+| `de_depot_statement.xlsx` | German headers, header on row 3, repeated header after a page break, accrued interest, `Summe` row |
+| `fr_portefeuille.csv` | French headers, UTF-8 BOM, narrow no-break space thousands, comment column, money market fund, total |
+| `generic_headers.xlsx` | Meaningless headers (`Col1`…): detection from values, user corrections |
 
-## Static reference data
+## Limitations
 
-| File | Source |
-| --- | --- |
-| `src/data/iso3166.json`, `src/data/iso4217.json` | ISO 3166-1 countries (249) and ISO 4217 currencies (178), generated by `scripts/build_reference_data.py` from pycountry (Debian iso-codes). The non-ISO currency codes the TPT spec allows (CNH, …) come from the spec itself. |
-| `src/data/nace.json` | NACE Rev. 2 picklist (21 sections, 88 divisions, 272 groups, 615 classes), with codes in TPT field 148 format (`K6419`). Built by `scripts/build_nace.py` from `spec/nace/NACE_Rev2_Sept2019.pdf`, supplied by the project owner. That PDF ends after section T, so section U (99, extraterritorial organisations) is added as a marked supplement. Used for selection and validation only; never guessed from names. |
-| `src/data/cic_table.json` | CIC table per Commission Implementing Regulation (EU) 2023/894, Annex VI: 16 categories (0-9, A-F), 115 sub-categories, XL/XT listing codes. Supplied by the project owner; not yet verified against the Official Journal text. `spec/cic/cic_table_source.png` is the older table image it replaced, kept for reference. `src/data/cic.test.ts` cross-checks it against the TPT spec. |
+The app produces a TPT from what is in the file and what you enter. It is not a substitute for reference
+data or for your own review. In particular:
 
-## Limitations (summary; expanded in later phases)
-
-- No market data and no reference data vendor. Every TPT cell is filled in one of four ways:
-  - taken from the input file
-  - taken from the user's own security master
-  - derived, and flagged with the method used and a confidence level
-  - left blank and flagged
-- SCR contribution fields and other regulatory values that cannot be derived are left blank.
-- FinDatEx does not assert copyright over the template. The names "FinDatEx" and "Financial Data
-  Exchange" are theirs. This project is not affiliated with or endorsed by FinDatEx.
-- Not legal or regulatory advice.
+- **No market or reference data.** Issuer and group LEIs, management company data, NACE codes, credit
+  quality steps, ratings and similar fields come only from the file or from your security master. Expect
+  them to be missing on first use; the quality report lists them.
+- **Estimated values are estimates.** They are always flagged and listed with their method in the report,
+  and you should review them:
+  - listing country in the CIC (from a country column or the ISIN prefix);
+  - issuer country from the ISIN prefix;
+  - asset class and CIC sub-category;
+  - coupon and maturity parsed from names;
+  - clean/dirty detection;
+  - NAV as the sum of holdings when none is entered.
+- **Bond analytics are simplified.** Yield and duration assume bullet redemption at 100, the chosen day count,
+  and the coupon frequency from your master or a per-currency assumption. They are not computed for
+  floating-rate notes, perpetuals, callable, sinking, inflation-linked or PIK bonds.
+- **Not computed:**
+  - look-through;
+  - SCR contributions (fields 97–105b);
+  - derivative exposure and greeks, except the notional for FX forwards, FRAs and CDS;
+  - underlying-asset fields of derivatives (67–89);
+  - collateral and counterparty-sector fields;
+  - eligibility assessments (LTEI, legislative programmes, infrastructure, type 1 private equity).
+- **Column detection is statistical.** The model is trained on synthetic files; always review the mapping,
+  especially highlighted columns.
+- **Reference data has an as-of date.**
+  - NACE is Rev. 2. TPT V8 asks for the latest NACE version in force, which may be Rev. 2.1.
+  - The CIC table was supplied and is not verified against the Official Journal.
+  - EEA/OECD membership is as of November 2026.
+- **Local storage only.** The security master and profiles live in one browser. There is no sync, and
+  clearing browser data deletes them, so export regularly.
+- **Size.** Processing runs on the page's main thread. 5,000 holdings take about 1 s to process and 2 s to
+  export.
+- FinDatEx does not assert copyright over the template. The names "FinDatEx" and "Financial Data Exchange"
+  belong to FinDatEx, and this project is not affiliated with or endorsed by FinDatEx.
+- **Not legal, regulatory or investment advice.** You remain responsible for the data you report.

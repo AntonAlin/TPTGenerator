@@ -1,0 +1,154 @@
+/**
+ * Browser end-to-end test of the production build (run: `npm run e2e`).
+ *
+ * Drives the real app in headless Chromium through the whole workflow and checks:
+ *  - upload → skipped rows → column mapping → source profile → fund form → security master → export,
+ *  - downloaded TPT / quality report files are valid and have the spec layout,
+ *  - IndexedDB persistence (profile and security master survive a page reload),
+ *  - no page or console errors, no request to any other origin,
+ *  - the Content-Security-Policy blocks network requests from the page.
+ */
+import assert from 'node:assert/strict';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { preview } from 'vite';
+import { chromium, type Page } from 'playwright';
+import * as XLSX from 'xlsx';
+import spec from '../src/spec/tpt_spec.json' with { type: 'json' };
+
+const root = resolve(import.meta.dirname, '..');
+const samples = join(root, 'samples');
+const downloads = mkdtempSync(join(tmpdir(), 'tpt-e2e-'));
+const headers = spec.fields.map((f) => f.header);
+const colOf = (id: string) => spec.fields.findIndex((f) => f.id === id);
+
+const server = await preview({ root, preview: { port: 0, strictPort: false }, logLevel: 'silent' });
+const url = server.resolvedUrls?.local[0];
+if (!url) throw new Error('vite preview did not start');
+const origin = new URL(url).origin;
+
+const browser = await chromium.launch();
+const context = await browser.newContext({ acceptDownloads: true, viewport: { width: 1400, height: 900 } });
+const page = await context.newPage();
+const errors: string[] = [];
+const foreign: string[] = [];
+page.on('pageerror', (e) => errors.push(e.message));
+page.on('console', (m) => m.type() === 'error' && !m.text().includes('Content Security Policy') && errors.push(m.text()));
+page.on('request', (r) => !r.url().startsWith(origin) && !r.url().startsWith('blob:') && !r.url().startsWith('data:') && foreign.push(r.url()));
+
+async function step(name: string, fn: () => Promise<void>) {
+  const t = Date.now();
+  await fn();
+  console.log(`  ✓ ${name} (${Date.now() - t} ms)`);
+}
+
+async function upload(p: Page, file: string) {
+  await p.click('text=1. Upload holdings');
+  await p.setInputFiles('input[type=file]', join(samples, file));
+  await p.waitForSelector('text=holdings rows');
+}
+
+async function download(p: Page, label: string) {
+  const [d] = await Promise.all([p.waitForEvent('download'), p.click(`text=${label}`)]);
+  const path = join(downloads, d.suggestedFilename());
+  await d.saveAs(path);
+  return { name: d.suggestedFilename(), bytes: readFileSync(path) };
+}
+
+try {
+  console.log(`Browser e2e against ${url}`);
+  await page.goto(url);
+
+  await step('CSP blocks network requests from the page', async () => {
+    const csp = await page.getAttribute('meta[http-equiv="Content-Security-Policy"]', 'content');
+    assert.match(csp ?? '', /connect-src 'none'/);
+    const outcome = await page.evaluate(() => fetch('https://example.com/').then(() => 'sent', () => 'blocked'));
+    assert.equal(outcome, 'blocked');
+  });
+
+  await step('upload Swedish custodian file: header, skipped rows, preview', async () => {
+    await upload(page, 'se_custodian_holdings.xlsx');
+    await page.waitForSelector('text=two-row header: rows 5 + 6');
+    assert.ok(await page.isVisible('text=Totals and subtotals: 3'));
+    assert.ok(await page.isVisible('text=Section headings: 3'));
+  });
+
+  await step('column mapping and saving a source profile', async () => {
+    await page.click('text=Continue to column mapping');
+    await page.waitForSelector('table.mapping');
+    assert.equal(await page.inputValue('select[aria-label="Mapping for Marknadsvärde SEK"]'), 'market_value_portfolio');
+    assert.equal(await page.inputValue('select[aria-label="Mapping for Kommentar"]'), 'ignore');
+    await page.click('text=Save as source profile');
+    await page.waitForSelector('text=Saved source profile');
+    await page.click('text=Confirm mapping');
+  });
+
+  await step('fund form with suggestions', async () => {
+    await page.waitForSelector('text=Fund and share class data');
+    await page.click('text=Use 2026-09-30');
+    await page.click('text=Use SEK');
+    await page.fill('label:has-text("1 · Portfolio identifying data") input', 'SE0000108656');
+    await page.fill('label:has-text("3 · Portfolio name") input', 'Exempelfonden');
+    await page.fill('label:has-text("5 · Net asset valuation") input', '50241000');
+  });
+
+  await step('security master: give the cash line an identifier', async () => {
+    await page.click('text=Continue to security master');
+    await page.click('text=All holdings');
+    await page.click('td:has-text("Likvida medel SEK")');
+    await page.click('.detail-table tr:has-text("Identifier") button:has-text("Edit")');
+    await page.fill('.editor input', 'CASH-SEK-01');
+    await page.click('text=Save to master');
+    await page.waitForSelector('.detail-table tr:has-text("CASH-SEK-01")');
+  });
+
+  await step('export: TPT xlsx, csv and quality report', async () => {
+    await page.click('text=5. Export & quality report');
+    await page.waitForSelector('text=Mandatory cells filled');
+    assert.ok(await page.isVisible('text=0 errors'));
+    const x = await download(page, 'Download TPT (.xlsx)');
+    assert.match(x.name, /^20260930_TPTV8_SE0000108656_\d{8}_Exempelfonden\.xlsx$/);
+    const wb = XLSX.read(x.bytes);
+    assert.deepEqual(wb.SheetNames, ['TPT', 'Source', 'Source notes']);
+    const rows = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets.TPT, { header: 1, defval: null });
+    assert.deepEqual(rows[0], headers);
+    assert.equal(rows.length, 8);
+    assert.ok(rows.some((r) => r[colOf('14')] === 'CASH-SEK-01'));
+    assert.equal(rows[1][colOf('1000')], spec.meta.versionFieldValue);
+    const csv = await download(page, 'Download TPT (.csv)');
+    assert.equal(csv.bytes.toString('utf8').replace(/^﻿/, '').split('\r\n')[0], headers.join(','));
+    const q = await download(page, 'Download quality report (.xlsx)');
+    assert.deepEqual(XLSX.read(q.bytes).SheetNames, ['Summary', 'Field completeness', 'Missing mandatory', 'Estimated values', 'Validation', 'Not derivable']);
+  });
+
+  await step('after a reload: source profile and security master are remembered (IndexedDB)', async () => {
+    await page.reload();
+    await upload(page, 'se_custodian_holdings.xlsx');
+    await page.click('text=Continue to column mapping');
+    await page.waitForSelector('text=Mapping loaded from source profile');
+    await page.click('text=Confirm mapping');
+    await page.click('text=Use SEK');
+    await page.click('text=4. Security master');
+    await page.click('text=All holdings');
+    await page.waitForSelector('td:has-text("CASH-SEK-01")');
+  });
+
+  await step('legacy .xls multi-asset file with derivatives exports without errors', async () => {
+    await upload(page, 'en_multi_asset.xls');
+    await page.click('text=Continue to column mapping');
+    await page.click('text=Confirm mapping');
+    await page.click('text=5. Export & quality report');
+    await page.waitForSelector('text=Mandatory cells filled');
+    assert.ok(await page.isVisible('text=0 errors'));
+  });
+
+  assert.deepEqual(errors, [], `page errors: ${errors.join('\n')}`);
+  assert.deepEqual(foreign, [], `requests to other origins: ${foreign.join('\n')}`);
+  console.log('  ✓ no page errors, no requests to other origins');
+  console.log('Browser e2e passed.');
+} finally {
+  await browser.close();
+  await server.close();
+  rmSync(downloads, { recursive: true, force: true });
+}

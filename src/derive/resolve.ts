@@ -9,7 +9,7 @@
 import { parseCic } from '../data/cic.ts';
 import { isCountry } from '../data/iso.ts';
 import { economicZone } from '../data/regions.ts';
-import { isValidIsin, isValidLei } from '../ingest/identifiers.ts';
+import { isValidIsin, isValidLei, looksLikeIsin } from '../ingest/identifiers.ts';
 import { ATTRS, ATTR, type AttrKey } from '../master/attributes.ts';
 import { instrumentKey, issuerKey, type MasterRecord, type SecurityMaster } from '../master/securityMaster.ts';
 import { ASSET_CLASSES, inferAssetClass, type AssetClass, type AssetClassResult } from './assetClass.ts';
@@ -167,8 +167,11 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
   const issues: string[] = [];
   const attrs = Object.fromEntries(ATTRS.map((a) => [a.key, missing()])) as unknown as Record<AttrKey, Resolved>;
 
-  const isin = f.isin && isValidIsin(f.isin) ? f.isin : undefined;
-  if (f.isin && !isin) issues.push(`"${f.isin}" is not a valid ISIN (check digit or format).`);
+  // ISIN-shaped values with a bad check digit are errors; other codes in the ISIN column (e.g. "FWD-0001"
+  // for an OTC derivative) are treated as non-ISIN identifiers.
+  const isinShaped = !!f.isin && looksLikeIsin(f.isin);
+  const isin = isinShaped && isValidIsin(f.isin) ? f.isin : undefined;
+  if (isinShaped && !isin) issues.push(`"${f.isin}" is not a valid ISIN (check digit fails).`);
   const iKey = instrumentKey({ isin, otherId: f.other_identifier ?? (isin ? undefined : f.isin), name: f.security_name });
   const inst = ctx.master?.get('instrument', iKey);
 
@@ -190,7 +193,7 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
     undefined,
     isin && attrs.identifier.value === f.isin
       ? derived('1', 'Valid ISIN → type 1 (ISO 6166)', 'high')
-      : missing(f.other_identifier ? 'Identifier is not an ISIN: choose the identification type.' : undefined),
+      : missing(f.other_identifier || (f.isin && !isinShaped) ? 'Identifier is not an ISIN: choose the identification type in the security master.' : undefined),
   );
   attrs.name = f.security_name ? fromFile(f.security_name) : missing();
 
@@ -209,7 +212,7 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
     maturity: f.maturity_date,
     valuationDate: ctx.valuationDate,
   });
-  const derivedCic = deriveCic({ assetClass: ac.assetClass, assetClassConfidence: ac.confidence, isEtf: ac.isEtf, isin: f.isin, fileCountry: f.country });
+  const derivedCic = deriveCic({ assetClass: ac.assetClass, assetClassConfidence: ac.confidence, isEtf: ac.isEtf, isin: f.isin, fileCountry: f.country, derivativeSub: ac.derivativeSub });
   attrs.cic = pick('cic', file(fileCic), derivedCic.cic);
   const finalCic = typeof attrs.cic.value === 'string' ? attrs.cic.value : undefined;
   const effectiveClass = (finalCic && (fileCic || masterCic) ? cicToAssetClass(finalCic) : undefined) ?? ac.assetClass;
@@ -283,12 +286,16 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
   attrs.fx_rate = fx !== undefined ? derived(fx, fxEntry!.source === 'user' ? 'FX rate entered by user' : fxEntry!.source === 'identity' ? 'Portfolio currency' : 'Implied from local and portfolio values in the file', fxEntry!.source === 'implied' ? 'medium' : 'high') : missing(ccy ? `No FX rate for ${ccy}: enter it in the fund step.` : 'No currency.');
   attrs.price = file(f.price) ?? missing();
 
+  const notionalBased = ['forward', 'swap', 'credit_derivative'].includes(effectiveClass);
   attrs.nominal = f.nominal !== undefined
     ? fromFile(f.nominal)
-    : isFI && f.quantity !== undefined
-      ? derived(f.quantity, 'Quantity column used as nominal amount for this debt instrument', 'medium')
+    : (isFI || notionalBased) && f.quantity !== undefined
+      ? derived(f.quantity, notionalBased ? 'Quantity column used as the contract (notional) amount for this forward/swap/CDS' : 'Quantity column used as nominal amount for this debt instrument', 'medium')
       : missing();
-  attrs.quantity = f.quantity !== undefined && !(isFI && f.nominal === undefined) ? fromFile(f.quantity) : missing(isFI ? 'Debt instrument: quantity reported as nominal (field 19).' : undefined);
+  attrs.quantity =
+    f.quantity !== undefined && !((isFI || notionalBased) && f.nominal === undefined)
+      ? fromFile(f.quantity)
+      : missing(isFI ? 'Debt instrument: quantity reported as nominal (field 19).' : notionalBased ? 'Forward/swap/CDS: amount reported as nominal (field 19).' : undefined);
   const nominal = typeof attrs.nominal.value === 'number' ? attrs.nominal.value : undefined;
 
   // Bond analytics (accrued, yield, duration) — fixed coupon bonds only.

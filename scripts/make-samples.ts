@@ -30,6 +30,16 @@ const writeXlsx = (wb: XLSX.WorkBook, path: string) =>
 
 const d = (s: string) => new Date(`${s}T00:00:00Z`);
 
+/** ISO 17442 LEI with valid check digits from an 18-character base. */
+function lei(base: string): string {
+  const digits = [...`${base}00`].map((c) => parseInt(c, 36).toString()).join('');
+  let rem = 0;
+  for (let i = 0; i < digits.length; i += 7) rem = Number(String(rem) + digits.slice(i, i + 7)) % 97;
+  return base + String(98 - rem).padStart(2, '0');
+}
+
+const round2 = (x: number) => Math.round(x * 100) / 100;
+
 // 1. Swedish custodian export (xlsx): title rows, two-row merged header, sections, subtotals, totals, notes column, footer.
 {
   const rows: unknown[][] = [
@@ -131,6 +141,65 @@ const d = (s: string) => new Date(`${s}T00:00:00Z`);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Sheet1');
   writeXlsx(wb, `${out}/generic_headers.xlsx`);
+}
+
+// 6. French portfolio (csv, UTF-8 with BOM, semicolon, decimal comma, narrow no-break space thousands, comment column).
+{
+  const fr = (n: number, dec = 2) => n.toLocaleString('fr-FR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  const oat = { nominal: 1_000_000, price: 101.25 };
+  const rows = [
+    { isin: isin('FR', '000120271'), name: 'TOTALENERGIES SE', qty: 15_000, price: 58.42, ccy: 'EUR', note: '' },
+    { isin: isin('FR', '000131104'), name: 'BNP PARIBAS ACT.A', qty: 9_000, price: 64.1, ccy: 'EUR', note: 'Dividende à recevoir' },
+    { isin: isin('FR', '001400AB1'), name: 'FRANCE OAT 2,75% 25/02/2029', qty: oat.nominal, price: oat.price, ccy: 'EUR', note: '', bond: true, accrued: 16_650.68, maturity: '25/02/2029' },
+    { isin: isin('FR', '001234567'), name: 'EXEMPLE MONETAIRE COURT TERME I', qty: 120.5, price: 10_512.34, ccy: 'EUR', note: '' },
+    { isin: '', name: 'LIQUIDITES EUR', qty: 250_000, price: 1, ccy: 'EUR', note: '' },
+  ].map((r) => ({ ...r, mv: round2(r.bond ? (r.qty * r.price) / 100 : r.qty * r.price) }));
+  const total = round2(rows.reduce((a, r) => a + r.mv, 0));
+  const lines = [
+    'Portefeuille : Fonds Exemple Actions-Obligations;;;;;;;;;',
+    'Date de valorisation : 30/09/2026;;;;;;;;;',
+    ';;;;;;;;;',
+    'Code ISIN;Libellé;Quantité;Cours;Devise;Valorisation (EUR);Poids (%);Coupon couru;Échéance;Commentaire',
+    ...rows.map((r) =>
+      [r.isin, r.name, fr(r.qty, Number.isInteger(r.qty) ? 0 : 2), fr(r.price, r.bond ? 3 : 2), r.ccy, fr(r.mv), fr((r.mv / total) * 100), r.accrued ? fr(r.accrued) : '', r.maturity ?? '', r.note].join(';'),
+    ),
+    ';;;;;;;;;',
+    `Total portefeuille;;;;;${fr(total)};${fr(100)};;;`,
+  ];
+  writeFileSync(`${out}/fr_portefeuille.csv`, `\ufeff${lines.join('\r\n')}\r\n`);
+}
+
+// 7. English multi-asset fund in legacy .xls (BIFF8): derivatives, ETF, covered bond, CIC and LEI columns,
+//    weights as fractions, asset-class subtotals, two cash currencies. Base currency EUR, USD at 1.1.
+{
+  const usd = 1 / 1.1;
+  type R = [string, string, string, string, string, string, number, number | null, number, number | null, string, string];
+  const pos: R[] = [
+    ['Equities', isin('DE', '000716460'), 'SAP SE', 'SAP SE', lei('529900D6BF99LW9R2E'), 'EUR', 4_000, 245.1, 980_400, null, '', ''],
+    ['Equities', isin('US', '594918104'), 'MICROSOFT CORP', 'Microsoft Corporation', lei('INR2EJN1ERAN0W5ZP9'), 'USD', 2_500, 425, 1_062_500, null, '', ''],
+    ['Funds', isin('IE', '00B4L5Y98'), 'EXAMPLE MSCI WORLD UCITS ETF USD ACC', 'Example ETF plc', lei('549300EXAMPLEETF001'.slice(0, 18)), 'USD', 30_000, 102.35, 3_070_500, null, '', ''],
+    ['Bonds', isin('XS', '231245678'), 'NORDIC MORTGAGE BANK COVERED 1.25% 15/06/2031', 'Nordic Mortgage Bank Oyj', lei('743700NORDICMB0001'), 'EUR', 2_000_000, 92.4, 1_848_000, null, 'XL27', 'AAA'],
+    ['Bonds', isin('IT', '000512345'), 'BTP 3.5% 01/03/2030', 'Republic of Italy', '', 'EUR', 1_500_000, 101.8, 1_527_000, null, '', 'BBB'],
+    ['Bonds', isin('DE', '000A3E5AB'), 'MUSTER INDUSTRIE AG 4.25% 01/12/2030', 'Muster Industrie AG', lei('529900MUSTERIND001'), 'EUR', 800_000, 102.3, 818_400, null, 'DE21', 'BBB-'],
+    ['Derivatives', 'FWD-0001', 'FX FWD EUR/USD 15-DEC-2026', 'Example Bank AG', lei('529900EXAMPLEBANK1'), 'USD', 5_000_000, null, 12_345.67, null, '', ''],
+    ['Derivatives', 'FUT-ESZ6', 'EURO STOXX 50 FUT DEC26', 'Eurex Clearing AG', lei('529900LN3S50JPU47S06'.slice(0, 18)), 'EUR', 10, 4_950, 0, null, '', ''],
+    ['Cash', '', 'CASH EUR', 'Depositary Bank SA', '', 'EUR', 412_000, 1, 412_000, null, '', ''],
+    ['Cash', '', 'CASH USD', 'Depositary Bank SA', '', 'USD', 150_000, 1, 150_000, null, '', ''],
+  ];
+  for (const p of pos) p[9] = round2(p[5] === 'USD' ? p[8] * usd : p[8]);
+  const totalBase = round2(pos.reduce((a, p) => a + (p[9] as number), 0));
+  const header = ['Asset Class', 'Security ID', 'Description', 'Issuer', 'Issuer LEI', 'CCY', 'Quantity/Nominal', 'Price', 'MV Local', 'MV Base (EUR)', 'Weight', 'CIC', 'Rating'];
+  const rows: unknown[][] = [['Multi-asset fund - positions as of 30 Sep 2026'], [], header];
+  for (const cls of ['Equities', 'Funds', 'Bonds', 'Derivatives', 'Cash']) {
+    const group = pos.filter((p) => p[0] === cls);
+    for (const p of group) rows.push([p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], Math.round(((p[9] as number) / totalBase) * 1e6) / 1e6, p[10], p[11]]);
+    const sub = round2(group.reduce((a, p) => a + (p[9] as number), 0));
+    rows.push([`Sub-total ${cls}`, null, null, null, null, null, null, null, null, sub, Math.round((sub / totalBase) * 1e6) / 1e6, null, null]);
+  }
+  rows.push(['Total', null, null, null, null, null, null, null, null, totalBase, 1, null, null]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Positions');
+  writeFileSync(`${out}/en_multi_asset.xls`, XLSX.write(wb, { type: 'buffer', bookType: 'biff8' }) as Buffer);
 }
 
 console.log(`Samples written to ${out}`);

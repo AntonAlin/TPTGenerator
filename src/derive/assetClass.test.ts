@@ -57,6 +57,29 @@ describe('deriveCic', () => {
     expect(deriveCic({ assetClass: 'fund_debt', assetClassConfidence: 'high', isEtf: false, isin: 'SE0001234567' }).cic.value).toBe('XL42');
     expect(deriveCic({ assetClass: 'fund_equity', assetClassConfidence: 'high', isEtf: true, isin: 'IE00B4L5Y983' }).cic.value).toBe('IE41');
   });
+  it('picks derivative sub-categories from the underlying', () => {
+    const cic = (name: string) => {
+      const a = inferAssetClass({ name });
+      return deriveCic({ assetClass: a.assetClass, assetClassConfidence: a.confidence, isEtf: false, derivativeSub: a.derivativeSub }).cic.value;
+    };
+    expect(cic('FX FWD EUR/USD 15-DEC-2026')).toBe('XTE2');
+    expect(cic('Valutatermin SEK/NOK 2026-12-15')).toBe('XTE2');
+    expect(cic('FRA 3X6 EURIBOR forward')).toBe('XTE1');
+    expect(cic('IRS pay fixed 2.5% 2031 swap')).toBe('XTD1');
+    expect(cic('TRS on index basket swap')).toBe('XTD4');
+    expect(cic('CDS ITRAXX MAIN')).toBe('XTF1');
+    expect(cic('Some forward contract')).toBe('XTE9');
+    const fut = (name: string, isin = 'DE0000000001') => {
+      const a = inferAssetClass({ name, isin });
+      return deriveCic({ assetClass: a.assetClass, assetClassConfidence: a.confidence, isEtf: false, isin, derivativeSub: a.derivativeSub });
+    };
+    expect(fut('EURO STOXX 50 FUT DEC26').cic.value).toBe('DEA1');
+    expect(fut('EURO BUND FUT DEC26').cic.value).toBe('DEA2');
+    expect(fut('BRENT CRUDE OIL FUT DEC26').cic.value).toBe('DEA5');
+    expect(fut('EURO STOXX 50 FUT DEC26').alternatives).toContain('DEA9');
+    expect(fut('EURO STOXX 50 FUT DEC26').cic.note).toMatch(/from the underlying/);
+  });
+
   it('maps CIC to fields 13 and 131', () => {
     expect(quotationZoneFromCic('SE31')?.value).toBe(1);
     expect(quotationZoneFromCic('US31')?.value).toBe(2);
@@ -67,4 +90,12 @@ describe('deriveCic', () => {
     expect(underlyingCategoryFromCic('XT71')?.value).toBe('7');
     expect(underlyingCategoryFromCic('DEA1')?.value).toBe('A');
   });
+});
+
+describe('compound and French fund names', () => {
+  it.each([
+    ['Muster Rentenfonds I', 'fund_debt'],
+    ['EXEMPLE MONETAIRE COURT TERME I', 'fund_money_market'],
+    ['Penningmarknadsfond Sverige', 'fund_money_market'],
+  ])('%s → %s', (name, cls) => expect(inferAssetClass({ name, isin: 'LU1234567896' }).assetClass).toBe(cls));
 });

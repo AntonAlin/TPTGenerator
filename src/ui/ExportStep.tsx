@@ -27,6 +27,18 @@ export function ExportStep({ result, portfolio, fx, fxMissing }: Props) {
   const [delimiter, setDelimiter] = useState(',');
   const [fileIdx, setFileIdx] = useState(0);
   const [tab, setTab] = useState<Tab>('validation');
+  const [busy, setBusy] = useState<string | null>(null);
+  /** Let the browser paint the busy state before the (synchronous) file generation starts. */
+  const generate = (label: string, make: () => void) => {
+    setBusy(label);
+    setTimeout(() => {
+      try {
+        make();
+      } finally {
+        setBusy(null);
+      }
+    }, 30);
+  };
 
   const files = useMemo(() => buildTptFiles(result, portfolio, fx, { freeText }), [result, portfolio, fx, freeText]);
   const file = files[Math.min(fileIdx, files.length - 1)];
@@ -72,19 +84,21 @@ export function ExportStep({ result, portfolio, fx, fxMissing }: Props) {
           <code>{file.fileName}</code> — {report.holdings} holdings × {file.fields.length} fields, in the column order and with the headers of the active template.
         </p>
         <div class="filters">
-          <button type="button" class="primary" onClick={() => downloadBlob(writeTptXlsx(file, includeSource), `${file.fileName}.xlsx`, XLSX_TYPE)}>
+          <button type="button" class="primary" disabled={!!busy} onClick={() => generate('TPT workbook', () => downloadBlob(writeTptXlsx(file, includeSource), `${file.fileName}.xlsx`, XLSX_TYPE))}>
             Download TPT (.xlsx)
           </button>
-          <button type="button" class="secondary" onClick={() => downloadBlob(writeTptCsv(file, delimiter), `${file.fileName}.csv`, 'text/csv;charset=utf-8')}>
+          <button type="button" class="secondary" disabled={!!busy} onClick={() => generate('CSV', () => downloadBlob(writeTptCsv(file, delimiter), `${file.fileName}.csv`, 'text/csv;charset=utf-8'))}>
             Download TPT (.csv)
           </button>
-          <button type="button" class="secondary" onClick={() => downloadBlob(writeQualityXlsx(report), `${file.fileName}_quality_report.xlsx`, XLSX_TYPE)}>
+          <button type="button" class="secondary" disabled={!!busy} onClick={() => generate('quality report', () => downloadBlob(writeQualityXlsx(report), `${file.fileName}_quality_report.xlsx`, XLSX_TYPE))}>
             Download quality report (.xlsx)
           </button>
+          {busy && <span class="muted" role="status">Preparing {busy}…</span>}
           {files.length > 1 && (
             <button
               type="button"
               class="secondary"
+              disabled={!!busy}
               onClick={() => files.forEach((f, i) => setTimeout(() => downloadBlob(writeTptXlsx(f, includeSource), `${f.fileName}.xlsx`, XLSX_TYPE), i * 400))}
             >
               Download all {files.length} TPT files

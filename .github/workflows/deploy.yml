@@ -26,7 +26,9 @@ jobs:
       # Fails if src/spec/tpt_spec.json is stale relative to the template in /spec.
       - run: npm run spec:check
       - run: npm test
-      - run: npm run build
+      # Browser end-to-end test of the production build (also builds dist/).
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request'
         with:

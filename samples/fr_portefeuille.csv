@@ -1,0 +1,11 @@
+﻿Portefeuille : Fonds Exemple Actions-Obligations;;;;;;;;;
+Date de valorisation : 30/09/2026;;;;;;;;;
+;;;;;;;;;
+Code ISIN;Libellé;Quantité;Cours;Devise;Valorisation (EUR);Poids (%);Coupon couru;Échéance;Commentaire
+FR0001202714;TOTALENERGIES SE;15 000;58,42;EUR;876 300,00;22,00;;;
+FR0001311044;BNP PARIBAS ACT.A;9 000;64,10;EUR;576 900,00;14,49;;;Dividende à recevoir
+FR001400AB19;FRANCE OAT 2,75% 25/02/2029;1 000 000;101,250;EUR;1 012 500,00;25,42;16 650,68;25/02/2029;
+FR0012345676;EXEMPLE MONETAIRE COURT TERME I;120,50;10 512,34;EUR;1 266 736,97;31,81;;;
+;LIQUIDITES EUR;250 000;1,00;EUR;250 000,00;6,28;;;
+;;;;;;;;;
+Total portefeuille;;;;;3 982 436,97;100,00;;;

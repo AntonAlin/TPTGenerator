@@ -72,12 +72,15 @@ describe('buildTptFiles (fund level)', () => {
     expect(csv.startsWith('﻿1_Portfolio_identifying_data,')).toBe(true);
     expect(csv.split('\r\n')[1]).toContain('V8.0 dated 8 October 2026');
     const wb = XLSX.read(writeTptXlsx(f, true), { type: 'array' });
-    expect(wb.SheetNames).toEqual(['TPT', 'Source']);
+    expect(wb.SheetNames).toEqual(['TPT', 'Source', 'Source notes']);
     const rows = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets.TPT, { header: 1 });
     expect(rows[0]).toEqual(spec.fields.map((x) => x.header));
     const src = XLSX.utils.sheet_to_json<string[]>(wb.Sheets.Source, { header: 1 });
-    expect(src[1][col('12')]).toMatch(/^derived/);
+    expect(src[1][col('12')]).toMatch(/^derived \(low\) #\d+$/);
     expect(src[1][col('22')]).toBe('file');
+    const notes = XLSX.utils.sheet_to_json<string[]>(wb.Sheets['Source notes'], { header: 1 });
+    const ref = String(src[1][col('12')]).split(' ').pop();
+    expect(notes.find((n) => n[0] === ref)?.[1]).toMatch(/Built from asset class "Equity"/);
   });
 });
 
