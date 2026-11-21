@@ -8,8 +8,8 @@ and works at fund or share-class level. It does not do look-through.
 Content-Security-Policy with `connect-src 'none'`, so the browser itself blocks any network request
 from the app.
 
-> Status: **Phase 2**: file upload, table detection and column mapping work. Derivations, the security
-> master and export are added in later phases.
+> Status: **Phase 3**: upload, column mapping, derivations, the fund/share class form and the security
+> master work. TPT export and the quality report are added in phase 4.
 
 ## Run locally
 
@@ -147,6 +147,38 @@ Retraining runs three steps:
 
 Current model: 98.1% validation accuracy. On the 93% of columns predicted with ≥60% confidence, it is 99.7%.
 If you change the feature list, retrain; the app refuses to load a model trained on a different feature set.
+
+## Derivations and the security master
+
+Every value carries its **source**: file, security master, user, derived, or missing. Derived values also carry the **method**
+and a **confidence** (high / medium / low). The resolution order per attribute (`src/derive/resolve.ts`) is:
+
+**input file → your security master → derivation → blank**
+
+A security master value marked "override file" also beats the file.
+
+| Module | What it does |
+| --- | --- |
+| `src/derive/parseName.ts` | Reads the coupon (`0.75%`, `4 1/8`, `3,5%`), the maturity (`12/11/2029`, `15-NOV-32`, `02/15/31`, ISO, `PERP` → `9999-12-31`) and instrument hints (ETF, fund, FRN, covered, subordinated, government, …) from security names. If the day/month order is ambiguous, the date gets low confidence and the note shows the alternative reading. A year alone ("FRN 2027") is never turned into a date. |
+| `src/derive/assetClass.ts` | Infers the asset class from the asset-type column, section headings, name keywords, coupon/maturity presence, price level and ISIN prefix. Each class maps to a CIC category and sub-category, plus alternatives. |
+| `src/derive/cicDerive.ts` | Builds the CIC: listing location + category + sub-category. The location comes from the file's country column, else the ISIN prefix (both flagged as estimated), else XL. Cash, deposits and OTC derivatives get XT. Non-ETF funds get XL. Also maps CIC → fields 13 and 131. |
+| `src/derive/fixedIncome.ts` | Coupon schedule, accrued interest (ACT/ACT ICMA, 30E/360, ACT/360, ACT/365F), yield to maturity (Newton with bisection fallback), and Macaulay and modified duration. Tests compare it against an independent implementation. FRNs and perpetuals are not computed. |
+| `src/derive/valuation.ts` | Implied FX per currency (portfolio value ÷ local value), a portfolio-currency guess, the FX table, and clean/dirty detection: nominal × price ÷ 100 compared with the file value. |
+| `src/derive/resolve.ts` | Applies the resolution order to every attribute. Also computes NAV (entered, else the sum of holdings, flagged), weights, the cash ratio (field 9) and portfolio duration (field 10). |
+| `src/portfolio/portfolio.ts` | Fund and share-class form generated from the spec's portfolio sections. Fund profiles save identification and conventions, without NAV, dates or FX. |
+| `src/master/` | The security master: instrument records keyed by ISIN (else id, else name) and issuer records keyed by LEI (else name), in IndexedDB, with JSON export/import. Option lists for coded attributes come from the spec. |
+
+Assumptions you can change in step 3: whether file market values include accrued interest (auto-detected per
+bond by default), the day count, the coupon frequency per currency, and whether to estimate the issuer country
+from the ISIN prefix. The assumed coupon frequency is used only inside calculations: field 38 is filled only
+from your security master.
+
+**Never derived (left blank unless you enter them):** credit quality step, NACE, issuer group, securitisation
+type, state guarantee, redemption type, call dates, rating agency, and anything that would need market or reference data.
+NACE codes are checked for format only (section letter + up to 4 digits).
+
+`src/data/regions.json` lists EEA and OECD members (as of November 2026) for the economic-zone fields 13, 53, 74 and 87. Review it when
+membership changes.
 
 ## Samples
 

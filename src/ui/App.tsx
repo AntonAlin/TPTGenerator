@@ -1,43 +1,98 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useMemo, useState } from 'preact/hooks';
 import { spec } from '../spec/index.ts';
 import { SpecBrowser } from './SpecBrowser.tsx';
 import { UploadStep } from './UploadStep.tsx';
 import { MappingStep } from './MappingStep.tsx';
-import type { LoadedSheet } from './session.ts';
+import { PortfolioStep } from './PortfolioStep.tsx';
+import { MasterStep } from './MasterStep.tsx';
+import { dateFromMetadata, type LoadedSheet } from './session.ts';
 import { ProfileRepository } from '../profiles/profiles.ts';
 import { openStore } from '../profiles/store.ts';
-import { CANONICAL_INFO, type CanonicalField } from '../detect/canonical.ts';
+import { SecurityMaster } from '../master/securityMaster.ts';
+import { FundProfileRepository, baseCurrencyOf, emptyPortfolio, fundNav, type PortfolioState } from '../portfolio/portfolio.ts';
+import type { CanonicalField } from '../detect/canonical.ts';
+import { normalizeHoldings } from '../derive/holdings.ts';
+import { buildFxTable, guessPortfolioCurrency, impliedFxRates } from '../derive/valuation.ts';
+import { resolveHoldings } from '../derive/resolve.ts';
 
 type StepId = 'upload' | 'mapping' | 'fund' | 'master' | 'export' | 'spec';
 
 interface Step {
   id: StepId;
   label: string;
-  /** Phase in which the step gets implemented; undefined = available now. */
   comingInPhase?: number;
 }
 
 const STEPS: Step[] = [
   { id: 'upload', label: '1. Upload holdings' },
   { id: 'mapping', label: '2. Map columns' },
-  { id: 'fund', label: '3. Fund / share class', comingInPhase: 3 },
-  { id: 'master', label: '4. Security master', comingInPhase: 3 },
+  { id: 'fund', label: '3. Fund / share class' },
+  { id: 'master', label: '4. Security master' },
   { id: 'export', label: '5. Export & quality report', comingInPhase: 4 },
   { id: 'spec', label: `TPT ${spec.meta.version} field reference` },
 ];
+
+interface Stores {
+  profiles: ProfileRepository;
+  funds: FundProfileRepository;
+  master: SecurityMaster;
+  persistent: boolean;
+}
 
 export function App() {
   const [active, setActive] = useState<StepId>('upload');
   const [loaded, setLoaded] = useState<LoadedSheet | null>(null);
   const [mapping, setMapping] = useState<CanonicalField[] | null>(null);
-  const [repo, setRepo] = useState<{ repo: ProfileRepository; persistent: boolean } | null>(null);
+  const [portfolio, setPortfolio] = useState<PortfolioState>(emptyPortfolio);
+  const [stores, setStores] = useState<Stores | null>(null);
+  const [masterVersion, setMasterVersion] = useState(0);
 
   useEffect(() => {
-    openStore().then((s) => setRepo({ repo: new ProfileRepository(s), persistent: s.persistent }));
+    (async () => {
+      const s = await openStore();
+      setStores({ profiles: new ProfileRepository(s), funds: new FundProfileRepository(s), master: await SecurityMaster.open(s), persistent: s.persistent });
+    })();
   }, []);
 
+  const normalized = useMemo(() => (loaded && mapping ? normalizeHoldings(loaded.table, mapping) : null), [loaded, mapping]);
+  const implied = useMemo(() => (normalized ? impliedFxRates(normalized.holdings) : {}), [normalized]);
+  const suggestions = useMemo(() => {
+    if (!normalized || !loaded) return {};
+    const g = guessPortfolioCurrency(normalized.holdings, normalized.portfolioValueHeader);
+    return { baseCurrency: g.currency, baseWhy: g.why, valuationDate: dateFromMetadata(loaded.table) };
+  }, [normalized, loaded]);
+
+  const base = baseCurrencyOf(portfolio);
+  const fx = useMemo(() => {
+    const ccys = [
+      ...(normalized?.holdings.map((h) => h.file.currency).filter((c): c is string => !!c) ?? []),
+      ...(portfolio.level === 'share_class' ? portfolio.shareClasses.map((c) => c.values['4']).filter(Boolean) : []),
+      ...(base ? [base] : []),
+    ];
+    return buildFxTable(ccys, base, implied, portfolio.fxUser);
+  }, [normalized, portfolio, base, implied]);
+  const navInfo = fundNav(portfolio, (c) => fx.table[c]?.rate);
+
+  const result = useMemo(
+    () =>
+      normalized && stores
+        ? resolveHoldings(normalized.holdings, {
+            ...portfolio.conventions,
+            valuationDate: portfolio.values['6'] || undefined,
+            portfolioCurrency: base,
+            fx: fx.table,
+            nav: navInfo.nav,
+            master: stores.master,
+          })
+        : null,
+    // masterVersion forces re-resolution after security master edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [normalized, portfolio, base, fx, navInfo.nav, stores, masterVersion],
+  );
+
   const step = STEPS.find((s) => s.id === active)!;
-  const enabled = (id: StepId) => id === 'upload' || id === 'spec' || (id === 'mapping' && !!loaded) || STEPS.find((s) => s.id === id)?.comingInPhase;
+  const enabled = (id: StepId) =>
+    id === 'upload' || id === 'spec' || (id === 'mapping' && !!loaded) || ((id === 'fund' || id === 'master') && !!result) || !!STEPS.find((s) => s.id === id)?.comingInPhase;
 
   let body;
   if (active === 'spec') body = <SpecBrowser />;
@@ -52,37 +107,39 @@ export function App() {
         onContinue={() => setActive('mapping')}
       />
     );
-  else if (active === 'mapping' && loaded && repo)
+  else if (active === 'mapping' && loaded && stores)
     body = (
       <MappingStep
         loaded={loaded}
-        repo={repo.repo}
-        persistent={repo.persistent}
+        repo={stores.profiles}
+        persistent={stores.persistent}
         onMapped={(m) => {
           setMapping(m);
           setActive('fund');
         }}
       />
     );
+  else if (active === 'fund' && result && stores)
+    body = (
+      <PortfolioStep
+        portfolio={portfolio}
+        setPortfolio={setPortfolio}
+        fx={fx}
+        implied={implied}
+        derivations={result.portfolio}
+        navNote={navInfo.note}
+        suggestions={suggestions}
+        fundRepo={stores.funds}
+        onContinue={() => setActive('master')}
+      />
+    );
+  else if (active === 'master' && result && stores)
+    body = <MasterStep result={result} master={stores.master} persistent={stores.persistent} onChanged={() => setMasterVersion((v) => v + 1)} onContinue={() => setActive('export')} />;
   else
     body = (
       <section class="placeholder">
         <h2>{step.label}</h2>
-        <p class="muted">This step will be built in phase {step.comingInPhase}.</p>
-        {mapping && loaded && (
-          <>
-            <p>Confirmed mapping for {loaded.workbook.fileName}:</p>
-            <ul>
-              {mapping.map((f, i) =>
-                f === 'ignore' ? null : (
-                  <li key={i}>
-                    {loaded.table.headers[i]} → {CANONICAL_INFO[f].label}
-                  </li>
-                ),
-              )}
-            </ul>
-          </>
-        )}
+        <p class="muted">{step.comingInPhase ? `This step will be built in phase ${step.comingInPhase}.` : 'Upload a file and confirm the column mapping first.'}</p>
       </section>
     );
 

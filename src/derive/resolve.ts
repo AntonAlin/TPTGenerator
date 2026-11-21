@@ -1,0 +1,415 @@
+/**
+ * Field resolution: for every holding and attribute, take the value from
+ *   1. the input file,
+ *   2. the user's security master (a master value marked "override" beats the file),
+ *   3. a derivation (with method and confidence),
+ *   4. otherwise leave it blank,
+ * and record the source of every value.
+ */
+import { parseCic } from '../data/cic.ts';
+import { isCountry } from '../data/iso.ts';
+import { economicZone } from '../data/regions.ts';
+import { isValidIsin, isValidLei } from '../ingest/identifiers.ts';
+import { ATTRS, ATTR, type AttrKey } from '../master/attributes.ts';
+import { instrumentKey, issuerKey, type MasterRecord, type SecurityMaster } from '../master/securityMaster.ts';
+import { ASSET_CLASSES, inferAssetClass, type AssetClass, type AssetClassResult } from './assetClass.ts';
+import { deriveCic, quotationZoneFromCic, underlyingCategoryFromCic } from './cicDerive.ts';
+import { bondAnalytics, type BondAnalytics, type DayCount, type Frequency } from './fixedIncome.ts';
+import type { Holding } from './holdings.ts';
+import {
+  derived,
+  fromFile,
+  fromMaster,
+  hasValue,
+  minConfidence,
+  missing,
+  type Confidence,
+  type Resolved,
+  type Scalar,
+} from './provenance.ts';
+import { detectCleanDirty, type FxEntry, type MvConvention } from './valuation.ts';
+
+export interface Conventions {
+  valuationDate?: string;
+  portfolioCurrency?: string;
+  /** Whether market values in the file include accrued interest. */
+  mvConvention: MvConvention;
+  dayCount: DayCount;
+  /** Coupon frequency assumed for analytics when the master has none, by currency ("*" = default). */
+  frequencyByCurrency: Record<string, Frequency>;
+  /** Estimate issuer country from the ISIN prefix when nothing better is available (flagged as estimated). */
+  issuerCountryFromIsin: boolean;
+}
+
+export const DEFAULT_CONVENTIONS: Conventions = {
+  mvConvention: 'auto',
+  dayCount: 'ACT/ACT ICMA',
+  frequencyByCurrency: { '*': 1, USD: 2, GBP: 2, CAD: 2, AUD: 2, JPY: 2 },
+  issuerCountryFromIsin: true,
+};
+
+export interface ResolveContext extends Conventions {
+  fx: Record<string, FxEntry>;
+  /** Net asset value in portfolio currency entered by the user. */
+  nav?: number;
+  master?: SecurityMaster;
+}
+
+export interface ResolvedHolding {
+  holding: Holding;
+  instrumentKey?: string;
+  issuerKey?: string;
+  assetClass: AssetClassResult;
+  effectiveClass: AssetClass;
+  cicAlternatives: string[];
+  attrs: Record<AttrKey, Resolved>;
+  analytics?: BondAnalytics;
+  issues: string[];
+}
+
+export interface PortfolioDerivations {
+  nav: Resolved<number>;
+  cashRatio: Resolved<number>;
+  modifiedDuration: Resolved<number>;
+}
+
+export interface ResolveResult {
+  rows: ResolvedHolding[];
+  portfolio: PortfolioDerivations;
+}
+
+/** Map a known CIC back to an asset class (exact category+sub match, else the category's first class). */
+export function cicToAssetClass(cic: string): AssetClass | undefined {
+  const cat = cic[2];
+  const sub = cic[3];
+  const entries = Object.entries(ASSET_CLASSES) as [AssetClass, (typeof ASSET_CLASSES)[AssetClass]][];
+  return (entries.find(([, i]) => i.cic[0] === cat && i.cic[1] === sub) ?? entries.find(([, i]) => i.cic[0] === cat))?.[0];
+}
+
+function masterValue(rec: MasterRecord | undefined, attr: AttrKey) {
+  return rec?.attrs[attr];
+}
+
+const round = (x: number, d = 10) => Math.round(x * 10 ** d) / 10 ** d;
+
+export function resolveHoldings(holdings: Holding[], ctx: ResolveContext): ResolveResult {
+  const rows = holdings.map((h) => resolveOne(h, ctx));
+
+  // NAV: user entry, else the sum of all holdings (incl. accrued) — flagged as derived.
+  let nav: Resolved<number>;
+  if (ctx.nav && ctx.nav > 0) nav = { value: ctx.nav, source: 'user', method: 'Entered in the fund form', confidence: 'high' };
+  else {
+    const vals = rows.map((r) => r.attrs.mv_port_dirty.value);
+    const known = vals.filter((v): v is number => typeof v === 'number');
+    nav = known.length
+      ? derived(
+          round(known.reduce((a, b) => a + b, 0), 2),
+          'Sum of market values incl. accrued interest of all holdings',
+          known.length === vals.length ? 'medium' : 'low',
+          'Enter the official NAV in the fund form; the sum of holdings ignores liabilities and receivables not in the file.' +
+            (known.length < vals.length ? ` ${vals.length - known.length} holding(s) have no value and are not included.` : ''),
+        )
+      : missing('No NAV entered and no market values available.');
+  }
+
+  // Weights (field 26): file value, else value / NAV.
+  for (const r of rows) {
+    const fileW = r.holding.file.weight;
+    if (fileW !== undefined) r.attrs.weight = fromFile(round(fileW), 'Input file (scaled to 1 = 100%)');
+    else if (typeof r.attrs.mv_port_dirty.value === 'number' && typeof nav.value === 'number' && nav.value !== 0) {
+      r.attrs.weight = derived(
+        round(r.attrs.mv_port_dirty.value / nav.value),
+        `Market value incl. accrued (portfolio ccy) ÷ NAV (${nav.source === 'user' ? 'entered' : 'sum of holdings'})`,
+        minConfidence(r.attrs.mv_port_dirty.confidence, nav.source === 'user' ? 'high' : 'medium'),
+      );
+    } else r.attrs.weight = missing('No market value or NAV.');
+  }
+
+  // Portfolio-level derivations (fields 9 and 10).
+  let cash = 0;
+  let cashKnown = false;
+  let dur = 0;
+  let durWeight = 0;
+  for (const r of rows) {
+    const w = r.attrs.weight.value;
+    const cic = r.attrs.cic.value;
+    if (typeof w !== 'number') continue;
+    if (typeof cic === 'string' && ['71', '72', '73'].includes(cic.slice(2))) {
+      cash += w;
+      cashKnown = true;
+    }
+    if (typeof r.attrs.modified_duration.value === 'number') {
+      dur += w * r.attrs.modified_duration.value;
+      durWeight += w;
+    }
+  }
+  const cashRatio = derived(
+    round(cash),
+    'Sum of weights of holdings with CIC xx71, xx72, xx73 (cash and short-term deposits; xx74 excluded per field 9 comment)',
+    cashKnown ? 'medium' : 'low',
+    cashKnown ? undefined : 'No cash holdings identified.',
+  );
+  const modifiedDuration =
+    durWeight > 0
+      ? derived(
+          round(dur, 6),
+          'Σ weight × modified duration over holdings with a computed duration (others count as 0)',
+          'low',
+          `Durations computed for holdings worth ${(durWeight * 100).toFixed(1)}% of NAV; floating-rate notes, funds and derivatives without data count as 0.`,
+        )
+      : missing('No holding has a modified duration.');
+
+  return { rows, portfolio: { nav, cashRatio, modifiedDuration } };
+}
+
+function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
+  const f = h.file;
+  const issues: string[] = [];
+  const attrs = Object.fromEntries(ATTRS.map((a) => [a.key, missing()])) as unknown as Record<AttrKey, Resolved>;
+
+  const isin = f.isin && isValidIsin(f.isin) ? f.isin : undefined;
+  if (f.isin && !isin) issues.push(`"${f.isin}" is not a valid ISIN (check digit or format).`);
+  const iKey = instrumentKey({ isin, otherId: f.other_identifier ?? (isin ? undefined : f.isin), name: f.security_name });
+  const inst = ctx.master?.get('instrument', iKey);
+
+  /** file → master → derived, with master "override" beating the file. */
+  const pick = (attr: AttrKey, fileVal: Resolved | undefined, derivedVal?: Resolved, rec?: MasterRecord): Resolved => {
+    const m = masterValue(rec ?? (ATTR[attr].master === 'issuer' ? undefined : inst), attr);
+    if (m?.override) return fromMaster(m.value, 'Security master (overrides the file)');
+    if (hasValue(fileVal)) return fileVal;
+    if (m) return fromMaster(m.value);
+    if (hasValue(derivedVal)) return derivedVal;
+    return derivedVal ?? missing();
+  };
+  const file = <T extends Scalar>(v: T | undefined, method?: string) => (v === undefined ? undefined : fromFile(v, method));
+
+  // --- Identification -------------------------------------------------------
+  attrs.identifier = f.isin ? fromFile(f.isin) : f.other_identifier ? fromFile(f.other_identifier) : missing('No identifier in the file.');
+  attrs.id_type = isin
+    ? derived('1', 'Valid ISIN → type 1 (ISO 6166)', 'high')
+    : missing(f.other_identifier ? 'Identifier is not an ISIN: choose the identification type.' : undefined);
+  attrs.name = f.security_name ? fromFile(f.security_name) : missing();
+
+  // --- Asset class & CIC ----------------------------------------------------
+  const masterCic = masterValue(inst, 'cic');
+  const fileCic = f.cic && parseCic(f.cic).valid ? f.cic : undefined;
+  if (f.cic && !fileCic) issues.push(`CIC "${f.cic}" in the file is not valid: ${parseCic(f.cic).errors.join(' ')}`);
+  const ac = inferAssetClass({
+    name: f.security_name,
+    assetTypeText: f.asset_type,
+    section: h.section,
+    isin: f.isin,
+    hasCoupon: f.coupon !== undefined,
+    hasMaturity: f.maturity_date !== undefined,
+    price: f.price,
+    maturity: f.maturity_date,
+    valuationDate: ctx.valuationDate,
+  });
+  const derivedCic = deriveCic({ assetClass: ac.assetClass, assetClassConfidence: ac.confidence, isEtf: ac.isEtf, isin: f.isin, fileCountry: f.country });
+  attrs.cic = pick('cic', file(fileCic), derivedCic.cic);
+  const finalCic = typeof attrs.cic.value === 'string' ? attrs.cic.value : undefined;
+  const effectiveClass = (finalCic && (fileCic || masterCic) ? cicToAssetClass(finalCic) : undefined) ?? ac.assetClass;
+  const info = ASSET_CLASSES[effectiveClass];
+  attrs.asset_class = derived(info.label, ac.evidence.join('; '), effectiveClass === ac.assetClass ? ac.confidence : 'high');
+  attrs.quotation_zone = quotationZoneFromCic(finalCic) ?? missing('No CIC.');
+  attrs.underlying_category = underlyingCategoryFromCic(finalCic) ?? missing('No CIC.');
+  const isFI = !!info.isFixedIncome || ['deposit_short', 'deposit_long'].includes(effectiveClass);
+  const hints = ac.parsedName.hints;
+  const floating = hints.has('floating');
+
+  // --- Currency ---------------------------------------------------------------
+  const ccyFromName = !f.currency && effectiveClass === 'cash' ? f.security_name?.match(/\b[A-Z]{3}\b/)?.[0] : undefined;
+  attrs.currency = f.currency
+    ? fromFile(f.currency)
+    : ccyFromName
+      ? derived(ccyFromName, `Currency code in the name "${f.security_name}"`, 'medium')
+      : missing('No currency in the file.');
+  const ccy = typeof attrs.currency.value === 'string' ? attrs.currency.value : undefined;
+
+  // --- Interest rate characteristics ----------------------------------------
+  const pn = ac.parsedName;
+  attrs.coupon = pick(
+    'coupon',
+    file(f.coupon),
+    isFI && pn.coupon && !floating ? derived(pn.coupon.value, `Parsed from name ("${pn.coupon.text}")`, pn.coupon.confidence) : floating && isFI ? missing('Floating-rate note: current coupon (last fixing + margin) is not in the file.') : undefined,
+  );
+  attrs.maturity = pick(
+    'maturity',
+    file(f.maturity_date),
+    pn.maturity && (isFI || effectiveClass === 'future' || effectiveClass === 'forward')
+      ? derived(pn.maturity.value, `Parsed from name ("${pn.maturity.text}")`, pn.maturity.confidence, pn.maturity.note)
+      : pn.maturityYear && isFI
+        ? missing(`Name only gives the year ${pn.maturityYear}; enter the exact maturity date.`)
+        : undefined,
+  );
+  if (f.maturity_date && pn.maturity && pn.maturity.value !== f.maturity_date && pn.maturity.confidence !== 'low') {
+    issues.push(`Maturity in the file (${f.maturity_date}) differs from the name (${pn.maturity.value}).`);
+  }
+  if (f.coupon !== undefined && pn.coupon && Math.abs(pn.coupon.value - f.coupon) > 1e-6 && !floating) {
+    issues.push(`Coupon in the file (${f.coupon}) differs from the name (${pn.coupon.value}).`);
+  }
+  attrs.interest_rate_type = pick(
+    'interest_rate_type',
+    undefined,
+    !isFI
+      ? undefined
+      : floating
+        ? derived('Floating', 'Floating-rate keyword in the name', 'medium')
+        : hints.has('inflation_linked')
+          ? derived('Inflation_linked', 'Inflation-linked keyword in the name', 'medium')
+          : hasValue(attrs.coupon)
+            ? derived('Fixed', 'Has a coupon and no floating/inflation keyword', attrs.coupon.confidence === 'high' ? 'medium' : 'low')
+            : undefined,
+  );
+  attrs.coupon_frequency = pick('coupon_frequency', undefined);
+  for (const k of ['redemption_type', 'redemption_rate', 'callable', 'call_date', 'securitisation', 'guarantee', 'cqs', 'rating_agency'] as AttrKey[]) {
+    attrs[k] = pick(k, undefined);
+  }
+  attrs.covered = pick('covered', undefined, ['covered_bond', 'gov_covered_bond'].includes(effectiveClass) ? derived('C', 'Classified as a covered bond', 'medium') : undefined);
+  attrs.subordinated = pick(
+    'subordinated',
+    undefined,
+    ['subordinated_bond', 'hybrid_bond'].includes(effectiveClass) ? derived('Y', 'Subordinated/hybrid keyword in the name', 'medium') : undefined,
+  );
+  attrs.credit_rating = pick('credit_rating', file(f.rating));
+
+  // --- Valuation --------------------------------------------------------------
+  const fxEntry = ccy ? (ccy === ctx.portfolioCurrency ? { rate: 1, source: 'identity' as const } : ctx.fx[ccy]) : undefined;
+  const fx = fxEntry?.rate;
+  attrs.fx_rate = fx !== undefined ? derived(fx, fxEntry!.source === 'user' ? 'FX rate entered by user' : fxEntry!.source === 'identity' ? 'Portfolio currency' : 'Implied from local and portfolio values in the file', fxEntry!.source === 'implied' ? 'medium' : 'high') : missing(ccy ? `No FX rate for ${ccy}: enter it in the fund step.` : 'No currency.');
+  attrs.price = file(f.price) ?? missing();
+
+  attrs.nominal = f.nominal !== undefined
+    ? fromFile(f.nominal)
+    : isFI && f.quantity !== undefined
+      ? derived(f.quantity, 'Quantity column used as nominal amount for this debt instrument', 'medium')
+      : missing();
+  attrs.quantity = f.quantity !== undefined && !(isFI && f.nominal === undefined) ? fromFile(f.quantity) : missing(isFI ? 'Debt instrument: quantity reported as nominal (field 19).' : undefined);
+  const nominal = typeof attrs.nominal.value === 'number' ? attrs.nominal.value : undefined;
+
+  // Bond analytics (accrued, yield, duration) — fixed coupon bonds only.
+  const coupon = typeof attrs.coupon.value === 'number' ? attrs.coupon.value : undefined;
+  const maturity = typeof attrs.maturity.value === 'string' ? attrs.maturity.value : undefined;
+  const freqMaster = attrs.coupon_frequency.value !== undefined ? Number(attrs.coupon_frequency.value) : undefined;
+  const frequency = ([1, 2, 4, 12].includes(freqMaster ?? 0) ? freqMaster : ctx.frequencyByCurrency[ccy ?? ''] ?? ctx.frequencyByCurrency['*'] ?? 1) as Frequency;
+  let analytics: BondAnalytics | undefined;
+  const fixedRate = attrs.interest_rate_type.value === 'Fixed' || (attrs.interest_rate_type.value === undefined && coupon !== undefined && !floating);
+  if (info.isFixedIncome && fixedRate && coupon !== undefined && maturity && ctx.valuationDate) {
+    analytics = bondAnalytics({ coupon, maturity, settlement: ctx.valuationDate, cleanPrice: f.price, frequency, dayCount: ctx.dayCount });
+  }
+  const inputConf = minConfidence(attrs.coupon.confidence, attrs.maturity.confidence, freqMaster ? 'high' : 'medium');
+  const freqNote = freqMaster ? '' : ` Coupon frequency ${frequency}/year is an assumption (set it in the security master).`;
+
+  let accrued: Resolved<number>;
+  if (f.accrued_interest !== undefined) accrued = fromFile(f.accrued_interest, 'Input file (assumed quotation currency)');
+  else if (analytics && nominal !== undefined) {
+    accrued = derived(round((analytics.accruedPer100 * nominal) / 100, 2), `Computed: ${analytics.assumptions}`, inputConf, freqNote.trim() || undefined);
+  } else if (!isFI) accrued = derived(0, `No accrued interest for ${info.label.toLowerCase()}`, 'high');
+  else accrued = missing(floating ? 'Floating-rate note: accrued interest needs the current fixing.' : 'Coupon, maturity, nominal or valuation date missing: accrued interest not computed.');
+  attrs.accrued_local = accrued;
+  const ai = accrued.value;
+
+  // Market value in local currency as given/derived (convention not yet applied).
+  let mvLocal: Resolved<number> | undefined;
+  let computedClean = false;
+  if (f.market_value_local !== undefined) mvLocal = fromFile(f.market_value_local);
+  else if (f.market_value_portfolio !== undefined && fx) {
+    mvLocal = derived(round(f.market_value_portfolio / fx, 2), `Portfolio-currency value ÷ FX rate ${fx}`, fxEntry?.source === 'implied' ? 'medium' : 'high');
+  } else if (f.price !== undefined && isFI && nominal !== undefined) {
+    mvLocal = derived(round((nominal * f.price) / 100, 2), 'Nominal × clean price ÷ 100', 'medium');
+    computedClean = true;
+  } else if (f.price !== undefined && f.quantity !== undefined) {
+    mvLocal = derived(round(f.quantity * f.price, 2), 'Quantity × price', 'medium');
+    computedClean = true;
+  }
+
+  // Clean or dirty?
+  let conv: 'clean' | 'dirty' = ctx.mvConvention === 'dirty' ? 'dirty' : 'clean';
+  let convNote = '';
+  if (computedClean) conv = 'clean';
+  else if (ctx.mvConvention === 'auto' && isFI && mvLocal?.value !== undefined && nominal !== undefined && f.price !== undefined && ai !== undefined) {
+    const d = detectCleanDirty(mvLocal.value, nominal, f.price, ai);
+    if (d) {
+      conv = d;
+      convNote = `File value matches nominal × price ${d === 'clean' ? 'without' : 'plus'} accrued interest → treated as ${d}.`;
+    } else convNote = 'Could not tell whether the file value includes accrued interest; assumed clean.';
+  } else if (ctx.mvConvention === 'auto' && isFI) convNote = 'Assumed the file value excludes accrued interest (clean).';
+
+  const splitValue = (base: Resolved<number> | undefined, factor: number, label: string): [Resolved, Resolved] => {
+    if (!base || base.value === undefined) return [missing(`No ${label} market value.`), missing(`No ${label} market value.`)];
+    const v = base.value;
+    const aiConv = ai !== undefined ? ai * factor : undefined;
+    const keep = (value: number, extra?: string): Resolved => ({ ...base, value: round(value, 2), ...(extra ? { note: [base.note, extra].filter(Boolean).join(' ') } : {}) });
+    if (aiConv === undefined) {
+      const other = derived(round(v, 2), `Same as the ${conv} value: accrued interest unknown`, 'low', 'Accrued interest is unknown; clean and dirty values are reported as equal.');
+      return conv === 'clean' ? [other, keep(v, convNote)] : [keep(v, convNote), other];
+    }
+    if (aiConv === 0) return [keep(v), keep(v)];
+    const conf = minConfidence(base.confidence, accrued.confidence);
+    if (conv === 'clean') return [derived(round(v + aiConv, 2), `${base.source === 'file' ? 'File' : 'Derived'} clean value + accrued interest`, conf, convNote || undefined), keep(v, convNote)];
+    return [keep(v, convNote), derived(round(v - aiConv, 2), `${base.source === 'file' ? 'File' : 'Derived'} dirty value − accrued interest`, conf, convNote || undefined)];
+  };
+  [attrs.mv_local_dirty, attrs.mv_local_clean] = splitValue(mvLocal, 1, 'local');
+
+  let mvPort: Resolved<number> | undefined;
+  if (f.market_value_portfolio !== undefined) mvPort = fromFile(f.market_value_portfolio);
+  else if (mvLocal?.value !== undefined && fx) {
+    mvPort = derived(round(mvLocal.value * fx, 2), `Local value × FX rate ${fx} (${fxEntry!.source})`, minConfidence(mvLocal.confidence, fxEntry!.source === 'implied' ? 'medium' : 'high'));
+  }
+  [attrs.mv_port_dirty, attrs.mv_port_clean] = splitValue(mvPort, fx ?? 1, 'portfolio-currency');
+  if (!mvPort && mvLocal && !fx) {
+    attrs.mv_port_dirty = missing(`No FX rate for ${ccy}.`);
+    attrs.mv_port_clean = missing(`No FX rate for ${ccy}.`);
+  }
+
+  if (analytics?.modifiedDuration !== undefined) {
+    attrs.modified_duration = derived(round(analytics.modifiedDuration, 6), `Computed from coupon, maturity and clean price: ${analytics.assumptions}`, minConfidence(inputConf, 'medium'), freqNote.trim() || undefined);
+    attrs.valuation_yield = derived(
+      round(analytics.yieldToMaturity! * 100, 6),
+      `Yield to maturity solved from the clean price + accrued: ${analytics.assumptions}`,
+      minConfidence(inputConf, 'medium'),
+      `Expressed in percent like the coupon (e.g. 2.5 = 2.5%).${freqNote}`,
+    );
+  } else if (info.isFixedIncome) {
+    const why = floating
+      ? 'Floating-rate note: duration and yield need index curves (not available).'
+      : !ctx.valuationDate
+        ? 'Enter the valuation date to compute duration and yield.'
+        : 'Needs coupon, maturity and clean price.';
+    attrs.modified_duration = missing(why);
+    attrs.valuation_yield = missing(why);
+  }
+
+  // --- Issuer ------------------------------------------------------------------
+  attrs.issuer_name = pick('issuer_name', file(f.issuer_name));
+  const lei = f.issuer_lei && isValidLei(f.issuer_lei) ? f.issuer_lei : undefined;
+  if (f.issuer_lei && !lei) issues.push(`Issuer LEI "${f.issuer_lei}" fails the ISO 17442 check.`);
+  const eKey = issuerKey({ lei, name: typeof attrs.issuer_name.value === 'string' ? attrs.issuer_name.value : undefined });
+  const iss = ctx.master?.get('issuer', eKey);
+  attrs.issuer_id = pick('issuer_id', lei ? fromFile(lei, 'Issuer LEI from the file') : undefined, undefined, iss);
+  const idVal = typeof attrs.issuer_id.value === 'string' ? attrs.issuer_id.value : undefined;
+  attrs.issuer_id_type = pick('issuer_id_type', undefined, idVal && isValidLei(idVal) ? derived('1', 'Issuer id is a valid LEI → type 1', 'high') : undefined, iss);
+  for (const k of ['group_name', 'group_id', 'group_id_type', 'nace'] as AttrKey[]) attrs[k] = pick(k, undefined, undefined, iss);
+
+  const isinCountry = f.isin?.slice(0, 2);
+  let countryDerived: Resolved | undefined;
+  if (effectiveClass === 'supranational_bond') countryDerived = derived('XA', 'Supranational issuer → XA (allowed by field 52)', 'medium');
+  else if (['gov_bond', 'treasury_bill', 'gov_covered_bond'].includes(effectiveClass) && isinCountry && isCountry(isinCountry)) {
+    countryDerived = derived(isinCountry, `Government bond: issuer country taken from the ISIN prefix ${isinCountry}`, 'medium', 'Estimated.');
+  } else if (ctx.issuerCountryFromIsin && isinCountry && isCountry(isinCountry) && !['cash', 'deposit_short', 'deposit_long'].includes(effectiveClass)) {
+    countryDerived = derived(isinCountry, `ISIN prefix ${isinCountry}`, 'low', 'Estimated: the ISIN prefix is not always the issuer country (e.g. depositary receipts, foreign-registered issues).');
+  }
+  attrs.issuer_country = pick(
+    'issuer_country',
+    f.country && isCountry(f.country) ? fromFile(f.country, 'Country column in the file (assumed to be the issuer country)') : undefined,
+    countryDerived ?? missing(effectiveClass === 'cash' ? 'Cash: issuer is the depositary bank — enter its country.' : undefined),
+    iss,
+  );
+  const zone = economicZone(typeof attrs.issuer_country.value === 'string' ? attrs.issuer_country.value : undefined);
+  attrs.issuer_area = zone ? derived(zone, `Issuer country ${attrs.issuer_country.value} → economic area ${zone}`, minConfidence(attrs.issuer_country.confidence, 'high')) : missing();
+
+  return { holding: h, instrumentKey: iKey, issuerKey: eKey, assetClass: ac, effectiveClass, cicAlternatives: derivedCic.alternatives, attrs, analytics, issues };
+}
+
+/** Confidence label helper for UIs. */
+export const confidenceOf = (r: Resolved): Confidence | undefined => r.confidence;

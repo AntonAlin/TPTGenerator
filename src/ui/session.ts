@@ -4,6 +4,7 @@
  */
 import { readFile, type RawWorkbook } from '../ingest/readFile.ts';
 import { detectTable, type DetectedTable } from '../ingest/table.ts';
+import { parseDate } from '../ingest/values.ts';
 import { classifyColumns, type ColumnPrediction, type MappingSource } from '../detect/classify.ts';
 import type { CanonicalField } from '../detect/canonical.ts';
 import type { ColumnInput } from '../detect/features.ts';
@@ -84,4 +85,15 @@ export function downloadBlob(data: BlobPart, fileName: string, type: string) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** A date found in the title/metadata rows above the table (e.g. "Per: 2026-09-30"), as a valuation date suggestion. */
+export function dateFromMetadata(table: DetectedTable): string | undefined {
+  for (const s of table.skipped) {
+    if (s.reason !== 'above-header') continue;
+    const m = /(\d{4}-\d{2}-\d{2}|\d{1,2}[./-]\d{1,2}[./-]\d{4}|\d{1,2}[- ][A-Za-zé]{3,9}[- ]\d{4})/.exec(s.preview);
+    const iso = m ? parseDate(m[1]) : undefined;
+    if (iso) return iso;
+  }
+  return undefined;
 }

@@ -133,3 +133,34 @@ tr.low .conf .bar span { background: var(--warn); }
 ul.reasons { margin: 0; padding-left: 16px; }
 details summary { cursor: pointer; }
 .table-wrap.unbounded { max-height: none; }
+
+/* ---- Phase 3: fund form, security master ---- */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px 16px; }
+.field { display: flex; flex-direction: column; gap: 3px; }
+.field-label { font-size: 0.85rem; font-weight: 600; }
+.field input, .field select, .editor input, .editor select, .narrow-wide { font: inherit; padding: 5px 7px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); max-width: 100%; }
+.field.compact input, .field.compact select { width: 100%; min-width: 90px; }
+.field.has-error input, .field.has-error select { border-color: var(--bad); }
+.narrow-wide { width: 9em; }
+.hint { font-size: 0.8rem; color: var(--muted); }
+.freq-list { display: flex; flex-wrap: wrap; gap: 6px 12px; }
+.freq-list select { padding: 2px 4px; }
+button.linklike { background: none; border: none; padding: 0; text-align: left; font: inherit; }
+tr.missing-row td { background: var(--warn-soft); }
+.src { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; font-size: 10px; font-weight: 700; color: #fff; vertical-align: 1px; flex: none; }
+.src-file { background: #2f6fb5; }
+.src-master { background: #7a4fb5; }
+.src-user { background: #2f8a4c; }
+.src-derived { background: #b07a12; }
+.src-missing { background: transparent; color: var(--bad); border: 1.5px solid var(--bad); }
+.src.low { box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--warn); }
+.legend span { margin-right: 10px; white-space: nowrap; }
+.master-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 1000px) { .master-layout { grid-template-columns: 1fr; } }
+.master-grid tbody tr { cursor: pointer; }
+.master-grid td { max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+td.req-missing, tr.req-missing td:first-child { box-shadow: inset 3px 0 0 var(--bad); }
+.detail-table td { white-space: normal !important; vertical-align: top; }
+.detail-table td:first-child { width: 34%; }
+.editor { margin-top: 6px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); display: flex; flex-direction: column; gap: 6px; }
+.editor .checkbox { margin-right: 10px; }
