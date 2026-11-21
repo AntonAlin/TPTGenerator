@@ -397,8 +397,8 @@ export function HowItWorks() {
           <li><strong>Compliance:</strong> UCITS limits such as 5/10/40, issuer and counterparty limits, the fund's own investment rules, global exposure by commitment or VaR, a breach history and a control log.</li>
           <li><strong>Performance:</strong> risk and return against a benchmark, Brinson attribution, changes between two dates, and pre-trade checks of a trade before you make it.</li>
           <li>
-            <strong>Reporting:</strong> a PDF report, draft PRIIPs KIDs and the FinDatEx EPT file, and a TPT of your own fund with the model figures this converter
-            leaves blank, such as option deltas, gamma and credit sensitivity.
+            <strong>Reporting:</strong> a PDF report, draft PRIIPs KIDs and the FinDatEx EPT file. Nexus also reads TPT files you receive from other managers; the
+            TPT for your own investors is made here.
           </li>
         </ul>
         <p class="small muted">
