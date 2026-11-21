@@ -14,8 +14,9 @@ afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
 describe('random portfolios', () => {
   const seeds = Array.from({ length: 24 }, (_, i) => 31_000 + i);
+  // Every fourth seed is written as legacy Excel 97-2003 (.xls), which the generator only makes on request.
   it.each(seeds)('seed %i converts with every holding right', (seed) => {
-    const truth = generatePortfolio(seed, dir);
+    const truth = generatePortfolio(seed, dir, seed % 4 === 0 ? { format: 'xls' } : {});
     const e = evaluate(truth, dir);
     const wrong = [
       ...e.mapping.filter((m) => !m.ok).map((m) => `map "${m.header}" → ${m.got} (want ${m.expected})`),

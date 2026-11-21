@@ -37,7 +37,7 @@ export interface Truth {
   seed: number;
   file: string;
   language: 'en' | 'sv' | 'de' | 'fr';
-  format: 'xlsx' | 'csv';
+  format: 'xlsx' | 'csv' | 'xls';
   baseCurrency: string;
   valuationDate: string;
   rows: TruthRow[];
@@ -104,7 +104,14 @@ const SOVEREIGNS: [string, string, string][] = [['SE', 'SEK', 'SWEDEN'], ['DE', 
 const SYL = ['nor', 'vik', 'sand', 'berg', 'atl', 'tel', 'gen', 'ax', 'lux', 'mar', 'tor', 'ika', 'lun', 'ess', 'kin', 'ro', 'max', 'tri', 'on', 'ex', 'vol', 'dal'];
 const SUFFIX: Record<string, string[]> = { SE: ['AB', 'AB ser. B'], DE: ['AG', 'SE'], FR: ['SA'], US: ['Inc', 'Corp'], GB: ['plc'], NO: ['ASA'], FI: ['Oyj'], DK: ['A/S'] };
 
-export function generatePortfolio(seed: number, outDir: string): Truth {
+export interface GenerateOptions {
+  /** Force the header language (default: random from the seed). */
+  language?: 'en' | 'sv' | 'de' | 'fr';
+  /** Force the file format; xls (legacy Excel 97-2003) is only produced when asked for. */
+  format?: 'xlsx' | 'csv' | 'xls';
+}
+
+export function generatePortfolio(seed: number, outDir: string, opts: GenerateOptions = {}): Truth {
   const rnd = mulberry32(seed);
   const pick = <T,>(xs: readonly T[]) => xs[Math.floor(rnd() * xs.length)];
   const int = (a: number, b: number) => a + Math.floor(rnd() * (b - a + 1));
@@ -114,9 +121,12 @@ export function generatePortfolio(seed: number, outDir: string): Truth {
     return n[0].toUpperCase() + n.slice(1);
   };
 
-  const language = pick(['en', 'sv', 'de', 'fr'] as const);
+  // The draws happen even when overridden, so a seed gives the same holdings whatever the options.
+  const randomLanguage = pick(['en', 'sv', 'de', 'fr'] as const);
+  const language = opts.language ?? randomLanguage;
   const L = LANG[language];
-  const format = rnd() < 0.5 ? 'xlsx' : 'csv';
+  const randomFormat = rnd() < 0.5 ? 'xlsx' : 'csv';
+  const format = opts.format ?? randomFormat;
   const base = pick(['SEK', 'EUR'] as const);
   const fx = (c: string) => FX[c] / FX[base];
   const valuationDate = '2026-09-30';
@@ -254,10 +264,10 @@ export function generatePortfolio(seed: number, outDir: string): Truth {
 
   mkdirSync(outDir, { recursive: true });
   const file = `random_${language}_${seed}.${format}`;
-  if (format === 'xlsx') {
+  if (format === 'xlsx' || format === 'xls') {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'Holdings');
-    writeFileSync(resolve(outDir, file), XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer);
+    writeFileSync(resolve(outDir, file), XLSX.write(wb, { type: 'buffer', bookType: format === 'xls' ? 'biff8' : 'xlsx' }) as Buffer);
   } else {
     const locale = { en: 'en-US', sv: 'sv-SE', de: 'de-DE', fr: 'fr-FR' }[language];
     const delim = language === 'en' ? ',' : ';';
