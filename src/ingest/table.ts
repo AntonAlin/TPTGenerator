@@ -6,6 +6,7 @@
  */
 import type { RawCell } from './readFile.ts';
 import { parseDate, parseNumber } from './values.ts';
+import type { SplitChoice, TableSplit } from './split.ts';
 
 export type SkipReason =
   | 'blank'
@@ -53,6 +54,8 @@ export interface DetectedTable {
   droppedColumns: number[];
   /** Totals and sub-totals found in the table; used to check which values are market values. */
   totals: TotalRow[];
+  /** Set when the file holds several portfolios or dates and the rows were cut to one (see split.ts). */
+  split?: TableSplit & { choice: SplitChoice };
 }
 
 const SUBTOTAL_RE = /\b(sub-?\s*total|delsumma|zwischensumme|sous-?\s*total)\b|^(summa|summe|total|somme)\s+\S/i;

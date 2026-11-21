@@ -111,11 +111,13 @@ const TYPE_TEXT: [AssetClass, RegExp][] = [
   ['fund_other', /\b(funds?|fond(er|s)?|fondandelar|investment fund|mutual fund|ucits|opcvm|cis|ciu|etf|sicav)\b|fond\b/i],
   ['future', /\b(futures?|terminer|terminskontrakt)\b/i],
   ['forward', /\b(forwards?|fx forward|valutatermin(er)?|devisentermin\w*|fra)\b/i],
+  ['credit_derivative', /\b(cds|credit derivatives?|credit default swaps?|kreditderivat\w*)\b/i],
   ['swap', /\b(swaps?)\b/i],
   ['call_option', /\b(call|köpoption)/i],
   ['put_option', /\b(put|säljoption)/i],
   ['warrant', /\b(warrants?|optionsschein)/i],
-  ['credit_derivative', /\b(cds|credit derivative)/i],
+  // A plain "Option" type: call or put is read from the name (see fromText).
+  ['option_generic' as AssetClass, /\b(options?|optioner|optionen)\b/i],
   ['covered_bond', /(covered|s[aä]kerst[aä]lld|pfandbrief|fonci[eè]re)/i],
   ['convertible_bond', /\b(convertible|konvertib\w*|wandel\w*)\b/i],
   ['treasury_bill', /\b(t-?bill|statsskuldv[aä]xel)/i],
@@ -160,7 +162,8 @@ const UNDERLYING: { re: RegExp; kind: 'equity' | 'rate' | 'fx' | 'commodity' | '
   { re: /\b(CCS|CROSS[- ]CURRENCY|CCIRS)\b/i, kind: 'ccs' },
   { re: /\b(IRS|INTEREST RATE SWAP|OIS)\b/i, kind: 'irs' },
   { re: /\b(FRA|FORWARD RATE AGREEMENT)\b/i, kind: 'fra' },
-  { re: /\b(FX|CURRENCY|VALUTA\w*|DEVISEN\w*)\b|\b[A-Z]{3}\/[A-Z]{3}\b/i, kind: 'fx' },
+  // Two different currency codes ("USD put / SEK call", "Sell EUR / buy SEK") also mean a currency underlying.
+  { re: /\b(FX|CURRENCY|VALUTA\w*|DEVISEN\w*)\b|\b[A-Z]{3}\/[A-Z]{3}\b|\b(USD|EUR|SEK|NOK|DKK|GBP|JPY|CHF|CAD|AUD|NZD|CNY|CNH|HKD|SGD|PLN|CZK|HUF|ISK|TRY|ZAR|MXN|BRL|INR|KRW)\b.*?\b(?!\2\b)(USD|EUR|SEK|NOK|DKK|GBP|JPY|CHF|CAD|AUD|NZD|CNY|CNH|HKD|SGD|PLN|CZK|HUF|ISK|TRY|ZAR|MXN|BRL|INR|KRW)\b/i, kind: 'fx' },
   { re: /\b(BUND|BOBL|SCHATZ|BUXL|T-?NOTE|T-?BOND|TREASURY|GILT|OAT|BTP|\d+ ?YR|EURIBOR|SOFR|SONIA|STIR|BOND|RATE)\b/i, kind: 'rate' },
   { re: /\b(OIL|BRENT|WTI|GOLD|SILVER|COPPER|GAS|COMMODIT\w*|WHEAT|CORN)\b/i, kind: 'commodity' },
   { re: /\b(OMXS?\d*|STOXX|S&P|SPX|DAX|FTSE|NIKKEI|CAC|NASDAQ|MSCI|INDEX|EQUITY|AKTIE\w*)\b/i, kind: 'equity' },
@@ -184,13 +187,45 @@ function derivativeSub(cls: AssetClass, name: string | undefined): AssetClassRes
   return undefined;
 }
 
-function fromText(text: string | undefined): { cls?: AssetClass; etf: boolean; match?: string } {
+/** Call or put from the name: the first of the two words that appears ("USD put / SEK call" is a put). */
+function optionFromName(name: string | undefined): AssetClass | undefined {
+  const put = name ? name.search(/\b(put|säljoption)\b/i) : -1;
+  const call = name ? name.search(/\b(call|köpoption)\b/i) : -1;
+  if (put < 0 && call < 0) return undefined;
+  return put >= 0 && (call < 0 || put < call) ? 'put_option' : 'call_option';
+}
+
+/**
+ * A "money market" type that is not a fund ("Money market / T-bill"): the instrument itself, read
+ * from the name. A money market fund says fund.
+ */
+function moneyMarketInstrument(text: string, h: Set<NameHint>): AssetClass | undefined {
+  if (/\b(funds?|fond(er|s)?|fondandelar|opcvm|ucits|sicav)\b/i.test(text)) return undefined;
+  if (h.has('commercial_paper')) return 'commercial_paper';
+  if (h.has('treasury_bill')) return 'treasury_bill';
+  if (h.has('deposit')) return 'deposit_short';
+  if (/\b(t-?bills?|statsskuldv[aä]xl\w*)/i.test(text)) return 'treasury_bill';
+  return undefined;
+}
+
+function fromText(text: string | undefined, name?: string, h: Set<NameHint> = new Set()): { cls?: AssetClass; etf: boolean; match?: string; guessed?: string } {
   if (!text) return { etf: false };
   const etf = /\betf\b/i.test(text);
   for (const [cls, re] of TYPE_TEXT) {
     if (cls === ('etf_marker' as AssetClass)) continue;
     const m = re.exec(text);
-    if (m) return { cls, etf, match: m[0] };
+    if (!m) continue;
+    if (cls === ('option_generic' as AssetClass)) {
+      const fromName = optionFromName(name);
+      return fromName
+        ? { cls: fromName, etf, match: m[0] }
+        : { cls: 'call_option', etf, match: m[0], guessed: 'Neither "call" nor "put" in the name: read as a call; check it' };
+    }
+    if (cls === 'fund_money_market') {
+      const instrument = moneyMarketInstrument(text, h);
+      if (instrument) return { cls: instrument, etf, match: m[0] };
+    }
+    return { cls, etf, match: m[0] };
   }
   return { etf };
 }
@@ -211,7 +246,7 @@ const isFund = (c: AssetClass) => c.startsWith('fund_');
 const parsedHasBondTerms = (h: Set<NameHint>) => h.has('bond') || h.has('floating') || h.has('treasury_bill') || h.has('commercial_paper') || h.has('deposit');
 
 /** Refine a broad class using name hints (e.g. bond → covered bond, fund → debt fund). */
-function refine(base: AssetClass, h: Set<NameHint>, input: AssetClassInput): AssetClass {
+function refine(base: AssetClass, h: Set<NameHint>, input: AssetClassInput, keepCorporate = false): AssetClass {
   if (isFund(base)) return base === 'fund_other' ? fundSubtype(h) : base;
   if (['corporate_bond', 'gov_bond'].includes(base)) {
     if (h.has('securitised')) return 'collateralised_security';
@@ -224,7 +259,8 @@ function refine(base: AssetClass, h: Set<NameHint>, input: AssetClassInput): Ass
     if (h.has('hybrid')) return 'hybrid_bond';
     if (h.has('subordinated')) return 'subordinated_bond';
     if (h.has('commercial_paper')) return 'commercial_paper';
-    if (h.has('government') && base === 'corporate_bond') return 'gov_bond';
+    // "Treasury" in "Volvo Treasury" does not make a bond the file calls corporate a government bond.
+    if (h.has('government') && base === 'corporate_bond' && !keepCorporate) return 'gov_bond';
   }
   if (base === 'equity') {
     if (h.has('preferred')) return 'equity_preferred';
@@ -243,16 +279,19 @@ export function inferAssetClass(input: AssetClassInput): AssetClassResult {
   const parsed = parseSecurityName(input.name);
   const h = parsed.hints;
   const evidence: string[] = [];
-  const typeText = fromText(input.assetTypeText);
-  const sectionText = fromText(input.section);
+  const typeText = fromText(input.assetTypeText, input.name, h);
+  const sectionText = fromText(input.section, input.name, h);
+  // An explicit corporate type in the file is kept, whatever the issuer's name says.
+  const keepCorporate = typeText.cls === 'corporate_bond' && /corporate|f[oö]retag|unternehmen|entreprise/i.test(input.assetTypeText ?? '');
   const isEtf = h.has('etf') || typeText.etf || sectionText.etf;
   const fixedIncomeShape = !!(input.hasCoupon && input.hasMaturity);
 
   const done = (cls: AssetClass, confidence: Confidence): AssetClassResult => {
-    const refined = refine(cls, h, input);
+    const refined = refine(cls, h, input, keepCorporate);
     if (refined !== cls) evidence.push(`Name keywords refine it to ${ASSET_CLASSES[refined].label.toLowerCase()}`);
     if (isEtf) evidence.push('ETF: classified as a collective investment undertaking (CIC 4x)');
-    const sub = derivativeSub(refined, input.name);
+    // The underlying can be in the name or in the type text ("Interest rate swap", "FX forward").
+    const sub = derivativeSub(refined, [input.name, input.assetTypeText, input.section].filter(Boolean).join(' · '));
     if (sub) evidence.push(sub.why);
     return { assetClass: refined, confidence, evidence, isEtf, parsedName: parsed, ...(sub ? { derivativeSub: sub } : {}) };
   };
@@ -263,7 +302,11 @@ export function inferAssetClass(input: AssetClassInput): AssetClassResult {
     let cls = typeText.cls;
     if (isEtf) cls = fundSubtype(h);
     // Generic "bond"/"fixed income" text plus government hints → government bond.
-    if (cls === 'corporate_bond' && h.has('government')) cls = 'gov_bond';
+    if (cls === 'corporate_bond' && h.has('government') && !keepCorporate) cls = 'gov_bond';
+    if (typeText.guessed) {
+      evidence.push(typeText.guessed);
+      return done(cls, 'low');
+    }
     if (cls === 'corporate_bond' && !fixedIncomeShape && !h.has('bond') && !h.has('floating') && (h.has('fund') || isEtf)) cls = fundSubtype(h);
     return done(cls, cls === 'corporate_bond' && !/corporate|f[oö]retag|unternehmen/i.test(input.assetTypeText ?? '') ? 'medium' : 'high');
   }

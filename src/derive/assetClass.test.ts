@@ -105,4 +105,23 @@ describe('compound and French fund names', () => {
     ['EXEMPLE MONETAIRE COURT TERME I', 'fund_money_market'],
     ['Penningmarknadsfond Sverige', 'fund_money_market'],
   ])('%s → %s', (name, cls) => expect(inferAssetClass({ name, isin: 'LU1234567896' }).assetClass).toBe(cls));
+
+  it('reads instrument types as a portfolio system writes them', () => {
+    const cls = (assetTypeText: string, name: string) => inferAssetClass({ assetTypeText, name });
+    expect(cls('Option', 'OMXS30 Put 2400').assetClass).toBe('put_option');
+    expect(cls('Option', 'Volvo B Call 270').assetClass).toBe('call_option');
+    // The first of the two words decides: a USD put / SEK call is a put, on a currency.
+    expect([cls('Option', 'USD put / SEK call 9.60').assetClass, cls('Option', 'USD put / SEK call 9.60').derivativeSub?.sub]).toEqual(['put_option', '3']);
+    const neither = cls('Option', 'Some structured option');
+    expect([neither.assetClass, neither.confidence]).toEqual(['call_option', 'low']);
+    expect(cls('Credit default swap', 'iTraxx Crossover 5y').assetClass).toBe('credit_derivative');
+    expect([cls('Interest rate swap', 'SEK 7y payer swap').assetClass, cls('Interest rate swap', 'SEK 7y payer swap').derivativeSub?.sub]).toEqual(['swap', '1']);
+    expect([cls('FX forward / swap', 'Sell USD / buy SEK').assetClass, cls('FX forward / swap', 'Sell USD / buy SEK').derivativeSub?.sub]).toEqual(['forward', '2']);
+    expect(cls('Money market / T-bill', 'Swedish T-bill').assetClass).toBe('treasury_bill');
+    expect(cls('Money market / T-bill', 'Nordea commercial paper').assetClass).toBe('commercial_paper');
+    expect(cls('Money market fund', 'Nordic Liquidity A').assetClass).toBe('fund_money_market');
+    // "Treasury" in a corporate issuer's name does not override an explicit corporate type.
+    expect(cls('Corporate bond', 'Volvo Treasury 3.625% 2029').assetClass).toBe('corporate_bond');
+    expect(cls('Bond', 'US Treasury 4.125% 2031').assetClass).toBe('gov_bond');
+  });
 });

@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import type { SkipReason } from '../ingest/table.ts';
-import { loadFile, reloadSheet, type LoadedSheet } from './session.ts';
+import { datesFor, needsChoice } from '../ingest/split.ts';
+import { chooseSlice, loadFile, reloadSheet, type LoadedSheet } from './session.ts';
 
 const REASON_LABEL: Record<SkipReason, string> = {
   'above-header': 'Title / metadata above the table',
@@ -126,11 +127,14 @@ export function UploadStep({ loaded, onLoaded, onContinue }: Props) {
               )}
             </div>
             <p>
-              <strong>{t.rows.length}</strong> holdings rows, <strong>{t.headers.length}</strong> columns.{' '}
+              <strong>{t.rows.length}</strong> holdings rows{t.split && t.rows.length !== t.split.rowsInFile ? ` (of ${t.split.rowsInFile} in the file)` : ''},{' '}
+              <strong>{t.headers.length}</strong> columns.{' '}
               {loaded.workbook.notes.join(' ')}
               {t.droppedColumns.length > 0 && ` ${t.droppedColumns.length} empty column(s) ignored.`}
             </p>
           </div>
+
+          {t.split && needsChoice(t.split) && <SlicePicker loaded={loaded} onLoaded={onLoaded} />}
 
           {grouped.length > 0 && (
             <div class="card">
@@ -191,5 +195,62 @@ export function UploadStep({ loaded, onLoaded, onContinue }: Props) {
         </>
       )}
     </section>
+  );
+}
+
+/** A file with several portfolios and/or dates: one TPT is one portfolio on one date, so pick which. */
+function SlicePicker({ loaded, onLoaded }: { loaded: LoadedSheet; onLoaded: (s: LoadedSheet) => void }) {
+  const split = loaded.table.split!;
+  const { choice } = split;
+  const dates = datesFor(split, choice.portfolio);
+  const headerOf = (i: number | undefined) => (i === undefined ? '' : loaded.table.headers[i]);
+  const parts = [
+    split.portfolios.length > 1 ? `${split.portfolios.length} portfolios` : '',
+    split.dates.length > 1 ? `${split.dates.length} dates` : '',
+  ].filter(Boolean);
+  const pick = (next: { portfolio?: string; date?: string }) => {
+    const portfolio = next.portfolio ?? choice.portfolio;
+    const available = datesFor(split, portfolio);
+    // Keep the date when the new portfolio has it, else its latest date.
+    const date = next.date ?? (choice.date && available.includes(choice.date) ? choice.date : available.at(-1));
+    onLoaded(chooseSlice(loaded, { portfolio, date }));
+  };
+  return (
+    <div class="card">
+      <h3>This file holds {parts.join(' on ')}</h3>
+      <p class="muted">
+        A TPT is for one portfolio on one valuation date. Choose which to convert; the other rows are left out. The rows are picked by the column
+        {split.portfolioCol !== undefined && split.dateCol !== undefined ? 's' : ''}{' '}
+        {[headerOf(split.portfolioCol), headerOf(split.dateCol)].filter(Boolean).map((h) => `"${h}"`).join(' and ')}.
+      </p>
+      <div class="filters">
+        {split.portfolioCol !== undefined && (
+          <label>
+            Portfolio{' '}
+            <select aria-label="Portfolio to convert" value={choice.portfolio} onChange={(e) => pick({ portfolio: (e.target as HTMLSelectElement).value })}>
+              {split.portfolios.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {split.dateCol !== undefined && (
+          <label>
+            Date{' '}
+            <select aria-label="Date to convert" value={choice.date} onChange={(e) => pick({ date: (e.target as HTMLSelectElement).value })}>
+              {dates.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                  {d === dates.at(-1) ? ' (latest)' : ''}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        <span class="muted">{loaded.table.rows.length} holdings</span>
+      </div>
+    </div>
   );
 }

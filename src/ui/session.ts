@@ -4,6 +4,7 @@
  */
 import { readFile, type RawWorkbook } from '../ingest/readFile.ts';
 import { detectTable, type DetectedTable } from '../ingest/table.ts';
+import { applySplit, withDefaultSplit, type SplitChoice } from '../ingest/split.ts';
 import { parseDate } from '../ingest/values.ts';
 import { classifyColumns, type ColumnPrediction, type MappingSource } from '../detect/classify.ts';
 import type { CanonicalField } from '../detect/canonical.ts';
@@ -13,7 +14,10 @@ import { profileMapping, type SourceProfile } from '../profiles/profiles.ts';
 export interface LoadedSheet {
   workbook: RawWorkbook;
   sheetName: string;
+  /** The table the rest of the app works on: one portfolio on one date. */
   table: DetectedTable;
+  /** The whole table before a multi-portfolio / multi-date file was cut (same as table otherwise). */
+  fullTable: DetectedTable;
   /** Header row chosen by the user (0-based), undefined = auto. */
   headerRowOverride?: number;
 }
@@ -31,11 +35,11 @@ export async function loadFile(file: File): Promise<LoadedSheet> {
   let bestScore = -1;
   for (const s of workbook.sheets) {
     try {
-      const table = detectTable(s.rows);
-      const score = table.rows.length * table.headers.length;
+      const full = detectTable(s.rows);
+      const score = full.rows.length * full.headers.length;
       if (score > bestScore) {
         bestScore = score;
-        best = { workbook, sheetName: s.name, table };
+        best = { workbook, sheetName: s.name, fullTable: full, table: withDefaultSplit(full) };
       }
     } catch {
       /* sheet without a table */
@@ -48,7 +52,14 @@ export async function loadFile(file: File): Promise<LoadedSheet> {
 export function reloadSheet(current: LoadedSheet, sheetName: string, headerRow?: number): LoadedSheet {
   const sheet = current.workbook.sheets.find((s) => s.name === sheetName);
   if (!sheet) throw new Error(`Sheet ${sheetName} not found.`);
-  return { workbook: current.workbook, sheetName, table: detectTable(sheet.rows, { headerRow }), headerRowOverride: headerRow };
+  const full = detectTable(sheet.rows, { headerRow });
+  return { workbook: current.workbook, sheetName, fullTable: full, table: withDefaultSplit(full), headerRowOverride: headerRow };
+}
+
+/** Convert another portfolio or date of a multi-portfolio / multi-date file. */
+export function chooseSlice(current: LoadedSheet, choice: SplitChoice): LoadedSheet {
+  const split = current.table.split;
+  return split ? { ...current, table: applySplit(current.fullTable, split, choice) } : current;
 }
 
 export function columnsOf(table: DetectedTable): ColumnInput[] {
@@ -59,7 +70,14 @@ export function predict(table: DetectedTable, profile?: SourceProfile, userPins:
   const fixed = new Map<number, { field: CanonicalField; source: MappingSource }>();
   if (profile) for (const [i, f] of profileMapping(profile, table.headers)) fixed.set(i, { field: f, source: 'profile' });
   for (const [i, f] of userPins) fixed.set(i, { field: f, source: 'user' });
-  return classifyColumns(columnsOf(table), fixed);
+  // The portfolio and as-of date columns pick the rows; they are not holding data.
+  const picker = new Map<number, string>();
+  if (table.split?.dateCol !== undefined) picker.set(table.split.dateCol, 'Holds each row\'s as-of date: used in the upload step to pick the date to convert');
+  if (table.split?.portfolioCol !== undefined) picker.set(table.split.portfolioCol, 'Holds each row\'s portfolio: used in the upload step to pick the portfolio to convert');
+  for (const i of picker.keys()) if (!fixed.has(i)) fixed.set(i, { field: 'ignore', source: 'model' });
+  const preds = classifyColumns(columnsOf(table), fixed);
+  for (const p of preds) if (picker.has(p.index) && p.source === 'model' && p.field === 'ignore') p.reasons = [picker.get(p.index)!];
+  return preds;
 }
 
 /** Up to n distinct non-empty sample values of a column, as display strings. */

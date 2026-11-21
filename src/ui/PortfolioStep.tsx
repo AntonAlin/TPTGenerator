@@ -14,7 +14,7 @@ interface Props {
   implied: Record<string, ImpliedFx>;
   derivations: PortfolioDerivations;
   navNote?: string;
-  suggestions: { baseCurrency?: string; baseWhy?: string; valuationDate?: string };
+  suggestions: { baseCurrency?: string; baseWhy?: string; valuationDate?: string; valuationDateWhy?: string; portfolioName?: string; portfolioNameWhy?: string };
   fundRepo: FundProfileRepository;
   onContinue: () => void;
 }
@@ -46,6 +46,14 @@ export function PortfolioStep({ portfolio: p, setPortfolio, fx, implied, derivat
             <input type="radio" name="level" checked={p.level === 'share_class'} onChange={() => update((d) => (d.level = 'share_class'))} /> share class level (one TPT per class)
           </label>
         </div>
+        {suggestions.portfolioName && !p.values['3'] && (
+          <p class="small">
+            <button type="button" class="linklike" onClick={() => setValue('3', suggestions.portfolioName!)}>
+              Use “{suggestions.portfolioName}” as 3 · Portfolio name
+            </button>{' '}
+            <span class="muted">({suggestions.portfolioNameWhy})</span>
+          </p>
+        )}
       </div>
 
       <div class="card">
@@ -58,7 +66,7 @@ export function PortfolioStep({ portfolio: p, setPortfolio, fx, implied, derivat
             <input type="date" value={valuationDate} onInput={(e) => setValue('6', (e.target as HTMLInputElement).value)} />
             {!valuationDate && suggestions.valuationDate && (
               <button type="button" class="linklike small" onClick={() => setValue('6', suggestions.valuationDate!)}>
-                Use {suggestions.valuationDate} (found above the table in the file)
+                Use {suggestions.valuationDate} ({suggestions.valuationDateWhy ?? 'found above the table in the file'})
               </button>
             )}
           </label>

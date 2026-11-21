@@ -19,6 +19,32 @@ export const model = modelJson as unknown as Model;
 
 /** Below this probability a mapping is highlighted for review. */
 export const LOW_CONFIDENCE = 0.6;
+/**
+ * Below this probability a column does not take a field at all and stays "ignore". Without it, a
+ * column whose likely fields were taken by better columns fell through to whatever was left
+ * ("Buy amount" → market value at 0%).
+ */
+export const MIN_CLAIM = 0.1;
+
+/**
+ * A column with too few values to judge by (under 20% of rows filled, at most two distinct values,
+ * e.g. a "Market value override" column that only has 0 for the futures) gives the model almost
+ * nothing but its header. When that header is an exact synonym of one field, the header decides:
+ * the field gets at least this probability, which still leaves the mapping highlighted for review.
+ */
+const HEADER_ONLY_P = 0.55;
+function headerOnlyField(col: ColumnInput, f: ColumnFeatures): CanonicalField | undefined {
+  const filled = col.values.filter((v) => v != null && !(typeof v === 'string' && !v.trim()));
+  if (!col.values.length || filled.length / col.values.length >= 0.2) return undefined;
+  if (new Set(filled.map((v) => String(v))).size > 2) return undefined;
+  const exact = model.classes.filter((c) => (f.named[`hdr_${c}`] ?? 0) >= 0.97);
+  return exact.length === 1 ? (exact[0] as CanonicalField) : undefined;
+}
+function withFloor(p: number[], i: number, floor: number): number[] {
+  if (i < 0 || p[i] >= floor) return p;
+  const rest = 1 - p[i];
+  return p.map((x, k) => (k === i ? floor : rest > 0 ? (x * (1 - floor)) / rest : 0));
+}
 
 export type MappingSource = 'model' | 'profile' | 'user';
 
@@ -99,8 +125,15 @@ export function classifyColumns(
   fixed: Map<number, { field: CanonicalField; source: MappingSource }> = new Map(),
 ): ColumnPrediction[] {
   const feats = extractFeatures(columns);
+  const headerDecides = new Set<number>();
   const preds: ColumnPrediction[] = feats.map((f, index) => {
-    const p = predictProba(f.vector);
+    let p = predictProba(f.vector);
+    const exact = headerOnlyField(columns[index], f);
+    const ei = exact === undefined ? -1 : model.classes.indexOf(exact);
+    if (ei >= 0 && p[ei] < HEADER_ONLY_P) {
+      p = withFloor(p, ei, HEADER_ONLY_P);
+      headerDecides.add(index);
+    }
     const ranked = model.classes
       .map((c, i) => ({ field: c as CanonicalField, p: p[i] }))
       .sort((a, b) => b.p - a.p);
@@ -134,14 +167,24 @@ export function classifyColumns(
   for (const c of claims) {
     if (done.has(c.col)) continue;
     if (UNIQUE_FIELDS.has(c.field) && taken.has(c.field)) continue;
+    if (c.field !== 'ignore' && c.p < MIN_CLAIM) continue;
     const pred = preds[c.col];
     pred.field = c.field;
     pred.confidence = c.p;
     if (UNIQUE_FIELDS.has(c.field)) taken.add(c.field);
     done.add(c.col);
   }
+  // Columns nothing fits well enough: ignored, with the model's own probability for "ignore".
+  for (const p of preds) {
+    if (done.has(p.index)) continue;
+    p.field = 'ignore';
+    p.confidence = p.ranked.find((r) => r.field === 'ignore')?.p ?? 0;
+  }
   for (const p of preds) {
     p.reasons = p.source === 'model' ? explain(p.features, p.field) : [p.source === 'profile' ? 'From saved source profile' : 'Set by you'];
+    if (p.source === 'model' && headerDecides.has(p.index) && p.field === p.ranked[0].field) {
+      p.reasons.unshift('Too few values to judge by: the header decides (check it)');
+    }
     if (p.source === 'model' && p.field !== p.ranked[0].field) {
       p.reasons.unshift(`Best guess was ${CANONICAL_INFO[p.ranked[0].field].label}, but another column matched it better`);
     }

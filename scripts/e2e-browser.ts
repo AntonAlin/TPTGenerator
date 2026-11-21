@@ -183,6 +183,26 @@ try {
     assert.equal(new URL(page.url()).hash, '');
   });
 
+  await step('a file with two funds on six dates: pick the fund and date to convert', async () => {
+    await upload(page, 'nexus_holdings_demo.csv');
+    await page.waitForSelector('text=This file holds 2 portfolios on 6 dates');
+    assert.equal(await page.inputValue('select[aria-label="Portfolio to convert"]'), 'Demo: Nordic Balanced Fund');
+    assert.equal(await page.inputValue('select[aria-label="Date to convert"]'), '2026-10-30');
+    assert.ok(await page.isVisible('text=55 holdings rows (of 406 in the file)'));
+    await page.selectOption('select[aria-label="Portfolio to convert"]', 'Demo: Nordic Equity Fund');
+    await page.selectOption('select[aria-label="Date to convert"]', '2026-07-31');
+    await page.waitForSelector('text=13 holdings rows (of 406 in the file)');
+    await page.click('text=Continue to column mapping');
+    await page.waitForSelector('table.mapping');
+    assert.equal(await page.inputValue('select[aria-label="Mapping for Date"]'), 'ignore');
+    assert.equal(await page.inputValue('select[aria-label="Mapping for Quantity"]'), 'quantity');
+    await page.click('text=Confirm mapping');
+    await page.waitForSelector('text=Use “Demo: Nordic Equity Fund” as 3 · Portfolio name');
+    await page.click('text=Use 2026-07-31');
+    await page.click('text=Use “Demo: Nordic Equity Fund” as 3 · Portfolio name');
+    assert.equal(await page.inputValue('label:has-text("3 · Portfolio name") input'), 'Demo: Nordic Equity Fund');
+  });
+
   await step('legacy .xls multi-asset file with derivatives exports without errors', async () => {
     await upload(page, 'en_multi_asset.xls');
     await page.click('text=Continue to column mapping');

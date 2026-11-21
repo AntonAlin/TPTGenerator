@@ -127,4 +127,32 @@ describe('classifyColumns', () => {
     expect(preds[0].reasons.join(' ')).toMatch(/valid ISINs/);
     expect(preds[0].confidence).toBeGreaterThan(LOW_CONFIDENCE);
   });
+
+  it('leaves a column ignored rather than giving it a leftover field at a tiny probability', () => {
+    const n = 12;
+    const cols: ColumnInput[] = [
+      { header: 'Name', values: Array.from({ length: n }, (_, i) => `Company ${i} AB`) },
+      { header: 'Quantity', values: Array.from({ length: n }, (_, i) => 1000 + i * 37) },
+      { header: 'Price', values: Array.from({ length: n }, (_, i) => 50 + i) },
+      { header: 'Market value', values: Array.from({ length: n }, (_, i) => (1000 + i * 37) * (50 + i)) },
+      { header: 'Sell currency', values: Array.from({ length: n }, (_, i) => (i % 2 ? 'USD' : 'EUR')) },
+      { header: 'Buy amount', values: Array.from({ length: n }, (_, i) => 1e6 + i * 1000) },
+    ];
+    const preds = classifyColumns(cols);
+    for (const p of preds.filter((x) => x.field !== 'ignore')) expect(p.confidence, p.header).toBeGreaterThanOrEqual(0.1);
+    expect(preds.find((p) => p.header === 'Buy amount')!.field).not.toBe('market_value_local');
+  });
+  it('lets the header decide for a near-empty column (a market value override with only zeros)', () => {
+    const n = 30;
+    const cols: ColumnInput[] = [
+      { header: 'Name', values: Array.from({ length: n }, (_, i) => `Company ${i} AB`) },
+      { header: 'Quantity', values: Array.from({ length: n }, (_, i) => 1000 + i * 37) },
+      { header: 'Price', values: Array.from({ length: n }, (_, i) => 50 + i) },
+      { header: 'Market value override', values: Array.from({ length: n }, (_, i) => (i < 2 ? 0 : null)) },
+    ];
+    const p = classifyColumns(cols).find((x) => x.header === 'Market value override')!;
+    expect(p.field).toBe('market_value_local');
+    expect(p.confidence).toBeLessThan(LOW_CONFIDENCE);
+    expect(p.reasons[0]).toMatch(/header decides/);
+  });
 });

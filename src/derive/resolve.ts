@@ -319,6 +319,7 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
   const ai = accrued.value;
 
   // Market value in local currency as given/derived (convention not yet applied).
+  const isDerivativeCic = /^[A-F]$/.test(String(attrs.cic.value ?? '').charAt(2)) || /^[A-F]$/.test(info.cic[0]);
   let mvLocal: Resolved<number> | undefined;
   let computedClean = false;
   if (f.market_value_local !== undefined) mvLocal = amountFromFile('mv_local', f.market_value_local);
@@ -327,9 +328,14 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
   } else if (f.price !== undefined && isFI && nominal !== undefined) {
     mvLocal = derived(round((nominal * f.price) / 100, 2), 'Nominal × clean price ÷ 100', 'medium');
     computedClean = true;
-  } else if (f.price !== undefined && f.quantity !== undefined) {
+  } else if (f.price !== undefined && f.quantity !== undefined && !isDerivativeCic) {
+    // Not for derivatives: contracts × price is the underlying's value, not the contract's
+    // (a future is worth about zero after daily margining; an option's price is its premium).
     mvLocal = derived(round(f.quantity * f.price, 2), 'Quantity × price', 'medium');
     computedClean = true;
+  } else if (info.cic[0] === '7' && (nominal ?? f.quantity) !== undefined) {
+    // A cash balance is its own market value.
+    mvLocal = derived(round((nominal ?? f.quantity)!, 2), 'Cash: the balance is the market value', 'high');
   }
 
   // Clean or dirty?

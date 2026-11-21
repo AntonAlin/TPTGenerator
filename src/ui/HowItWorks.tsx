@@ -120,6 +120,11 @@ export function HowItWorks() {
           subtotals in English, Swedish, German or French, or found because a row equals the sum of the rows above it. Totals are not thrown away: they are used to
           check the market values, as explained further down.
         </p>
+        <p>
+          Some systems export several portfolios, or several dates, in one table, with a Portfolio and a Date column. A TPT is for one portfolio on one valuation
+          date, so the app finds those two columns, cuts the table to the first portfolio on its latest date, and lets you pick any other pair. The chosen date
+          and portfolio name are offered for the fund form.
+        </p>
         <div class="example">
           <div class="example-label">Example: a Swedish custodian report, as the app reads it</div>
           <div class="table-wrap unbounded">

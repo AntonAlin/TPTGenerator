@@ -10,6 +10,7 @@ import * as XLSX from 'xlsx';
 import { spec, field } from '../src/spec/index.ts';
 import { validateFieldValue } from '../src/spec/validate.ts';
 import { col, roundTripXlsx, runPipeline, SAMPLES, writeQualityXlsx, writeTptCsv } from './pipeline.ts';
+import type { PortfolioState } from '../src/portfolio/portfolio.ts';
 
 const SCR_IDS = spec.fields.filter((f) => /SCR/i.test(f.section)).map((f) => f.id);
 const EMPTY_IDS = spec.fields.filter((f) => f.mustBeEmpty).map((f) => f.id);
@@ -36,8 +37,11 @@ const CASES: Case[] = [
   },
 ];
 
+/** Samples with a block of their own below (they do not fit the generic checks). */
+const DEDICATED = ['nexus_holdings_demo.csv'];
+
 it('covers every file in /samples', () => {
-  expect(readdirSync(SAMPLES).sort()).toEqual(CASES.map((c) => c.file).sort());
+  expect(readdirSync(SAMPLES).sort()).toEqual([...CASES.map((c) => c.file), ...DEDICATED].sort());
 });
 
 /** A market value in the file turned out to be something else (e.g. a forward's notional) and was dropped. */
@@ -238,5 +242,83 @@ describe('sample-specific results', () => {
 
   it('field 148 in the export is validated against the NACE list', () => {
     expect(validateFieldValue(field('148'), 'C2630')).toBeUndefined();
+  });
+});
+
+// The demo file of Nexus Portfolio Lab (made by its js/demofile.js): two funds on six month-ends in
+// one table, 59 columns, no market value column (Nexus values holdings itself), and options, swaps,
+// CDS and FX forwards that only a pricing model can value. Those get no market value here: the TPT
+// leaves them blank and flagged rather than guessed.
+describe('nexus_holdings_demo.csv (two funds on six dates, Nexus Portfolio Lab layout)', () => {
+  const fxUser = { USD: 10.75, EUR: 11.0, NOK: 0.9, DKK: 1.47, CHF: 12.1 };
+  const sek = (p: PortfolioState) => {
+    p.values['4'] = 'SEK';
+  };
+  const run = runPipeline('nexus_holdings_demo.csv', { portfolio: sek, fxUser });
+  const { tpt } = roundTripXlsx(run.files[0]);
+  const byName = (name: string) => tpt.find((r) => r[col('17')] === name)!;
+  const mapped = Object.fromEntries(run.predictions.map((p) => [p.header, p.field]));
+
+  it('cuts the file to the first fund on its latest date, and can convert any other pair', () => {
+    const s = run.table.split!;
+    expect(s.portfolios).toEqual(['Demo: Nordic Balanced Fund', 'Demo: Nordic Equity Fund']);
+    expect(s.dates).toEqual(['2026-05-29', '2026-06-30', '2026-07-31', '2026-08-31', '2026-09-30', '2026-10-30']);
+    expect(s.choice).toEqual({ portfolio: 'Demo: Nordic Balanced Fund', date: '2026-10-30' });
+    expect(s.rowsInFile).toBe(406);
+    expect(tpt).toHaveLength(1 + 55);
+    expect(run.portfolio.values['6']).toBe('2026-10-30');
+    const other = runPipeline('nexus_holdings_demo.csv', { choice: { portfolio: 'Demo: Nordic Equity Fund', date: '2026-07-31' }, portfolio: sek, fxUser });
+    expect(other.files[0].rows).toHaveLength(13);
+    expect(other.portfolio.values['6']).toBe('2026-07-31');
+  });
+
+  it('maps the columns that matter and leaves the picker and model inputs out', () => {
+    expect(mapped).toMatchObject({
+      Date: 'ignore', Portfolio: 'ignore', 'Instrument type': 'asset_type', Name: 'security_name', ISIN: 'isin', Quantity: 'quantity',
+      Price: 'price', Currency: 'currency', 'Coupon %': 'coupon', 'Maturity / expiry': 'maturity_date', 'Market value override': 'market_value_local',
+      'Fixed rate %': 'ignore', 'Risk-free rate %': 'ignore', 'Avg daily volume': 'ignore', 'Buy amount': 'ignore', 'Sell currency': 'ignore',
+    });
+    for (const p of run.predictions) if (p.field !== 'ignore') expect(p.confidence, p.header).toBeGreaterThanOrEqual(0.1);
+  });
+
+  it('derives the CIC from the instrument type and name, for every kind of holding', () => {
+    const cic = (name: string) => String(byName(name)[col('12')]);
+    expect(cic('Investor B')).toBe('SE31');
+    expect(cic('Sweden 0.75% 2029')).toBe('SE11');
+    expect(cic('Volvo Treasury 3.625% 2029').slice(2)).toBe('21');
+    expect(cic('Stadshypotek 1.50% 2028 (covered)').slice(2)).toBe('27');
+    expect(cic('Swedish T-bill').slice(2)).toBe('15');
+    expect(cic('Nordea commercial paper').slice(2)).toBe('23');
+    expect(cic('Custody account SEK')).toBe('XT71');
+    expect(cic('OMXS30 Index Future')).toBe('XLA1');
+    expect(cic('Euro-Bund Future').slice(2)).toBe('A2');
+    expect(cic('Brent Crude Future').slice(2)).toBe('A5');
+    expect(cic('OMXS30 Put 2400').slice(2)).toBe('C1');
+    expect(cic('Volvo B Call 270')[2]).toBe('B');
+    expect(cic('USD put / SEK call 9.60').slice(2)).toBe('C3');
+    expect(cic('Sell USD / buy SEK')).toBe('XTE2');
+    expect(cic('SEK 7y payer swap')).toBe('XTD1');
+    expect(cic('iTraxx Crossover 5y')).toBe('XTF1');
+  });
+
+  it('values what the file values, and guesses nothing for model-valued derivatives', () => {
+    const v = (name: string, id: string) => byName(name)[col(id)];
+    expect([v('Investor B', '18'), v('Investor B', '22')]).toEqual([212766, 62000012.4]);
+    expect([v('Sweden 0.75% 2029', '19'), v('Sweden 0.75% 2029', '23'), v('Sweden 0.75% 2029', '33')]).toEqual([73000000, 70007000, 0.75]);
+    // Cash: the balance is the value; NOK converted with the rate entered in step 3.
+    expect([v('Custody account NOK', '19'), v('Custody account NOK', '22'), v('Custody account NOK', '24')]).toEqual([4500000, 4500000, 4050000]);
+    // Futures: the file's market value 0, not contracts × price.
+    expect([v('OMXS30 Index Future', '18'), v('OMXS30 Index Future', '22')]).toEqual([-120, 0]);
+    // Options and swaps need a pricing model: blank, not guessed.
+    for (const name of ['Volvo B Call 270', 'SEK 7y payer swap', 'iTraxx Crossover 5y']) expect(v(name, '22'), name).toBeNull();
+  });
+
+  it('every written value passes the spec validation and the report has no errors', () => {
+    for (const row of tpt.slice(1)) {
+      row.forEach((x, j) => {
+        if (x !== null) expect(validateFieldValue(spec.fields[j], x), `${spec.fields[j].header} = ${x}`).toBeUndefined();
+      });
+    }
+    expect(run.reports[0].summary.errors).toBe(0);
   });
 });

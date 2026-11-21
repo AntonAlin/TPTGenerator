@@ -76,7 +76,17 @@ export function App() {
   const suggestions = useMemo(() => {
     if (!normalized || !loaded) return {};
     const g = guessPortfolioCurrency(normalized.holdings, normalized.portfolioValueHeader);
-    return { baseCurrency: g.currency, baseWhy: g.why, valuationDate: dateFromMetadata(loaded.table) };
+    const split = loaded.table.split;
+    const splitDate = split?.choice.date;
+    const metaDate = dateFromMetadata(loaded.table);
+    return {
+      baseCurrency: g.currency,
+      baseWhy: g.why,
+      valuationDate: splitDate ?? metaDate,
+      valuationDateWhy: splitDate ? `the rows chosen in the upload step have this date in "${loaded.table.headers[split!.dateCol!]}"` : 'found above the table in the file',
+      portfolioName: split?.choice.portfolio,
+      portfolioNameWhy: split?.portfolioCol !== undefined ? `from the file's "${loaded.table.headers[split.portfolioCol]}" column` : undefined,
+    };
   }, [normalized, loaded]);
 
   const base = baseCurrencyOf(portfolio);
