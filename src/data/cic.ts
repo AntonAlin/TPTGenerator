@@ -1,6 +1,7 @@
 /**
  * CIC (Complementary Identification Code) table and validation.
- * Data: src/data/cic_table.json, transcribed from spec/cic/cic_table_source.png.
+ * Data: src/data/cic_table.json (Commission Implementing Regulation (EU) 2023/894,
+ * Annex VI, as supplied by the project owner; see its "provenance" field).
  *
  * A CIC is 4 characters: [1-2] listing country (ISO 3166-1 alpha-2) or XL / XT,
  * [3] category, [4] sub-category within that category.
@@ -11,13 +12,16 @@ export interface CicSubcategory { code: string; name: string }
 export interface CicCategory { code: string; name: string; subcategories: CicSubcategory[] }
 
 export const cicTable = table as {
-  source: { description: string; file: string; transcribed: string; notes: string[] };
-  positions12: { description: string; specialCodes: { code: string; label: string }[] };
+  name: string;
+  source: string;
+  provenance: string;
+  structure: { positions_1_2: string; position_3: string; position_4: string; example: string };
+  listingCodes: { code: string; name: string }[];
   categories: CicCategory[];
 };
 
 const categories = new Map(cicTable.categories.map((c) => [c.code, c]));
-const SPECIAL = new Set(cicTable.positions12.specialCodes.map((s) => s.code));
+const SPECIAL = new Set(cicTable.listingCodes.map((s) => s.code));
 
 export type CicLocationKind = 'country' | 'XL' | 'XT';
 

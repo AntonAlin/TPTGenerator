@@ -14,14 +14,14 @@ describe('parseCic', () => {
     expect(parseCic('DEF1').subcategory?.name).toBe('Credit default swap');
   });
   it('rejects sub-categories that do not exist for the category', () => {
-    expect(parseCic('SE17').valid).toBe(false); // no 7 under government bonds
+    expect(parseCic('XL35').valid).toBe(false); // no 5 under equity
     expect(parseCic('XL83').valid).toBe(false); // no 3 under mortgages and loans
     expect(parseCic('XLE3').valid).toBe(false);
   });
   it('rejects malformed codes and unknown categories', () => {
     expect(parseCic('SE1').valid).toBe(false);
     expect(parseCic('S111').valid).toBe(false);
-    expect(parseCic('SE01').errors[0]).toMatch(/Category "0"/);
+    expect(parseCic('XLL1').errors[0]).toMatch(/not 2 letters/);
   });
   it('uses the injected country check', () => {
     expect(parseCic('QQ11', (c) => c === 'SE').valid).toBe(false);
@@ -46,7 +46,18 @@ describe('CIC table consistency with the TPT spec', () => {
     const cols = Object.keys(field('12').cicApplicability);
     for (const cat of cicTable.categories) expect(cols).toContain(cat.code);
   });
-  it('every category has an "Other" (9) sub-category', () => {
-    for (const cat of cicTable.categories) expect(cat.subcategories.find((s) => s.code === '9')?.name).toBe('Other');
+  it('every category has a 9 ("Other") sub-category', () => {
+    for (const cat of cicTable.categories) expect(cat.subcategories.some((s) => s.code === '9')).toBe(true);
+  });
+  it('covers all 16 categories of the TPT CIC applicability columns', () => {
+    expect(cicTable.categories.map((c) => c.code).sort()).toEqual(Object.keys(field('12').cicApplicability).sort());
+  });
+  it('includes the 2023/894 additions', () => {
+    expect(parseCic('XL09').subcategory?.name).toBe('Other investments');
+    expect(parseCic('XL01').valid).toBe(false);
+    expect(parseCic('DE17').subcategory?.name).toBe('National Central banks');
+    expect(parseCic('XT86').subcategory?.name).toBe('Loans on policies');
+    expect(parseCic('XLD4').subcategory?.name).toBe('Total return swaps');
+    expect(cicTable.categories.reduce((n, c) => n + c.subcategories.length, 0)).toBe(115);
   });
 });

@@ -1,20 +1,17 @@
 {
-  "source": {
-    "description": "Complementary Identification Code (CIC) table, transcribed cell by cell from the image supplied by the project owner.",
-    "file": "spec/cic/cic_table_source.png",
-    "transcribed": "2026-11-21",
-    "notes": [
-      "The image does not show a column for category 0 (Other investments). The TPT V8 template does use category 0 (column 'Other (CIC 0)' and field 131 code '0'), but no sub-categories for it are available from this source, so none are listed.",
-      "Empty cells in the image are omitted: those sub-category codes do not exist for that category."
-    ]
+  "name": "Solvency II Complementary Identification Code (CIC)",
+  "source": "Commission Implementing Regulation (EU) 2023/894, Annex VI",
+  "provenance": "Supplied by the project owner as JSON on 2026-11-21, stated source as above. Replaces an earlier transcription of an older CIC table image (spec/cic/cic_table_source.png). Not independently verified against the Official Journal text.",
+  "structure": {
+    "positions_1_2": "ISO 3166-1 alpha-2 country code where the asset is listed; 'XL' = not listed on a stock exchange; 'XT' = not exchange-tradable by nature",
+    "position_3": "Category",
+    "position_4": "Subcategory",
+    "example": "DE11 = Central Government bond listed in Germany"
   },
-  "positions12": {
-    "description": "ISO 3166-1-alpha-2 country code or XL (for not listed) or XT (for not exchange tradable)",
-    "specialCodes": [
-      { "code": "XL", "label": "Not listed" },
-      { "code": "XT", "label": "Not exchange tradable" }
-    ]
-  },
+  "listingCodes": [
+    { "code": "XL", "name": "Assets not listed in a stock exchange" },
+    { "code": "XT", "name": "Assets that are not exchange tradable by their nature" }
+  ],
   "categories": [
     {
       "code": "1",
@@ -25,7 +22,9 @@
         { "code": "3", "name": "Regional government bonds" },
         { "code": "4", "name": "Municipal government bonds" },
         { "code": "5", "name": "Treasury bonds" },
-        { "code": "6", "name": "Covered bond" },
+        { "code": "6", "name": "Covered bonds" },
+        { "code": "7", "name": "National Central banks" },
+        { "code": "8", "name": "Government bonds not denominated in domestic currency" },
         { "code": "9", "name": "Other" }
       ]
     },
@@ -33,7 +32,7 @@
       "code": "2",
       "name": "Corporate bonds",
       "subcategories": [
-        { "code": "1", "name": "Common bonds" },
+        { "code": "1", "name": "Corporate bonds" },
         { "code": "2", "name": "Convertible bonds" },
         { "code": "3", "name": "Commercial paper" },
         { "code": "4", "name": "Money market instruments" },
@@ -57,7 +56,7 @@
     },
     {
       "code": "4",
-      "name": "Investment funds",
+      "name": "Collective Investment Undertakings",
       "subcategories": [
         { "code": "1", "name": "Equity funds" },
         { "code": "2", "name": "Debt funds" },
@@ -76,7 +75,7 @@
       "subcategories": [
         { "code": "1", "name": "Equity risk" },
         { "code": "2", "name": "Interest rate risk" },
-        { "code": "3", "name": "Currency risk" },
+        { "code": "3", "name": "Currency (FX) risk" },
         { "code": "4", "name": "Credit risk" },
         { "code": "5", "name": "Real estate risk" },
         { "code": "6", "name": "Commodity risk" },
@@ -91,7 +90,7 @@
       "subcategories": [
         { "code": "1", "name": "Equity risk" },
         { "code": "2", "name": "Interest rate risk" },
-        { "code": "3", "name": "Currency risk" },
+        { "code": "3", "name": "Currency (FX) risk" },
         { "code": "4", "name": "Credit risk" },
         { "code": "5", "name": "Real estate risk" },
         { "code": "6", "name": "Commodity risk" },
@@ -106,7 +105,7 @@
       "subcategories": [
         { "code": "1", "name": "Cash" },
         { "code": "2", "name": "Transferable deposits (cash equivalents)" },
-        { "code": "3", "name": "Other deposits short term (less than one year)" },
+        { "code": "3", "name": "Other deposits short term (less than or equal to one year)" },
         { "code": "4", "name": "Other deposits with term longer than one year" },
         { "code": "5", "name": "Deposits to cedants" },
         { "code": "9", "name": "Other" }
@@ -116,10 +115,13 @@
       "code": "8",
       "name": "Mortgages and loans",
       "subcategories": [
-        { "code": "1", "name": "Uncollateralized loans made" },
-        { "code": "2", "name": "Loans made collateralized with securities" },
+        { "code": "1", "name": "Uncollateralised loans" },
+        { "code": "2", "name": "Loans collateralised by securities" },
         { "code": "4", "name": "Mortgages" },
-        { "code": "5", "name": "Other collateralized loans made" },
+        { "code": "5", "name": "Other collateralised loans" },
+        { "code": "6", "name": "Loans on policies" },
+        { "code": "7", "name": "Loans to members of the administrative, management or supervisory body" },
+        { "code": "8", "name": "Loans to other natural persons" },
         { "code": "9", "name": "Other" }
       ]
     },
@@ -130,9 +132,17 @@
         { "code": "1", "name": "Property (office and commercial)" },
         { "code": "2", "name": "Property (residential)" },
         { "code": "3", "name": "Property (for own use)" },
-        { "code": "4", "name": "Property (under construction)" },
+        { "code": "4", "name": "Property (under construction for investment)" },
         { "code": "5", "name": "Plant and equipment (for own use)" },
+        { "code": "6", "name": "Property (under construction for own use)" },
         { "code": "9", "name": "Other" }
+      ]
+    },
+    {
+      "code": "0",
+      "name": "Other investments",
+      "subcategories": [
+        { "code": "9", "name": "Other investments" }
       ]
     },
     {
@@ -185,6 +195,7 @@
         { "code": "1", "name": "Interest rate swaps" },
         { "code": "2", "name": "Currency swaps" },
         { "code": "3", "name": "Interest rate and currency swaps" },
+        { "code": "4", "name": "Total return swaps" },
         { "code": "5", "name": "Security swaps" },
         { "code": "7", "name": "Catastrophe and Weather risk" },
         { "code": "8", "name": "Mortality risk" },

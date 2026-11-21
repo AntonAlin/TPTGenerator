@@ -77,7 +77,7 @@ etc.), not by fixed column letters, so a moderately re-arranged template still p
 
 | File | Source |
 | --- | --- |
-| `src/data/cic_table.json` | CIC table (categories and sub-categories, first-two-position rules), transcribed from `spec/cic/cic_table_source.png`, supplied by the project owner. Category 0 (Other investments) is used by TPT but has no sub-categories in this source, so none are listed. `src/data/cic.test.ts` cross-checks the table against the TPT spec. |
+| `src/data/cic_table.json` | CIC table per Commission Implementing Regulation (EU) 2023/894, Annex VI: 16 categories (0-9, A-F), 115 sub-categories, XL/XT listing codes. Supplied by the project owner; not yet verified against the Official Journal text. `spec/cic/cic_table_source.png` is the older table image it replaced, kept for reference. `src/data/cic.test.ts` cross-checks it against the TPT spec. |
 
 ## Limitations (summary; expanded in later phases)
 
