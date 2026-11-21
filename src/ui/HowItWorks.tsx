@@ -11,6 +11,7 @@ import { CANONICAL_INFO } from '../detect/canonical.ts';
 import synonyms from '../detect/synonyms.json';
 import type { AmountRole } from '../derive/amounts.ts';
 import { runExample } from './howItWorksExample.ts';
+import { NEXUS_URL, REPO_URL } from './links.ts';
 
 const pct = (x: number, digits = 1) => `${(x * 100).toFixed(digits)}%`;
 const num = (v: unknown) => (typeof v === 'number' ? v.toLocaleString('en-US', { maximumFractionDigits: 3 }) : v instanceof Date ? v.toISOString().slice(0, 10) : String(v ?? ''));
@@ -49,6 +50,7 @@ const SECTIONS = [
   ['how-tested', 'How it is tested'],
   ['how-privacy', 'Privacy'],
   ['how-limits', 'Limits'],
+  ['how-nexus', 'Nexus Portfolio Lab'],
 ] as const;
 
 export function HowItWorks() {
@@ -359,7 +361,7 @@ export function HowItWorks() {
           Your file never leaves this tab. There is no server behind the app, no analytics and no tracking. The page's Content-Security-Policy forbids it from making
           network requests at all, so it could not send your data even by mistake. Saved source and fund profiles stay in this browser's storage. The affiliate
           banner's image is served from this site: nothing is requested from the advertiser unless you click it.{' '}
-          <a href="https://github.com/AntonAlin/TPTGenerator" target="_blank" rel="noopener noreferrer">
+          <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
             The source code is public
           </a>
           , so all of this can be checked.
@@ -375,6 +377,39 @@ export function HowItWorks() {
           <li>Bond analytics assume bullet bonds. Yields and durations are not computed for floating-rate, perpetual, callable, inflation-linked or similar bonds.</li>
           <li>Not legal, regulatory or investment advice. You remain responsible for the data you report.</li>
         </ul>
+      </section>
+
+      <section class="card nexus" id="how-nexus">
+        <h3>Next: analyse the portfolio in Nexus Portfolio Lab</h3>
+        <p>
+          This app converts a holdings file into a TPT. <strong>Nexus Portfolio Lab</strong>, from the same developer, is free portfolio analytics for fund managers:
+          what the portfolio is exposed to, how much risk it carries, and whether it stays within its limits. Like this app it runs in your browser with no
+          accounts, and reads the same kind of holdings file (CSV or Excel). Your holdings stay in your browser and your own files or API; they are not sent to a
+          server.
+        </p>
+        <p>What you can do there:</p>
+        <ul>
+          <li><strong>Exposure:</strong> market value against economic exposure including derivatives, by asset class, sector, region, country, issuer and currency before and after hedges.</li>
+          <li><strong>Risk:</strong> parametric, historical and EWMA value at risk and expected shortfall, risk contributions by factor and by position, option Greeks.</li>
+          <li><strong>Fixed income:</strong> yield, duration, convexity, DV01 and CS01, maturity and rating profiles.</li>
+          <li><strong>Stress tests:</strong> 11 scenarios, among them 2008, the euro crisis, Covid and the 2022 rate shock, plus your own, with options fully repriced.</li>
+          <li><strong>Liquidity:</strong> days to liquidate and a liquidity stress test along ESMA's guidelines, with redemption shocks and a coverage ratio.</li>
+          <li><strong>Compliance:</strong> UCITS limits such as 5/10/40, issuer and counterparty limits, the fund's own investment rules, global exposure by commitment or VaR, a breach history and a control log.</li>
+          <li><strong>Performance:</strong> risk and return against a benchmark, Brinson attribution, changes between two dates, and pre-trade checks of a trade before you make it.</li>
+          <li>
+            <strong>Reporting:</strong> a PDF report, draft PRIIPs KIDs and the FinDatEx EPT file, and a TPT of your own fund with the model figures this converter
+            leaves blank, such as option deltas, gamma and credit sensitivity.
+          </li>
+        </ul>
+        <p class="small muted">
+          One difference: Nexus downloads its chart and spreadsheet libraries and the ECB's exchange rates when it opens. Your holdings are not part of those
+          requests.
+        </p>
+        <p>
+          <a class="button-link" href={NEXUS_URL} target="_blank" rel="noopener noreferrer">
+            Open Nexus Portfolio Lab ↗
+          </a>
+        </p>
       </section>
     </article>
   );

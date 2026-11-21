@@ -16,6 +16,7 @@ import { resolveHoldings } from '../derive/resolve.ts';
 import { interpretAmounts } from '../derive/amounts.ts';
 import { Promo } from './Promo.tsx';
 import { HowItWorks } from './HowItWorks.tsx';
+import { NEXUS_URL } from './links.ts';
 
 type StepId = 'upload' | 'mapping' | 'fund' | 'export' | 'spec' | 'how';
 
@@ -197,10 +198,22 @@ export function App() {
       <main class="content">{body}</main>
 
       <footer class="app-footer muted">
-        <p>
-          Field definitions are generated from {spec.meta.sourceFile.split('#')[0].replace('spec/', '')} ({spec.meta.dateLine}). This tool does not use
-          market or reference data. Derived values are estimates and are flagged as such. Not legal or regulatory advice.
-        </p>
+        <div class="footer-text">
+          <p>
+            Field definitions are generated from {spec.meta.sourceFile.split('#')[0].replace('spec/', '')} ({spec.meta.dateLine}). This tool does not use
+            market or reference data. Derived values are estimates and are flagged as such. Not legal or regulatory advice.
+          </p>
+          <p class="sister">
+            Also free, from the same developer:{' '}
+            <a href={NEXUS_URL} target="_blank" rel="noopener noreferrer">
+              Nexus Portfolio Lab
+            </a>
+            , portfolio analytics for fund managers: exposure, VaR, stress tests, liquidity and UCITS limit checks, in your browser.{' '}
+            <a href={HOW_HASH} onClick={(e) => { e.preventDefault(); setActive('how'); setTimeout(() => document.getElementById('how-nexus')?.scrollIntoView(), 0); }}>
+              What you can do there
+            </a>
+          </p>
+        </div>
         <Promo />
       </footer>
     </div>

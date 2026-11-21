@@ -156,6 +156,17 @@ try {
     await page.waitForSelector('td:has-text("Amount (mixed")');
     assert.ok(await page.isVisible('text=matches after re-reading 1 cell'));
     assert.ok(await page.isVisible('td:has-text("total row (kept for checks)")'));
+    // Nexus Portfolio Lab: linked in the footer and explained on this page.
+    const nexus = page.locator('footer a:has-text("Nexus Portfolio Lab")');
+    assert.equal(await nexus.getAttribute('href'), 'https://nexus.alin.one/');
+    assert.equal(await nexus.getAttribute('target'), '_blank');
+    assert.match((await nexus.getAttribute('rel')) ?? '', /noreferrer/);
+    await page.click('text=1. Upload holdings');
+    await page.click('footer a:has-text("What you can do there")');
+    await page.waitForSelector('#how-nexus');
+    assert.ok(await page.locator('#how-nexus h3').isVisible());
+    assert.ok(await page.locator('#how-nexus').evaluate((el) => { const r = el.getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0; }));
+    assert.equal(await page.getAttribute('#how-nexus a:has-text("Open Nexus Portfolio Lab")', 'href'), 'https://nexus.alin.one/');
     // Opening the address directly shows the page; leaving it clears the address.
     await page.goto(`${url}#how-it-works`);
     await page.waitForSelector('h2:has-text("How it works")');

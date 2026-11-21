@@ -34,7 +34,9 @@ Live app: <https://tptgenerator.alin.one> (GitHub Pages).
 The app has a **How it works** page (<https://tptgenerator.alin.one/#how-it-works>) that explains all of this for
 users. Its worked example is a small sheet that the real engine processes when the page opens
 (`src/ui/howItWorksExample.ts`), and its figures (field count, model size and accuracy, synonym count) are
-read from the code, so the page stays true as the code changes.
+read from the code, so the page stays true as the code changes. The page and the footer also link to
+[Nexus Portfolio Lab](https://nexus.alin.one/), free portfolio analytics from the same developer, and explain
+what it does.
 
 | Step | What happens |
 | --- | --- |
