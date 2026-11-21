@@ -73,6 +73,12 @@ CI runs `npm run spec:check`, which fails if the committed JSON does not match t
 The parser finds columns by their header text (`NUM_DATA`, `DEFINITION`, `CODIFICATION`, `(CIC x)`,
 etc.), not by fixed column letters, so a moderately re-arranged template still parses.
 
+## Static reference data
+
+| File | Source |
+| --- | --- |
+| `src/data/cic_table.json` | CIC table (categories and sub-categories, first-two-position rules), transcribed from `spec/cic/cic_table_source.png`, supplied by the project owner. Category 0 (Other investments) is used by TPT but has no sub-categories in this source, so none are listed. `src/data/cic.test.ts` cross-checks the table against the TPT spec. |
+
 ## Limitations (summary; expanded in later phases)
 
 - No market data and no reference data vendor. Every TPT cell is filled in one of four ways:

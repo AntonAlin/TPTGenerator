@@ -1,0 +1,217 @@
+{
+  "source": {
+    "description": "Complementary Identification Code (CIC) table, transcribed cell by cell from the image supplied by the project owner.",
+    "file": "spec/cic/cic_table_source.png",
+    "transcribed": "2026-11-21",
+    "notes": [
+      "The image does not show a column for category 0 (Other investments). The TPT V8 template does use category 0 (column 'Other (CIC 0)' and field 131 code '0'), but no sub-categories for it are available from this source, so none are listed.",
+      "Empty cells in the image are omitted: those sub-category codes do not exist for that category."
+    ]
+  },
+  "positions12": {
+    "description": "ISO 3166-1-alpha-2 country code or XL (for not listed) or XT (for not exchange tradable)",
+    "specialCodes": [
+      { "code": "XL", "label": "Not listed" },
+      { "code": "XT", "label": "Not exchange tradable" }
+    ]
+  },
+  "categories": [
+    {
+      "code": "1",
+      "name": "Government bonds",
+      "subcategories": [
+        { "code": "1", "name": "Central Government bonds" },
+        { "code": "2", "name": "Supra-national bonds" },
+        { "code": "3", "name": "Regional government bonds" },
+        { "code": "4", "name": "Municipal government bonds" },
+        { "code": "5", "name": "Treasury bonds" },
+        { "code": "6", "name": "Covered bond" },
+        { "code": "9", "name": "Other" }
+      ]
+    },
+    {
+      "code": "2",
+      "name": "Corporate bonds",
+      "subcategories": [
+        { "code": "1", "name": "Common bonds" },
+        { "code": "2", "name": "Convertible bonds" },
+        { "code": "3", "name": "Commercial paper" },
+        { "code": "4", "name": "Money market instruments" },
+        { "code": "5", "name": "Hybrid bonds" },
+        { "code": "6", "name": "Common covered bonds" },
+        { "code": "7", "name": "Covered bonds subject to specific law" },
+        { "code": "8", "name": "Subordinated bonds" },
+        { "code": "9", "name": "Other" }
+      ]
+    },
+    {
+      "code": "3",
+      "name": "Equity",
+      "subcategories": [
+        { "code": "1", "name": "Common equity" },
+        { "code": "2", "name": "Equity of real estate related corporation" },
+        { "code": "3", "name": "Equity rights" },
+        { "code": "4", "name": "Preferred equity" },
+        { "code": "9", "name": "Other" }
+      ]
+    },
+    {
+      "code": "4",
+      "name": "Investment funds",
+      "subcategories": [
+        { "code": "1", "name": "Equity funds" },
+        { "code": "2", "name": "Debt funds" },
+        { "code": "3", "name": "Money market funds" },
+        { "code": "4", "name": "Asset allocation funds" },
+        { "code": "5", "name": "Real estate funds" },
+        { "code": "6", "name": "Alternative funds" },
+        { "code": "7", "name": "Private equity funds" },
+        { "code": "8", "name": "Infrastructure funds" },
+        { "code": "9", "name": "Other" }
+      ]
+    },
+    {
+      "code": "5",
+      "name": "Structured notes",
+      "subcategories": [
+        { "code": "1", "name": "Equity risk" },
+        { "code": "2", "name": "Interest rate risk" },
+        { "code": "3", "name": "Currency risk" },
+        { "code": "4", "name": "Credit risk" },
+        { "code": "5", "name": "Real estate risk" },
+        { "code": "6", "name": "Commodity risk" },
+        { "code": "7", "name": "Catastrophe and Weather risk" },
+        { "code": "8", "name": "Mortality risk" },
+        { "code": "9", "name": "Other" }
+      ]
+    },
+    {
+      "code": "6",
+      "name": "Collateralised securities",
+      "subcategories": [
+        { "code": "1", "name": "Equity risk" },
+        { "code": "2", "name": "Interest rate risk" },
+        { "code": "3", "name": "Currency risk" },
+        { "code": "4", "name": "Credit risk" },
+        { "code": "5", "name": "Real estate risk" },
+        { "code": "6", "name": "Commodity risk" },
+        { "code": "7", "name": "Catastrophe and Weather risk" },
+        { "code": "8", "name": "Mortality risk" },
+        { "code": "9", "name": "Other" }
+      ]
+    },
+    {
+      "code": "7",
+      "name": "Cash and deposits",
+      "subcategories": [
+        { "code": "1", "name": "Cash" },
+        { "code": "2", "name": "Transferable deposits (cash equivalents)" },
+        { "code": "3", "name": "Other deposits short term (less than one year)" },
+        { "code": "4", "name": "Other deposits with term longer than one year" },
+        { "code": "5", "name": "Deposits to cedants" },
+        { "code": "9", "name": "Other" }
+      ]
+    },
+    {
+      "code": "8",
+      "name": "Mortgages and loans",
+      "subcategories": [
+        { "code": "1", "name": "Uncollateralized loans made" },
+        { "code": "2", "name": "Loans made collateralized with securities" },
+        { "code": "4", "name": "Mortgages" },
+        { "code": "5", "name": "Other collateralized loans made" },
+        { "code": "9", "name": "Other" }
+      ]
+    },
+    {
+      "code": "9",
+      "name": "Property",
+      "subcategories": [
+        { "code": "1", "name": "Property (office and commercial)" },
+        { "code": "2", "name": "Property (residential)" },
+        { "code": "3", "name": "Property (for own use)" },
+        { "code": "4", "name": "Property (under construction)" },
+        { "code": "5", "name": "Plant and equipment (for own use)" },
+        { "code": "9", "name": "Other" }
+      ]
+    },
+    {
+      "code": "A",
+      "name": "Futures",
+      "subcategories": [
+        { "code": "1", "name": "Equity and index futures" },
+        { "code": "2", "name": "Interest rate futures" },
+        { "code": "3", "name": "Currency futures" },
+        { "code": "5", "name": "Commodity futures" },
+        { "code": "7", "name": "Catastrophe and Weather risk" },
+        { "code": "8", "name": "Mortality risk" },
+        { "code": "9", "name": "Other" }
+      ]
+    },
+    {
+      "code": "B",
+      "name": "Call Options",
+      "subcategories": [
+        { "code": "1", "name": "Equity and index options" },
+        { "code": "2", "name": "Bond options" },
+        { "code": "3", "name": "Currency options" },
+        { "code": "4", "name": "Warrants" },
+        { "code": "5", "name": "Commodity options" },
+        { "code": "6", "name": "Swaptions" },
+        { "code": "7", "name": "Catastrophe and Weather risk" },
+        { "code": "8", "name": "Mortality risk" },
+        { "code": "9", "name": "Other" }
+      ]
+    },
+    {
+      "code": "C",
+      "name": "Put Options",
+      "subcategories": [
+        { "code": "1", "name": "Equity and index options" },
+        { "code": "2", "name": "Bond options" },
+        { "code": "3", "name": "Currency options" },
+        { "code": "4", "name": "Warrants" },
+        { "code": "5", "name": "Commodity options" },
+        { "code": "6", "name": "Swaptions" },
+        { "code": "7", "name": "Catastrophe and Weather risk" },
+        { "code": "8", "name": "Mortality risk" },
+        { "code": "9", "name": "Other" }
+      ]
+    },
+    {
+      "code": "D",
+      "name": "Swaps",
+      "subcategories": [
+        { "code": "1", "name": "Interest rate swaps" },
+        { "code": "2", "name": "Currency swaps" },
+        { "code": "3", "name": "Interest rate and currency swaps" },
+        { "code": "5", "name": "Security swaps" },
+        { "code": "7", "name": "Catastrophe and Weather risk" },
+        { "code": "8", "name": "Mortality risk" },
+        { "code": "9", "name": "Other" }
+      ]
+    },
+    {
+      "code": "E",
+      "name": "Forwards",
+      "subcategories": [
+        { "code": "1", "name": "Forward interest rate agreement" },
+        { "code": "2", "name": "Forward exchange rate agreement" },
+        { "code": "7", "name": "Catastrophe and Weather risk" },
+        { "code": "8", "name": "Mortality risk" },
+        { "code": "9", "name": "Other" }
+      ]
+    },
+    {
+      "code": "F",
+      "name": "Credit derivatives",
+      "subcategories": [
+        { "code": "1", "name": "Credit default swap" },
+        { "code": "2", "name": "Credit spread option" },
+        { "code": "3", "name": "Credit spread swap" },
+        { "code": "4", "name": "Total return swap" },
+        { "code": "9", "name": "Other" }
+      ]
+    }
+  ]
+}
