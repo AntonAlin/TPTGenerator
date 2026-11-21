@@ -164,3 +164,28 @@ td.req-missing, tr.req-missing td:first-child { box-shadow: inset 3px 0 0 var(--
 .detail-table td:first-child { width: 34%; }
 .editor { margin-top: 6px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); display: flex; flex-direction: column; gap: 6px; }
 .editor .checkbox { margin-right: 10px; }
+
+/* ---- Phase 4: export & report ---- */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; }
+.tile.wide { grid-column: span 2; }
+@media (max-width: 700px) { .tile.wide { grid-column: span 1; } }
+.tile-label { font-size: 0.85rem; color: var(--muted); }
+.tile-value { font-size: 1.6rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+.stack-bar { display: flex; height: 14px; border-radius: 4px; overflow: hidden; gap: 2px; background: var(--border); }
+.seg { display: block; min-width: 3px; }
+.seg-file { background: #2f6fb5; }
+.seg-master { background: #7a4fb5; }
+.seg-user { background: #2f8a4c; }
+.seg-derived { background: #b07a12; }
+.seg-missing { background: repeating-linear-gradient(45deg, var(--bad) 0 3px, transparent 3px 6px); }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+.tab { font: inherit; background: none; border: none; border-bottom: 2px solid transparent; padding: 6px 10px; cursor: pointer; color: var(--muted); }
+.tab.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+.grid.report td { white-space: normal; vertical-align: top; }
+.conf-low { color: var(--warn); font-weight: 600; }
+.conf-medium { color: var(--text); }
+.fill-cell { display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+.mini-bar { display: inline-block; width: 50px; height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+.mini-bar span { display: block; height: 100%; background: var(--accent); }

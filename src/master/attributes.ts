@@ -68,8 +68,8 @@ export interface AttrDef {
 }
 
 export const ATTRS: AttrDef[] = [
-  { key: 'identifier', label: 'Identifier', tpt: ['14'], kind: 'text', grid: true },
-  { key: 'id_type', label: 'Id type', tpt: ['15'], kind: 'code' },
+  { key: 'identifier', label: 'Identifier', tpt: ['14'], kind: 'text', master: 'instrument', grid: true },
+  { key: 'id_type', label: 'Id type', tpt: ['15'], kind: 'code', master: 'instrument' },
   { key: 'name', label: 'Name', tpt: ['17'], kind: 'text', grid: true },
   { key: 'currency', label: 'Currency', tpt: ['21'], kind: 'currency' },
   { key: 'asset_class', label: 'Asset class', tpt: [], kind: 'text', grid: true },

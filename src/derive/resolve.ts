@@ -184,10 +184,14 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
   const file = <T extends Scalar>(v: T | undefined, method?: string) => (v === undefined ? undefined : fromFile(v, method));
 
   // --- Identification -------------------------------------------------------
-  attrs.identifier = f.isin ? fromFile(f.isin) : f.other_identifier ? fromFile(f.other_identifier) : missing('No identifier in the file.');
-  attrs.id_type = isin
-    ? derived('1', 'Valid ISIN → type 1 (ISO 6166)', 'high')
-    : missing(f.other_identifier ? 'Identifier is not an ISIN: choose the identification type.' : undefined);
+  attrs.identifier = pick('identifier', f.isin ? fromFile(f.isin) : f.other_identifier ? fromFile(f.other_identifier) : undefined, missing('No identifier in the file: set one in the security master (e.g. an internal code, type 99).'));
+  attrs.id_type = pick(
+    'id_type',
+    undefined,
+    isin && attrs.identifier.value === f.isin
+      ? derived('1', 'Valid ISIN → type 1 (ISO 6166)', 'high')
+      : missing(f.other_identifier ? 'Identifier is not an ISIN: choose the identification type.' : undefined),
+  );
   attrs.name = f.security_name ? fromFile(f.security_name) : missing();
 
   // --- Asset class & CIC ----------------------------------------------------

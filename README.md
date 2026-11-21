@@ -8,8 +8,8 @@ and works at fund or share-class level. It does not do look-through.
 Content-Security-Policy with `connect-src 'none'`, so the browser itself blocks any network request
 from the app.
 
-> Status: **Phase 3**: upload, column mapping, derivations, the fund/share class form and the security
-> master work. TPT export and the quality report are added in phase 4.
+> Status: **Phase 4**: the full workflow works end to end: upload → column mapping → fund/share class
+> data → security master → TPT export and quality report. Phase 5 (tests, samples, README polish) follows.
 
 ## Run locally
 
@@ -179,6 +179,37 @@ NACE codes come from a picklist and are validated against it (see Static referen
 
 `src/data/regions.json` lists EEA and OECD members (as of November 2026) for the economic-zone fields 13, 53, 74 and 87. Review it when
 membership changes.
+
+## Export and quality report
+
+`src/export/buildTpt.ts` builds one TPT per fund, or one per share class. It uses the exact column order and
+headers of the active spec, with column names on the first line only, as the template requires. Files are named
+per the template's convention, e.g. `20260930_TPTV8_SE0000108656_20261005_Exempelfonden`.
+
+- **xlsx:** sheet `TPT`, plus an optional `Source` sheet giving the origin of every cell for audit (`file`,
+  `master`, `user`, `derived (confidence) – method`, or `missing: reason`).
+- **csv:** decimal point, no thousands separators, ISO dates, UTF-8 with BOM. The delimiter can be a comma or a semicolon.
+- **Share classes:** holdings are shared across classes. Portfolio-currency amounts (24, 25, 28) are converted to each
+  class currency with the FX table. Weights are relative to the total fund NAV.
+- **Field 1000** gets the exact version value. Fields FinDatEx no longer maintains are always empty.
+- **Exposure (27, 28, 30):** for non-derivatives, equal to the market valuation incl. accrued, per the field
+  definitions. For FX forwards, FRAs and CDS: the notional. Other derivatives and convertibles are left blank,
+  because they need delta or underlying data.
+- **Always left blank:** the SCR contribution fields (97–105b), with field 11 set to `N`. The report says so.
+
+The quality report (`src/export/quality.ts`) is shown in step 5 and can be downloaded as xlsx. It contains:
+
+- per field: applicable rows (from the template's CIC applicability columns), % filled, and counts by source
+- every missing mandatory field, per holding; portfolio fields are listed once
+- every estimated (derived) value, with its method and confidence
+- validation errors and warnings:
+  - every cell checked against its spec data type and closed list (CIC, ISO codes, NACE, dates)
+  - invalid ISINs and LEIs, invalid CICs in the file
+  - weights not summing to 100%
+  - NAV differing from the sum of holdings
+  - duplicate identifiers
+  - maturities before the valuation date
+- the fields left blank on purpose, with the reason
 
 ## Samples
 

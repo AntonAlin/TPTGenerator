@@ -5,6 +5,7 @@ import { UploadStep } from './UploadStep.tsx';
 import { MappingStep } from './MappingStep.tsx';
 import { PortfolioStep } from './PortfolioStep.tsx';
 import { MasterStep } from './MasterStep.tsx';
+import { ExportStep } from './ExportStep.tsx';
 import { dateFromMetadata, type LoadedSheet } from './session.ts';
 import { ProfileRepository } from '../profiles/profiles.ts';
 import { openStore } from '../profiles/store.ts';
@@ -28,7 +29,7 @@ const STEPS: Step[] = [
   { id: 'mapping', label: '2. Map columns' },
   { id: 'fund', label: '3. Fund / share class' },
   { id: 'master', label: '4. Security master' },
-  { id: 'export', label: '5. Export & quality report', comingInPhase: 4 },
+  { id: 'export', label: '5. Export & quality report' },
   { id: 'spec', label: `TPT ${spec.meta.version} field reference` },
 ];
 
@@ -92,7 +93,7 @@ export function App() {
 
   const step = STEPS.find((s) => s.id === active)!;
   const enabled = (id: StepId) =>
-    id === 'upload' || id === 'spec' || (id === 'mapping' && !!loaded) || ((id === 'fund' || id === 'master') && !!result) || !!STEPS.find((s) => s.id === id)?.comingInPhase;
+    id === 'upload' || id === 'spec' || (id === 'mapping' && !!loaded) || ((id === 'fund' || id === 'master' || id === 'export') && !!result) || !!STEPS.find((s) => s.id === id)?.comingInPhase;
 
   let body;
   if (active === 'spec') body = <SpecBrowser />;
@@ -135,6 +136,8 @@ export function App() {
     );
   else if (active === 'master' && result && stores)
     body = <MasterStep result={result} master={stores.master} persistent={stores.persistent} onChanged={() => setMasterVersion((v) => v + 1)} onContinue={() => setActive('export')} />;
+  else if (active === 'export' && result)
+    body = <ExportStep result={result} portfolio={portfolio} fx={fx.table} fxMissing={fx.missing} />;
   else
     body = (
       <section class="placeholder">
