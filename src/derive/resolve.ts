@@ -16,6 +16,7 @@ import { ASSET_CLASSES, inferAssetClass, type AssetClass, type AssetClassResult 
 import { deriveCic, quotationZoneFromCic, underlyingCategoryFromCic } from './cicDerive.ts';
 import { bondAnalytics, type BondAnalytics, type DayCount, type Frequency } from './fixedIncome.ts';
 import type { Holding } from './holdings.ts';
+import { ROLE_LABEL, type AmountRole } from './amounts.ts';
 import {
   derived,
   fromFile,
@@ -185,6 +186,19 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
     return derivedVal ?? missing();
   };
   const file = <T extends Scalar>(v: T | undefined, method?: string) => (v === undefined ? undefined : fromFile(v, method));
+  /** File value of an amount, with how its cell was interpreted when that was decided cell by cell. */
+  const amountFromFile = (role: AmountRole, value: number): Resolved<number> => {
+    const ci = h.amounts?.cells.find((c) => c.role === role);
+    if (!ci || !ci.moved) return fromFile(value);
+    const a = h.amounts!;
+    return {
+      value,
+      source: 'file',
+      method: `Input file, column "${ci.cell.header}" read as ${ROLE_LABEL[role]}: ${a.evidence[0]}`,
+      confidence: a.confidence,
+      ...(a.runnerUp && a.confidence !== 'high' ? { note: `Alternative reading (${Math.round(a.runnerUp.probability * 100)}%): ${a.runnerUp.description}.` } : {}),
+    };
+  };
 
   // --- Identification -------------------------------------------------------
   attrs.identifier = pick('identifier', f.isin ? fromFile(f.isin) : f.other_identifier ? fromFile(f.other_identifier) : undefined, missing('No identifier in the file: set one in the security master (e.g. an internal code, type 99).'));
@@ -288,13 +302,13 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
 
   const notionalBased = ['forward', 'swap', 'credit_derivative'].includes(effectiveClass);
   attrs.nominal = f.nominal !== undefined
-    ? fromFile(f.nominal)
+    ? amountFromFile('nominal', f.nominal)
     : (isFI || notionalBased) && f.quantity !== undefined
       ? derived(f.quantity, notionalBased ? 'Quantity column used as the contract (notional) amount for this forward/swap/CDS' : 'Quantity column used as nominal amount for this debt instrument', 'medium')
       : missing();
   attrs.quantity =
     f.quantity !== undefined && !((isFI || notionalBased) && f.nominal === undefined)
-      ? fromFile(f.quantity)
+      ? amountFromFile('quantity', f.quantity)
       : missing(isFI ? 'Debt instrument: quantity reported as nominal (field 19).' : notionalBased ? 'Forward/swap/CDS: amount reported as nominal (field 19).' : undefined);
   const nominal = typeof attrs.nominal.value === 'number' ? attrs.nominal.value : undefined;
 
@@ -323,7 +337,7 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
   // Market value in local currency as given/derived (convention not yet applied).
   let mvLocal: Resolved<number> | undefined;
   let computedClean = false;
-  if (f.market_value_local !== undefined) mvLocal = fromFile(f.market_value_local);
+  if (f.market_value_local !== undefined) mvLocal = amountFromFile('mv_local', f.market_value_local);
   else if (f.market_value_portfolio !== undefined && fx) {
     mvLocal = derived(round(f.market_value_portfolio / fx, 2), `Portfolio-currency value ÷ FX rate ${fx}`, fxEntry?.source === 'implied' ? 'medium' : 'high');
   } else if (f.price !== undefined && isFI && nominal !== undefined) {
@@ -363,7 +377,7 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
   [attrs.mv_local_dirty, attrs.mv_local_clean] = splitValue(mvLocal, 1, 'local');
 
   let mvPort: Resolved<number> | undefined;
-  if (f.market_value_portfolio !== undefined) mvPort = fromFile(f.market_value_portfolio);
+  if (f.market_value_portfolio !== undefined) mvPort = amountFromFile('mv_port', f.market_value_portfolio);
   else if (mvLocal?.value !== undefined && fx) {
     mvPort = derived(round(mvLocal.value * fx, 2), `Local value × FX rate ${fx} (${fxEntry!.source})`, minConfidence(mvLocal.confidence, fxEntry!.source === 'implied' ? 'medium' : 'high'));
   }

@@ -24,6 +24,7 @@ export const CANONICAL_FIELDS = [
   'accrued_interest',
   'fx_rate',
   'cic',
+  'amount_mixed',
   'ignore',
 ] as const;
 
@@ -50,6 +51,10 @@ export const CANONICAL_INFO: Record<CanonicalField, { label: string; help: strin
   accrued_interest: { label: 'Accrued interest', help: 'Accrued coupon amount.' },
   fx_rate: { label: 'FX rate', help: 'Exchange rate between quotation and portfolio currency.' },
   cic: { label: 'CIC code', help: 'Solvency II Complementary Identification Code (4 characters).' },
+  amount_mixed: {
+    label: 'Amount (mixed: units / nominal / notional / value)',
+    help: 'One column that holds different things per row, e.g. shares for equities, nominal for bonds, notional for forwards and the amount for cash. Each cell is sorted into the right field using the other columns.',
+  },
   ignore: { label: '— Ignore this column —', help: 'Not used for the TPT.' },
 };
 

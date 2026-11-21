@@ -15,6 +15,7 @@ import type { CanonicalField } from '../detect/canonical.ts';
 import { normalizeHoldings } from '../derive/holdings.ts';
 import { buildFxTable, guessPortfolioCurrency, impliedFxRates } from '../derive/valuation.ts';
 import { resolveHoldings } from '../derive/resolve.ts';
+import { interpretAmounts } from '../derive/amounts.ts';
 
 type StepId = 'upload' | 'mapping' | 'fund' | 'master' | 'export' | 'spec';
 
@@ -73,11 +74,19 @@ export function App() {
     return buildFxTable(ccys, base, implied, portfolio.fxUser);
   }, [normalized, portfolio, base, implied]);
   const navInfo = fundNav(portfolio, (c) => fx.table[c]?.rate);
+  // Decide, cell by cell, what each amount is (units, nominal/notional, market value) and sort it.
+  const amounts = useMemo(
+    () =>
+      normalized && loaded
+        ? interpretAmounts(normalized.holdings, { portfolioCurrency: base, fx: (c) => fx.table[c]?.rate, nav: navInfo.nav, totals: loaded.table.totals })
+        : null,
+    [normalized, loaded, base, fx, navInfo.nav],
+  );
 
   const result = useMemo(
     () =>
-      normalized && stores
-        ? resolveHoldings(normalized.holdings, {
+      amounts && stores
+        ? resolveHoldings(amounts.holdings, {
             ...portfolio.conventions,
             valuationDate: portfolio.values['6'] || undefined,
             portfolioCurrency: base,
@@ -88,7 +97,7 @@ export function App() {
         : null,
     // masterVersion forces re-resolution after security master edits.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [normalized, portfolio, base, fx, navInfo.nav, stores, masterVersion],
+    [amounts, portfolio, base, fx, navInfo.nav, stores, masterVersion],
   );
 
   const step = STEPS.find((s) => s.id === active)!;
@@ -137,7 +146,7 @@ export function App() {
   else if (active === 'master' && result && stores)
     body = <MasterStep result={result} master={stores.master} persistent={stores.persistent} onChanged={() => setMasterVersion((v) => v + 1)} onContinue={() => setActive('export')} />;
   else if (active === 'export' && result)
-    body = <ExportStep result={result} portfolio={portfolio} fx={fx.table} fxMissing={fx.missing} />;
+    body = <ExportStep result={result} portfolio={portfolio} fx={fx.table} fxMissing={fx.missing} amountNotes={amounts?.notes ?? []} />;
   else
     body = (
       <section class="placeholder">

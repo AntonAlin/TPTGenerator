@@ -100,6 +100,23 @@ export function detectDecimalSeparator(values: unknown[]): DecimalSeparator | un
   return comma > dot ? ',' : '.';
 }
 
+/**
+ * Decimal style of a whole table: the style of the columns that show clear evidence,
+ * when they agree. Used for columns that cannot tell on their own (e.g. "94,125").
+ */
+export function tableDecimalSeparator(columns: unknown[][]): DecimalSeparator | undefined {
+  let comma = 0;
+  let dot = 0;
+  for (const values of columns) {
+    const d = detectDecimalSeparator(values);
+    if (d === ',') comma++;
+    else if (d === '.') dot++;
+  }
+  if (comma && !dot) return ',';
+  if (dot && !comma) return '.';
+  return undefined;
+}
+
 // ---------------------------------------------------------------------------
 // Dates
 // ---------------------------------------------------------------------------

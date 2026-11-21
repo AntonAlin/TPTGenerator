@@ -32,7 +32,8 @@ export function sourceAoa(file: TptFile): { cells: Aoa; notes: Aoa } {
     ...file.rows.map((row) =>
       row.map((c) => {
         if (c.source === 'missing') return undefined; // reasons per missing cell are in the quality report
-        if (c.source === 'file') return 'file';
+        // File values read differently from their column (mixed amounts) carry the reasoning.
+        if (c.source === 'file') return c.method && c.method !== 'Input file' && c.method.includes(' read as ') ? `file ${ref(c.method)}` : 'file';
         const label = c.source === 'derived' ? `derived (${c.confidence ?? '?'})` : c.source;
         const text = [c.method, c.note].filter(Boolean).join(' — ');
         return text ? `${label} ${ref(text)}` : label;
@@ -136,5 +137,16 @@ export function writeQualityXlsx(r: QualityReport): Uint8Array<ArrayBuffer> {
     'Validation',
   );
   XLSX.utils.book_append_sheet(wb, sheet([['Field', 'Header', 'Why left blank'], ...r.notDerived.map((n) => [n.fieldId, n.header, n.reason])], [7, 60, 90]), 'Not derivable');
+  XLSX.utils.book_append_sheet(
+    wb,
+    sheet(
+      [
+        ['Row', 'Identifier', 'Name', 'How the amount cells were read', 'Confidence', 'Probability', 'Evidence', 'Alternative reading'],
+        ...r.amounts.map((a) => [a.row, a.identifier, a.name, a.reading, a.confidence, Math.round(a.probability * 1000) / 1000, a.evidence, a.alternative]),
+      ],
+      [6, 16, 30, 60, 10, 10, 90, 60],
+    ),
+    'Amount interpretation',
+  );
   return new Uint8Array(XLSX.write(wb, { type: 'array', bookType: 'xlsx', bookSST: true, compression: true }) as ArrayBuffer);
 }

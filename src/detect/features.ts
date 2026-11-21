@@ -7,7 +7,7 @@
  */
 import { isValidIsin, isValidLei, looksLikeIsin } from '../ingest/identifiers.ts';
 import type { RawCell } from '../ingest/readFile.ts';
-import { detectDecimalSeparator, detectDateOrder, parseDate, parseNumber, type DecimalSeparator } from '../ingest/values.ts';
+import { detectDecimalSeparator, detectDateOrder, parseDate, parseNumber, tableDecimalSeparator, type DecimalSeparator } from '../ingest/values.ts';
 import { isCountry, isTptCurrency } from '../data/iso.ts';
 import { parseCic } from '../data/cic.ts';
 import { CANONICAL_FIELDS, type CanonicalField } from './canonical.ts';
@@ -52,6 +52,10 @@ export const FEATURE_NAMES: string[] = [
   'product_of_others',
   'factor_of_product',
   'share_of_other',
+  'units_rows',
+  'par_rows',
+  'equal_rows',
+  'role_mix',
   'row_id',
   'unique',
   'text',
@@ -97,11 +101,11 @@ function round(x: number, d = 4) {
 }
 
 /** Compute per-column statistics that do not depend on other columns. */
-export function profileColumn(col: ColumnInput, sampleLimit = 400): ColumnProfile {
+export function profileColumn(col: ColumnInput, sampleLimit = 400, fallbackDecimal?: DecimalSeparator): ColumnProfile {
   const present = col.values.filter((v) => !isBlank(v));
   const sample = present.slice(0, sampleLimit);
   const strings = sample.filter((v): v is string => typeof v === 'string');
-  const decimal = detectDecimalSeparator(strings);
+  const decimal = detectDecimalSeparator(strings) ?? fallbackDecimal;
   const order = detectDateOrder(strings) ?? 'DMY';
   const n = Math.max(sample.length, 1);
 
@@ -207,7 +211,7 @@ const close = (a: number, b: number) => Math.abs(a - b) <= Math.max(1e-9, Math.a
  */
 function crossColumnFeatures(profiles: ColumnProfile[]): Record<string, number>[] {
   const numericIdx = profiles.map((p, i) => (p.stats.numeric >= 0.8 && p.nonEmpty >= 2 ? i : -1)).filter((i) => i >= 0);
-  const out = profiles.map(() => ({ mag_rank: 0, product_of_others: 0, factor_of_product: 0, share_of_other: 0, date_later: 0.5 }));
+  const out = profiles.map(() => ({ mag_rank: 0, product_of_others: 0, factor_of_product: 0, share_of_other: 0, date_later: 0.5, units_rows: 0, par_rows: 0, equal_rows: 0, role_mix: 0 }));
 
   const medians = numericIdx.map((i) => {
     const a = profiles[i].numbers.filter((x): x is number => x !== undefined).map(Math.abs).sort((x, y) => x - y);
@@ -258,6 +262,44 @@ function crossColumnFeatures(profiles: ColumnProfile[]): Record<string, number>[
     }
   }
 
+  // Row-level behaviour of each amount-like column: in how many rows is it
+  //   a units factor  (this × other = third, e.g. shares × price = value),
+  //   a par factor    (this × other ÷ 100 = third, e.g. nominal × price % = value),
+  //   equal to another column (e.g. a cash balance = its market value)?
+  // A column that behaves differently in different rows is likely a mixed amount column.
+  for (const t of numericIdx) {
+    let units = 0, par = 0, equal = 0, seen = 0;
+    for (let r = 0; r < check; r++) {
+      const x = profiles[t].numbers[r];
+      if (x === undefined || x === 0) continue;
+      seen++;
+      let u = false, p = false, e = false;
+      for (const a of numericIdx) {
+        if (a === t) continue;
+        const y = profiles[a].numbers[r];
+        if (y === undefined) continue;
+        if (y !== 0 && close(x, y)) e = true;
+        for (const b of numericIdx) {
+          if (b === t || b === a) continue;
+          const z = profiles[b].numbers[r];
+          if (z === undefined || z === 0 || y === 0) continue;
+          if (!u && close(x * y, z)) u = true;
+          if (!p && close((x * y) / 100, z)) p = true;
+        }
+      }
+      if (u) units++;
+      if (p) par++;
+      if (e && !u && !p) equal++;
+    }
+    if (seen >= 2) {
+      out[t].units_rows = units / seen;
+      out[t].par_rows = par / seen;
+      out[t].equal_rows = equal / seen;
+      // Mixed: behaves as units (× price) in some rows and as a nominal (× price ÷ 100) in others.
+      out[t].role_mix = units > 0 && par > 0 ? 1 : 0;
+    }
+  }
+
   // Dates later than the other date columns' typical value (maturities vs trade/valuation dates).
   const dateIdx = profiles.map((p, i) => (p.stats.date >= 0.6 ? i : -1)).filter((i) => i >= 0);
   for (const t of dateIdx) {
@@ -279,7 +321,9 @@ export interface ColumnFeatures {
 
 /** Extract the feature vector (in FEATURE_NAMES order) for every column of a table. */
 export function extractFeatures(columns: ColumnInput[]): ColumnFeatures[] {
-  const profiles = columns.map((c) => profileColumn(c));
+  // Columns that cannot tell their decimal style on their own (e.g. only "94,125") use the table's.
+  const tableDecimal = tableDecimalSeparator(columns.map((c) => c.values));
+  const profiles = columns.map((c) => profileColumn(c, 400, tableDecimal));
   const cross = crossColumnFeatures(profiles);
   return profiles.map((p, i) => {
     const named: Record<string, number> = {

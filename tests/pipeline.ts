@@ -13,6 +13,7 @@ import type { CanonicalField } from '../src/detect/canonical.ts';
 import { normalizeHoldings } from '../src/derive/holdings.ts';
 import { buildFxTable, guessPortfolioCurrency, impliedFxRates } from '../src/derive/valuation.ts';
 import { DEFAULT_CONVENTIONS, resolveHoldings } from '../src/derive/resolve.ts';
+import { interpretAmounts } from '../src/derive/amounts.ts';
 import { baseCurrencyOf, emptyPortfolio, fundNav, type PortfolioState } from '../src/portfolio/portfolio.ts';
 import { buildTptFiles } from '../src/export/buildTpt.ts';
 import { buildQualityReport } from '../src/export/quality.ts';
@@ -55,18 +56,20 @@ export function runPipeline(file: string, opts: PipelineOptions = {}) {
     ...(base ? [base] : []),
   ];
   const fx = buildFxTable(ccys, base, implied, portfolio.fxUser);
-  const result = resolveHoldings(norm.holdings, {
+  const nav = fundNav(portfolio, (c) => fx.table[c]?.rate).nav;
+  const amounts = interpretAmounts(norm.holdings, { portfolioCurrency: base, fx: (c) => fx.table[c]?.rate, nav, totals: table.totals });
+  const result = resolveHoldings(amounts.holdings, {
     ...portfolio.conventions,
     ...DEFAULT_CONVENTIONS,
     valuationDate: portfolio.values['6'] || undefined,
     portfolioCurrency: base,
     fx: fx.table,
-    nav: fundNav(portfolio, (c) => fx.table[c]?.rate).nav,
+    nav,
     master: opts.master,
   });
   const files = buildTptFiles(result, portfolio, fx.table, { today: '2026-10-05', freeText: 'e2e' });
   const reports = files.map(buildQualityReport);
-  return { wb, table, predictions, mapping, norm, implied, guess, portfolio, fx, result, files, reports };
+  return { wb, table, predictions, mapping, norm, implied, guess, portfolio, fx, amounts, result, files, reports };
 }
 
 /** Write the TPT workbook and read it back as a 2-D array (what a recipient would see). */

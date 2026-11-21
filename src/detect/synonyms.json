@@ -72,7 +72,6 @@
       "instrument",
       "instrument name",
       "asset name",
-      "holding",
       "holding name",
       "position name",
       "asset description",
@@ -119,7 +118,6 @@
       "number of shares",
       "no of shares",
       "holding quantity",
-      "position",
       "amount held",
       "contracts",
       "number of units",
@@ -150,8 +148,7 @@
       "nombre",
       "nombre de titres",
       "nombre de parts",
-      "qté",
-      "position"
+      "qté"
     ]
   },
   "nominal": {
@@ -742,6 +739,52 @@
     ],
     "fr": [
       "code cic"
+    ]
+  },
+  "amount_mixed": {
+    "en": [
+      "holding",
+      "holdings amount",
+      "position",
+      "position amount",
+      "quantity/nominal",
+      "nominal/quantity",
+      "quantity or nominal",
+      "units/nominal",
+      "shares/nominal",
+      "nominal/shares",
+      "face/shares",
+      "nominal/market value",
+      "nominal / value",
+      "amount",
+      "holding amount",
+      "quantity/nominal/notional",
+      "exposure amount"
+    ],
+    "sv": [
+      "antal/nominellt",
+      "nominellt/antal",
+      "antal/belopp",
+      "volym/nominellt",
+      "antal eller nominellt",
+      "innehav antal/nominellt",
+      "nominellt belopp/antal"
+    ],
+    "de": [
+      "bestand",
+      "stück/nominale",
+      "nominale/stück",
+      "menge/nominal",
+      "stück/nominal",
+      "bestand stück/nominal",
+      "nominal/stück"
+    ],
+    "fr": [
+      "quantité/nominal",
+      "nominal/quantité",
+      "position",
+      "quantité ou nominal",
+      "nombre/nominal"
     ]
   },
   "ignore": {

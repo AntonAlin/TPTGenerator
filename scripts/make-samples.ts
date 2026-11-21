@@ -202,4 +202,56 @@ const round2 = (x: number) => Math.round(x * 100) / 100;
   writeFileSync(`${out}/en_multi_asset.xls`, XLSX.write(wb, { type: 'buffer', bookType: 'biff8' }) as Buffer);
 }
 
+// 8. English custodian export with a mixed "Holding" column (shares, nominal, fund units, notional,
+//    contracts, cash) and an FX forward whose notional is repeated in both market value columns.
+//    The total row adds up only without the forward. Base currency EUR, 1 USD = 1/1.1 EUR.
+{
+  const usd = 1 / 1.1;
+  type P = { name: string; id: string; holding: number; price: number | null; ccy: string; mv: number; bond?: boolean };
+  const pos: P[] = [
+    { name: 'SAP SE', id: isin('DE', '000716460'), holding: 4_000, price: 245.1, ccy: 'EUR', mv: 0 },
+    { name: 'MICROSOFT CORP', id: isin('US', '594918104'), holding: 2_500, price: 425, ccy: 'USD', mv: 0 },
+    { name: 'BUND 2.5% 15/02/2035', id: isin('DE', '000110148'), holding: 1_000_000, price: 98.9, ccy: 'EUR', mv: 0, bond: true },
+    { name: 'UST 4 1/8 15-NOV-32', id: isin('US', '91282CJX9'), holding: 500_000, price: 98.4375, ccy: 'USD', mv: 0, bond: true },
+    { name: 'EXAMPLE EURO LIQUIDITY FUND I', id: isin('LU', '765432109'), holding: 1_234.5678, price: 101.23, ccy: 'EUR', mv: 0 },
+    { name: 'EURO STOXX 50 FUT DEC26', id: 'FUT-ESZ6', holding: 10, price: 4_950, ccy: 'EUR', mv: 0 },
+    { name: 'CASH EUR', id: '', holding: 250_000, price: null, ccy: 'EUR', mv: 250_000 },
+  ];
+  for (const p of pos) if (p.price !== null) p.mv = p.name.includes('FUT') ? 0 : round2(p.bond ? (p.holding * p.price) / 100 : p.holding * p.price);
+  const base = (p: P) => round2(p.ccy === 'USD' ? p.mv * usd : p.mv);
+  const fwd = { name: 'FX FWD EUR/USD 15-DEC-2026', id: 'FWD-0001', notional: 2_000_000 };
+  const rows: unknown[][] = [
+    ['Custodian positions 30/09/2026'],
+    [],
+    ['Security', 'ISIN', 'Holding', 'Price', 'CCY', 'Market value', 'Market value (EUR)'],
+    ...pos.slice(0, 5).map((p) => [p.name, p.id, p.holding, p.price, p.ccy, p.mv, base(p)]),
+    // The custodian shows the forward's notional where the market value should be.
+    [fwd.name, fwd.id, fwd.notional, null, 'USD', fwd.notional, round2(fwd.notional * usd)],
+    ...pos.slice(5).map((p) => [p.name, p.id || null, p.holding, p.price, p.ccy, p.mv, base(p)]),
+    ['Total', null, null, null, null, null, round2(pos.reduce((a, p) => a + base(p), 0))],
+  ];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Positions');
+  writeXlsx(wb, `${out}/en_custodian_mixed_amounts.xlsx`);
+}
+
+// 9. Swedish export with one "Nominellt/Marknadsvärde" column: nominal for bonds, market value for
+//    everything else, and a weight column (the only way to tell which is which).
+{
+  const sv = (n: number, d = 2) => n.toLocaleString('sv-SE', { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/\u2212/g, '-');
+  const pos = [
+    { name: 'Ericsson B', id: 'SE0000108656', amount: 855_000, price: 85.42, value: 855_000 },
+    { name: 'Volvo B', id: 'SE0000115446', amount: 1_087_200, price: 271.8, value: 1_087_200 },
+    { name: 'SWEDEN 0.75% 12/11/2029', id: isin('SE', '000123457'), amount: 5_000_000, price: 94.125, value: 4_706_250 },
+    { name: 'STADSHYPOTEK 1.5% 2028-03-01', id: isin('SE', '000777888'), amount: 3_000_000, price: 98.2, value: 2_946_000 },
+    { name: 'Likvida medel SEK', id: '', amount: 406_000, price: 1, value: 406_000 },
+  ];
+  const total = pos.reduce((a, p) => a + p.value, 0);
+  const lines = [
+    'Värdepapper;ISIN-kod;Nominellt/Marknadsvärde;Kurs;Valuta;Andel %',
+    ...pos.map((p) => [p.name, p.id, sv(p.amount), sv(p.price, 3), 'SEK', sv((p.value / total) * 100, 4)].join(';')),
+  ];
+  writeFileSync(`${out}/sv_nominellt_eller_varde.csv`, `${lines.join('\r\n')}\r\n`);
+}
+
 console.log(`Samples written to ${out}`);

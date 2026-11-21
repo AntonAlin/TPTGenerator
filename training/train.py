@@ -18,7 +18,7 @@ import numpy as np
 CLASSES = [
     "isin", "other_identifier", "security_name", "quantity", "nominal", "market_value_local",
     "market_value_portfolio", "price", "currency", "coupon", "maturity_date", "asset_type", "weight",
-    "rating", "issuer_name", "issuer_lei", "country", "accrued_interest", "fx_rate", "cic", "ignore",
+    "rating", "issuer_name", "issuer_lei", "country", "accrued_interest", "fx_rate", "cic", "amount_mixed", "ignore",
 ]
 
 

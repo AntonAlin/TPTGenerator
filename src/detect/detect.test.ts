@@ -61,7 +61,7 @@ describe('classifyColumns', () => {
     const f = fieldsOf(cols);
     expect(f['ISIN-kod']).toBe('isin');
     expect(f['Värdepapper']).toBe('security_name');
-    expect(f['Antal/Nominellt']).toBe('quantity');
+    expect(f['Antal/Nominellt']).toBe('amount_mixed');
     expect(f['Kurs']).toBe('price');
     expect(f['Valuta']).toBe('currency');
     expect(f['Marknadsvärde SEK']).toBe('market_value_portfolio');

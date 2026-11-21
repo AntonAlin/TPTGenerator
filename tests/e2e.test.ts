@@ -29,6 +29,8 @@ const CASES: Case[] = [
   { file: 'de_depot_statement.xlsx', holdings: 4 },
   { file: 'fr_portefeuille.csv', holdings: 5 },
   { file: 'en_multi_asset.xls', holdings: 10 },
+  { file: 'en_custodian_mixed_amounts.xlsx', holdings: 8 },
+  { file: 'sv_nominellt_eller_varde.csv', holdings: 5, options: { portfolio: (p) => (p.values['4'] = 'SEK') } },
   {
     file: 'generic_headers.xlsx',
     holdings: 3,
@@ -40,11 +42,16 @@ it('covers every file in /samples', () => {
   expect(readdirSync(SAMPLES).sort()).toEqual(CASES.map((c) => c.file).sort());
 });
 
+/** A market value in the file turned out to be something else (e.g. a forward's notional) and was dropped. */
+const valueDropped = (r: ReturnType<typeof runPipeline>['result']['rows'][number]) =>
+  !!r.holding.amounts?.cells.some((c) => (c.cell.field === 'market_value_local' || c.cell.field === 'market_value_portfolio') && c.role !== 'mv_local' && c.role !== 'mv_port');
+
 describe.each(CASES)('$file', ({ file, holdings, options }) => {
   const run = runPipeline(file, options);
   const tptFile = run.files[0];
   const report = run.reports[0];
   const { wb, tpt } = roundTripXlsx(tptFile);
+  const dropped = run.result.rows.filter(valueDropped).length;
 
   it('writes a TPT with the exact spec headers, one row per holding', () => {
     expect(tpt[0]).toEqual(spec.fields.map((f) => f.header));
@@ -68,7 +75,8 @@ describe.each(CASES)('$file', ({ file, holdings, options }) => {
       });
     }
     expect(report.summary.errors).toBe(0);
-    expect(report.validation.filter((v) => v.fieldId === '26')).toEqual([]);
+    const weightIssues = report.validation.filter((v) => v.fieldId === '26').map((v) => v.message);
+    expect(weightIssues).toEqual(dropped ? [`${dropped} holding(s) have no valuation weight.`] : []);
   });
 
   it('keeps input values and identifiers, and every holding gets a valid CIC and a market value', () => {
@@ -76,13 +84,17 @@ describe.each(CASES)('$file', ({ file, holdings, options }) => {
       const row = tpt[i + 1];
       if (r.holding.file.isin) expect(row[col('14')]).toBe(r.holding.file.isin);
       expect(String(row[col('12')])).toMatch(/^[A-Z]{2}[0-9A-F]\d$/);
+      if (valueDropped(r)) {
+        expect(row[col('24')]).toBeNull();
+        return;
+      }
       expect(typeof row[col('24')]).toBe('number');
       expect(typeof row[col('26')]).toBe('number');
     });
   });
 
   it('weights sum to 100%', () => {
-    const sum = tpt.slice(1).reduce((a, r) => a + (r[col('26')] as number), 0);
+    const sum = tpt.slice(1).reduce((a, r) => a + ((r[col('26')] as number | null) ?? 0), 0);
     expect(sum).toBeCloseTo(1, 2);
   });
 
@@ -100,7 +112,7 @@ describe.each(CASES)('$file', ({ file, holdings, options }) => {
   it('writes CSV and the quality report', () => {
     const csv = writeTptCsv(tptFile).replace(/^﻿/, '');
     expect(csv.split('\r\n').filter(Boolean)).toHaveLength(1 + holdings);
-    expect(XLSX.read(writeQualityXlsx(report), { type: 'array' }).SheetNames).toHaveLength(6);
+    expect(XLSX.read(writeQualityXlsx(report), { type: 'array' }).SheetNames).toHaveLength(7);
     expect(report.notDerived.map((n) => n.fieldId)).toEqual(expect.arrayContaining(['97', '105b']));
   });
 });
@@ -203,6 +215,45 @@ describe('sample-specific results', () => {
     const src = XLSX.utils.sheet_to_json<(string | null)[]>(wb.Sheets.Source, { header: 1, defval: null });
     expect(src[1][col('148')]).toMatch(/^master/);
     expect(run.reports[0].missingMandatory.some((m) => m.fieldId === '14' && /Likvida/.test(m.name))).toBe(false);
+  });
+
+  it('mixed "Holding" column and a forward notional shown as market value', () => {
+    const run = runPipeline('en_custodian_mixed_amounts.xlsx');
+    expect(['amount_mixed', 'quantity']).toContain(run.mapping[run.table.headers.indexOf('Holding')]);
+    expect(run.mapping[run.table.headers.indexOf('Market value')]).toBe('market_value_local');
+    const sap = rowOf(run, /^SAP/);
+    expect(sap[col('18')].value).toBe(4000);
+    expect(sap[col('19')].source).toBe('missing');
+    const bund = rowOf(run, /BUND/);
+    expect(bund[col('19')].value).toBe(1_000_000);
+    expect(bund[col('18')].source).toBe('missing');
+    expect(bund[col('23')].value).toBe(989_000);
+    const fwd = rowOf(run, /FX FWD/);
+    expect(fwd[col('19')].value).toBe(2_000_000);
+    expect(fwd[col('22')].source).toBe('missing');
+    expect(fwd[col('24')].source).toBe('missing');
+    expect(fwd[col('27')].value).toBe(2_000_000);
+    expect(rowOf(run, /STOXX/)[col('18')].value).toBe(10);
+    expect(rowOf(run, /CASH EUR/)[col('22')].value).toBe(250_000);
+    expect(run.amounts.notes.join(' ')).toMatch(/Market value \(EUR\)": total .* matches after re-reading 1 cell/);
+    const fwdReport = run.reports[0].amounts.find((a) => /FX FWD/.test(a.name));
+    expect(fwdReport?.evidence).toMatch(/reported total/);
+  });
+
+  it('"Nominellt/Marknadsvärde": nominal for bonds, market value for the rest, decided by the weights', () => {
+    const run = runPipeline('sv_nominellt_eller_varde.csv', { portfolio: (p) => (p.values['4'] = 'SEK') });
+    expect(run.mapping[run.table.headers.indexOf('Nominellt/Marknadsvärde')]).toBe('amount_mixed');
+    expect(run.norm.notes.join(' ')).toMatch(/"Kurs": values like "85,420" are ambiguous/);
+    const eric = rowOf(run, /Ericsson/);
+    expect(eric[col('22')]).toMatchObject({ value: 855_000, source: 'file' });
+    expect(eric[col('22')].method).toMatch(/read as market value/);
+    expect(eric[col('24')].value).toBe(855_000);
+    expect(eric[col('18')].source).toBe('missing');
+    const sgb = rowOf(run, /^SWEDEN/);
+    expect(sgb[col('19')].value).toBe(5_000_000);
+    expect(sgb[col('25')].value).toBe(4_706_250);
+    expect(Math.abs(run.amounts.navEstimate! / 10_000_450 - 1)).toBeLessThan(0.0001);
+    for (const i of [0, 1, 2, 3]) expect(run.amounts.interpretations[i]!.confidence).not.toBe('low');
   });
 
   it('field 148 in the export is validated against the NACE list', () => {

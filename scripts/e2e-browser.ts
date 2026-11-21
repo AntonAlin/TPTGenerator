@@ -119,7 +119,7 @@ try {
     const csv = await download(page, 'Download TPT (.csv)');
     assert.equal(csv.bytes.toString('utf8').replace(/^﻿/, '').split('\r\n')[0], headers.join(','));
     const q = await download(page, 'Download quality report (.xlsx)');
-    assert.deepEqual(XLSX.read(q.bytes).SheetNames, ['Summary', 'Field completeness', 'Missing mandatory', 'Estimated values', 'Validation', 'Not derivable']);
+    assert.deepEqual(XLSX.read(q.bytes).SheetNames, ['Summary', 'Field completeness', 'Missing mandatory', 'Estimated values', 'Validation', 'Not derivable', 'Amount interpretation']);
   });
 
   await step('after a reload: source profile and security master are remembered (IndexedDB)', async () => {

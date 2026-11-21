@@ -32,6 +32,17 @@ export interface DataRow {
   section?: string;
 }
 
+export interface TotalRow {
+  /** 0-based row index in the sheet. */
+  row: number;
+  /** Label found in the row (empty for unlabelled totals detected by their sums). */
+  label: string;
+  /** Cells projected onto the table's columns (same order as `headers`). */
+  cells: RawCell[];
+  /** True for a sub-total (section total), false for a (grand) total. */
+  subtotal: boolean;
+}
+
 export interface DetectedTable {
   headerRows: number[];
   headers: string[];
@@ -40,7 +51,11 @@ export interface DetectedTable {
   rows: DataRow[];
   skipped: SkippedRow[];
   droppedColumns: number[];
+  /** Totals and sub-totals found in the table; used to check which values are market values. */
+  totals: TotalRow[];
 }
+
+const SUBTOTAL_RE = /\b(sub-?\s*total|delsumma|zwischensumme|sous-?\s*total)\b|^(summa|summe|total|somme)\s+\S/i;
 
 export interface TableOptions {
   /** Force a header row (0-based) instead of detecting it. */
@@ -175,6 +190,7 @@ export function detectTable(rows: RawCell[][], options: TableOptions = {}): Dete
   }
   const headerKey = grid[headerRow].map((c) => (isBlank(c) ? '' : String(c).trim().toLowerCase())).join('\u0001');
   const candidates: DataRow[] = [];
+  const totals: TotalRow[] = [];
   let section: string | undefined;
   const typicalFilled = medianFilled(grid.slice(lastHeaderRow + 1));
   for (let r = lastHeaderRow + 1; r < grid.length; r++) {
@@ -192,6 +208,7 @@ export function detectTable(rows: RawCell[][], options: TableOptions = {}): Dete
     const totalLabel = texts.find((t) => TOTAL_RE.test(t.trim()) || TOTAL_ANYWHERE_RE.test(t));
     if (totalLabel && !texts.some((t) => /^[A-Z]{2}[A-Z0-9]{9}\d$/.test(t.trim()))) {
       skipped.push({ row: r, reason: 'total', detail: `Totals row ("${totalLabel.trim().slice(0, 40)}")`, preview: preview(row) });
+      totals.push({ row: r, label: totalLabel.trim(), cells: columnIndex.map((c) => row[c]), subtotal: SUBTOTAL_RE.test(totalLabel.trim()) });
       continue;
     }
     if (filled === 1 && texts.length === 1 && headers.length >= 3) {
@@ -213,9 +230,10 @@ export function detectTable(rows: RawCell[][], options: TableOptions = {}): Dete
   }
 
   // 5. Totals without a label: rows with no text whose numbers equal the sum of the rows above.
-  const rowsOut = removeComputedTotals(candidates, skipped, grid);
+  const rowsOut = removeComputedTotals(candidates, skipped, grid, totals);
   skipped.sort((a, b) => a.row - b.row);
-  return { headerRows, headers, columnIndex, rows: rowsOut, skipped, droppedColumns };
+  totals.sort((a, b) => a.row - b.row);
+  return { headerRows, headers, columnIndex, rows: rowsOut, skipped, droppedColumns, totals };
 }
 
 function medianFilled(rows: RawCell[][]): number {
@@ -223,7 +241,7 @@ function medianFilled(rows: RawCell[][]): number {
   return counts.length ? counts[Math.floor(counts.length / 2)] : 0;
 }
 
-function removeComputedTotals(rows: DataRow[], skipped: SkippedRow[], grid: RawCell[][]): DataRow[] {
+function removeComputedTotals(rows: DataRow[], skipped: SkippedRow[], grid: RawCell[][], totals: TotalRow[]): DataRow[] {
   const out: DataRow[] = [];
   let groupStart = 0; // index in `out` where the current subtotal group starts
   for (const row of rows) {
@@ -238,7 +256,9 @@ function removeComputedTotals(rows: DataRow[], skipped: SkippedRow[], grid: RawC
           const v = nums[i]!;
           return Math.abs(s - v) <= Math.max(1e-6, Math.abs(v) * 0.005);
         });
-      if (sums(groupStart) || sums(0)) {
+      const grand = sums(0);
+      if (grand || sums(groupStart)) {
+        totals.push({ row: row.row, label: '', cells: row.cells, subtotal: !grand });
         skipped.push({
           row: row.row,
           reason: 'computed-total',

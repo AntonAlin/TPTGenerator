@@ -30,8 +30,10 @@ EXTRA_HEADERS = {
     "isin": ["ISIN-Code", "Isin Nr", "ISIN_ID", "Sec ISIN", "ISIN (12)", "IsinCode"],
     "other_identifier": ["BBG Ticker", "Bloomberg Code", "Sedol Code", "Short name", "SecID", "Kod", "Instrument code", "Ticker Symbol"],
     "security_name": ["Security Long Name", "Holding Description", "Papper", "Instr. name", "Asset", "Bezeichnung des Wertpapiers", "Libellé valeur", "Namn på innehav", "Long name"],
-    "quantity": ["Holding", "Units held", "Shares/Units", "Antal/Nominellt", "Pos qty", "Nb titres", "Stk.", "Number held", "Current Qty"],
-    "nominal": ["Par", "Face", "Nom. amount", "Nominal (orig)", "Nominellt bel.", "Nennwert/Stück"],
+    "quantity": ["Units held", "Shares/Units", "Pos qty", "Nb titres", "Stk.", "Number held", "Current Qty"],
+    "nominal": ["Par", "Face", "Nom. amount", "Nominal (orig)", "Nominellt bel.", "Nennwert"],
+    "amount_mixed": ["Holding", "Antal/Nominellt", "Nennwert/Stück", "Qty / Face", "Pos. amount", "Units or nominal", "Bestand (Stk./Nom.)", "Quantité / Nominal", "Holding (shares/nominal)", "Nominal or units"],
+    "amount_mixed_nv": ["Nominal / Market value", "Nominal or value", "Nominellt/Marknadsvärde", "Nominale/Kurswert", "Nominal/Valorisation", "Face or MV", "Amount (nominal/value)"],
     "market_value_local": ["MV (Local)", "Market Val LCL", "Värde (lokal)", "Kurswert Lokalwährung", "Valo. devise", "MktVal Local", "Local MV", "Market value issue ccy"],
     "market_value_portfolio": ["MV (Base)", "Base MV", "Market Val Base", "Värde (bas)", "Kurswert FW", "Valo. EUR", "MktVal Base", "Total value base"],
     "price": ["Px Close", "Kurs (lokal)", "Unit cost price", "Price (%)", "Dirty price", "Market Px", "Cours unitaire", "Pris/st"],
@@ -260,7 +262,9 @@ def pick_header(label: str, rng: random.Random, style: Style, pccy: str) -> str:
     r = rng.random()
     if r < 0.05:
         return rng.choice(["", f"Column {rng.randint(1, 30)}", f"Unnamed: {rng.randint(1, 30)}", f"F{rng.randint(1, 30)}"])
-    if label in SYNONYMS and r < 0.62:
+    if label == "amount_mixed_nv":
+        h = rng.choice(EXTRA_HEADERS["amount_mixed_nv"])
+    elif label in SYNONYMS and r < 0.62:
         lang = rng.choice(list(SYNONYMS[label].keys()))
         h = rng.choice(SYNONYMS[label][lang])
     else:
@@ -316,6 +320,8 @@ def make_table(rng: random.Random) -> list[dict]:
         "accrued_interest": lambda: [fmt_num(h.accrued, style, rng) if h.accrued is not None else (fmt_num(0.0, style, rng) if rng.random() < 0.3 else None) for h in hs],
         "fx_rate": lambda: [fmt_num(h.fx, style, rng, 6) for h in hs],
         "cic": lambda: [h.cic for h in hs],
+        "amount_mixed": lambda: [fmt_num(h.qty, style, rng, 0 if float(h.qty).is_integer() else 4) for h in hs],
+        "amount_mixed_nv": lambda: [fmt_num(h.qty, style, rng, 0) if h.kind.startswith("bond") else fmt_num(h.mv_local, style, rng) for h in hs],
     }
     noise = {
         "row_id": lambda: [str(i + 1) if not style.raw_numbers else i + 1 for i in range(n)],
@@ -339,6 +345,13 @@ def make_table(rng: random.Random) -> list[dict]:
     chosen = core + optional[: rng.randint(3, min(14, len(optional)))]
     if mix == "bond" and "nominal" not in chosen and rng.random() < 0.5:
         chosen.append("nominal")
+    # Mixed amount columns: one column holding units for equities, nominal for bonds, the balance for cash
+    # (or nominal for bonds and the market value for everything else).
+    r_mix = rng.random()
+    if r_mix < 0.25:
+        chosen = [k for k in chosen if k not in ("quantity", "nominal")] + ["amount_mixed"]
+    elif r_mix < 0.33:
+        chosen = [k for k in chosen if k not in ("quantity", "nominal", "market_value_local")] + ["amount_mixed_nv"]
     noise_keys = rng.sample(list(noise), k=rng.choice([0, 1, 1, 2, 3, 4]))
     cols = [(k, gens[k]()) for k in chosen] + [(k, noise[k]()) for k in noise_keys]
     rng.shuffle(cols)
@@ -347,7 +360,7 @@ def make_table(rng: random.Random) -> list[dict]:
 
     out = []
     for key, values in cols:
-        label = key if key in gens else "ignore"
+        label = ("amount_mixed" if key.startswith("amount_mixed") else key) if key in gens else "ignore"
         out.append({"header": pick_header(key, rng, style, pccy), "values": values, "label": label})
     return out
 

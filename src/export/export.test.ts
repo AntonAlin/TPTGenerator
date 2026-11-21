@@ -133,7 +133,7 @@ describe('quality report', () => {
   });
   it('writes the report workbook', () => {
     const wb = XLSX.read(writeQualityXlsx(q), { type: 'array' });
-    expect(wb.SheetNames).toEqual(['Summary', 'Field completeness', 'Missing mandatory', 'Estimated values', 'Validation', 'Not derivable']);
+    expect(wb.SheetNames).toEqual(['Summary', 'Field completeness', 'Missing mandatory', 'Estimated values', 'Validation', 'Not derivable', 'Amount interpretation']);
   });
   it('applicability follows the CIC columns', () => {
     expect(applies(field('33'), 'SE31')).toBe(false);

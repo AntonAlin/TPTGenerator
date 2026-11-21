@@ -49,8 +49,9 @@ export function headerSimilarity(header: string, synonym: string): number {
   if (header.replace(/ /g, '') === synonym.replace(/ /g, '')) best = 0.97;
   // All synonym tokens present in the header ("market value" ⊂ "market value sek").
   if (st.every((t) => ht.includes(t))) best = Math.max(best, 0.8 + 0.18 * (st.length / ht.length));
-  // Header tokens all inside the synonym ("mv" vs "mv local") – weaker.
-  else if (ht.every((t) => st.includes(t))) best = Math.max(best, 0.6 + 0.3 * (ht.length / st.length));
+  // A one-word header inside a longer synonym ("mv" vs "mv local") – weaker. Not for multi-word
+  // headers: "market value" is not "nominal / market value".
+  else if (ht.length === 1 && st.includes(ht[0])) best = Math.max(best, 0.6 + 0.3 * (ht.length / st.length));
   // Whole-string edit distance (typos, small variations); ignore for very short strings.
   if (Math.min(header.length, synonym.length) >= 4) best = Math.max(best, ratio(header, synonym) * 0.95);
   // Token-wise fuzzy coverage of the synonym ("maturty date" ~ "maturity date").

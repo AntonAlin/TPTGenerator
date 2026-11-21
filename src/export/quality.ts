@@ -6,6 +6,7 @@ import { validateFieldValue } from '../spec/validate.ts';
 import { looksLikeIsin, isValidIsin } from '../ingest/identifiers.ts';
 import type { Source } from '../derive/provenance.ts';
 import type { TptFile } from './buildTpt.ts';
+import { ROLE_LABEL } from '../derive/amounts.ts';
 
 export interface FieldStat {
   id: string;
@@ -47,6 +48,20 @@ export interface ValidationIssue {
   message: string;
 }
 
+export interface AmountRow {
+  row: number;
+  identifier: string;
+  name: string;
+  /** e.g. "Holding → nominal / notional; Market value → market value (local)". */
+  reading: string;
+  confidence: string;
+  probability: number;
+  evidence: string;
+  alternative?: string;
+  /** True if at least one cell was read differently from its column mapping. */
+  moved: boolean;
+}
+
 export interface NotDerived {
   fieldId: string;
   header: string;
@@ -70,6 +85,8 @@ export interface QualityReport {
   estimated: EstimatedValue[];
   validation: ValidationIssue[];
   notDerived: NotDerived[];
+  /** Rows whose amount cells were re-sorted, or whose reading is uncertain. */
+  amounts: AmountRow[];
 }
 
 const PORTFOLIO_LEVEL = /Portfolio Characteristics/i;
@@ -195,6 +212,29 @@ export function buildQualityReport(file: TptFile): QualityReport {
     if (typeof m === 'string' && typeof v === 'string' && m < v) validation.push({ severity: 'warning', row: holdings[i].holding.row + 1, identifier: String(holdings[i].attrs.identifier.value ?? ''), fieldId: '39', message: `Maturity ${m} is before the valuation date ${v}.` });
   });
 
+  // Amount cells that were re-sorted or are uncertain.
+  const amounts: AmountRow[] = [];
+  for (const h of holdings) {
+    const a = h.holding.amounts;
+    if (!a) continue;
+    const moved = a.cells.some((c) => c.moved);
+    if (!moved && a.confidence === 'high') continue;
+    amounts.push({
+      row: h.holding.row + 1,
+      identifier: String(h.attrs.identifier.value ?? ''),
+      name: String(h.attrs.name.value ?? ''),
+      reading: a.cells.map((c) => `${c.cell.header} → ${ROLE_LABEL[c.role]}`).join('; '),
+      confidence: a.confidence,
+      probability: a.probability,
+      evidence: a.evidence.join('; '),
+      ...(a.runnerUp ? { alternative: `${a.runnerUp.description} (${Math.round(a.runnerUp.probability * 100)}%)` } : {}),
+      moved,
+    });
+    if (a.confidence === 'low') {
+      validation.push({ severity: 'warning', row: h.holding.row + 1, identifier: String(h.attrs.identifier.value ?? ''), message: `Uncertain reading of the amount columns (${Math.round(a.probability * 100)}%): ${amounts.at(-1)!.reading}. Check the "Amounts" list.` });
+    }
+  }
+
   const mandatory = stats.filter((s) => s.requirement === 'mandatory');
   return {
     fileName: file.fileName,
@@ -213,5 +253,6 @@ export function buildQualityReport(file: TptFile): QualityReport {
     estimated,
     validation,
     notDerived: [...notDerived.values()],
+    amounts,
   };
 }

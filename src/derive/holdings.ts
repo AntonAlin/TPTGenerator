@@ -4,9 +4,10 @@
  * weights scaled to TPT convention (1 = 100%), coupons to percent.
  */
 import type { CanonicalField } from '../detect/canonical.ts';
+import type { AmountInterpretation } from './amounts.ts';
 import type { DetectedTable } from '../ingest/table.ts';
 import type { RawCell } from '../ingest/readFile.ts';
-import { detectDateOrder, detectDecimalSeparator, excelSerialToIso, parseDate, parseNumber, type DecimalSeparator } from '../ingest/values.ts';
+import { detectDateOrder, detectDecimalSeparator, excelSerialToIso, parseDate, parseNumber, tableDecimalSeparator, type DecimalSeparator } from '../ingest/values.ts';
 
 export interface FileValues {
   isin?: string;
@@ -31,6 +32,20 @@ export interface FileValues {
   cic?: string;
 }
 
+/** Columns whose cells are amounts that may need re-sorting per row (see derive/amounts.ts). */
+export const AMOUNT_FIELDS = ['quantity', 'nominal', 'market_value_local', 'market_value_portfolio', 'amount_mixed'] as const;
+export type AmountField = (typeof AMOUNT_FIELDS)[number];
+
+/** One numeric cell from an amount column, before deciding what it really is. */
+export interface AmountCell {
+  /** Index of the column in the table. */
+  col: number;
+  header: string;
+  /** What the column was mapped to. */
+  field: AmountField;
+  value: number;
+}
+
 export interface Holding {
   /** 0-based index in the holdings list. */
   index: number;
@@ -38,6 +53,10 @@ export interface Holding {
   row: number;
   section?: string;
   file: FileValues;
+  /** Every amount cell of the row, in column order (input to derive/amounts.ts). */
+  amountCells?: AmountCell[];
+  /** How the amount cells were interpreted (set by derive/amounts.ts). */
+  amounts?: AmountInterpretation;
   /** Values present in the file that could not be parsed (kept for the quality report). */
   unparsed: Partial<Record<keyof FileValues, string>>;
 }
@@ -50,7 +69,7 @@ export interface NormalizeResult {
   portfolioValueHeader?: string;
 }
 
-const NUMERIC: CanonicalField[] = ['quantity', 'nominal', 'market_value_local', 'market_value_portfolio', 'price', 'coupon', 'weight', 'accrued_interest', 'fx_rate'];
+const NUMERIC: CanonicalField[] = ['quantity', 'nominal', 'market_value_local', 'market_value_portfolio', 'price', 'coupon', 'weight', 'accrued_interest', 'fx_rate', 'amount_mixed'];
 const UPPER: CanonicalField[] = ['isin', 'currency', 'issuer_lei', 'country', 'cic'];
 
 const blank = (c: RawCell) => c == null || (typeof c === 'string' && !c.trim());
@@ -61,11 +80,15 @@ export function normalizeHoldings(table: DetectedTable, mapping: CanonicalField[
   const holdings: Holding[] = table.rows.map((r, index) => ({ index, row: r.row, section: r.section, file: {}, unparsed: {} }));
   const set = (h: Holding, f: CanonicalField, v: string | number) => ((h.file as Record<string, string | number>)[f] = v);
 
+  const tableDecimal = tableDecimalSeparator(table.headers.map((_, c) => table.rows.map((r) => r.cells[c])));
   mapping.forEach((field, col) => {
     if (field === 'ignore') return;
     const values = table.rows.map((r) => r.cells[col]);
     const strings = values.filter((v): v is string => typeof v === 'string');
-    const decimal: DecimalSeparator | undefined = detectDecimalSeparator(strings);
+    const decimal: DecimalSeparator | undefined = detectDecimalSeparator(strings) ?? tableDecimal;
+    if (!detectDecimalSeparator(strings) && tableDecimal && NUMERIC.includes(field) && strings.some((x) => /^\s*-?\d{1,3}[.,]\d{3}\s*$/.test(x))) {
+      notes.push(`"${table.headers[col]}": values like "${strings.find((x) => /^\s*-?\d{1,3}[.,]\d{3}\s*$/.test(x))}" are ambiguous on their own; read with the file's decimal ${tableDecimal === ',' ? 'comma' : 'point'}.`);
+    }
     const order = detectDateOrder(strings) ?? 'DMY';
 
     if (NUMERIC.includes(field)) {
@@ -88,9 +111,12 @@ export function normalizeHoldings(table: DetectedTable, mapping: CanonicalField[
           notes.push(`Coupons in "${table.headers[col]}" look like fractions (max ${Math.max(...pos)}) and were multiplied by 100.`);
         }
       }
+      const isAmount = (AMOUNT_FIELDS as readonly string[]).includes(field);
       parsed.forEach((p, i) => {
-        if (p) set(holdings[i], field, p.value * factor);
-        else if (!blank(values[i])) holdings[i].unparsed[field as keyof FileValues] = text(values[i]);
+        if (p && isAmount) (holdings[i].amountCells ??= []).push({ col, header: table.headers[col], field: field as AmountField, value: p.value });
+        // Mixed columns are only placed into fields once each cell is interpreted (derive/amounts.ts).
+        if (p && field !== 'amount_mixed') set(holdings[i], field, p.value * factor);
+        else if (!blank(values[i]) && field !== 'amount_mixed') holdings[i].unparsed[field as keyof FileValues] = text(values[i]);
       });
       return;
     }

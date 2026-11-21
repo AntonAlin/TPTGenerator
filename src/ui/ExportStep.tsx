@@ -14,14 +14,16 @@ interface Props {
   portfolio: PortfolioState;
   fx: Record<string, FxEntry>;
   fxMissing: string[];
+  /** Table-level findings from the amount interpretation (column totals). */
+  amountNotes: string[];
 }
 
-type Tab = 'validation' | 'missing' | 'estimated' | 'fields' | 'notDerived';
+type Tab = 'validation' | 'amounts' | 'missing' | 'estimated' | 'fields' | 'notDerived';
 const XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 const SOURCES: Source[] = ['file', 'master', 'user', 'derived', 'missing'];
 const pct = (a: number, b: number) => (b ? `${((a / b) * 100).toFixed(1)}%` : '–');
 
-export function ExportStep({ result, portfolio, fx, fxMissing }: Props) {
+export function ExportStep({ result, portfolio, fx, fxMissing, amountNotes }: Props) {
   const [freeText, setFreeText] = useState(portfolio.values['3']?.replace(/\s+/g, '-').slice(0, 30) || 'TPT');
   const [includeSource, setIncludeSource] = useState(true);
   const [delimiter, setDelimiter] = useState(',');
@@ -147,6 +149,7 @@ export function ExportStep({ result, portfolio, fx, fxMissing }: Props) {
           {(
             [
               ['validation', `Validation (${report.validation.length})`],
+              ['amounts', `Amounts (${report.amounts.length})`],
               ['missing', `Missing mandatory (${report.missingMandatory.length})`],
               ['estimated', `Estimated values (${report.estimated.length})`],
               ['fields', 'Completeness per field'],
@@ -165,6 +168,37 @@ export function ExportStep({ result, portfolio, fx, fxMissing }: Props) {
               rows={report.validation.map((v) => [<span class={v.severity === 'error' ? 'error' : 'warn'}>{v.severity}</span>, v.row ?? '', v.identifier ?? '', v.fieldId ?? '', v.message])}
               empty="No validation problems."
             />
+          )}
+          {tab === 'amounts' && (
+            <>
+              <p class="muted small">
+                Amount columns can mix shares, nominal, notional and market values. Each cell was read using the row's arithmetic (quantity × price, nominal × price ÷ 100,
+                value × FX, value ÷ NAV = weight), the row type and column totals. Listed: rows where a cell was sorted into a different field than its column, or where the
+                reading is uncertain.
+              </p>
+              {amountNotes.length > 0 && (
+                <ul class="small">
+                  {amountNotes.map((n) => (
+                    <li key={n}>{n}</li>
+                  ))}
+                </ul>
+              )}
+              <Table
+                head={['Row', 'Identifier', 'Name', 'Read as', 'Confidence', 'Evidence', 'Alternative']}
+                rows={report.amounts.map((a) => [
+                  a.row,
+                  a.identifier,
+                  a.name,
+                  a.reading,
+                  <span class={`conf-${a.confidence}`}>
+                    {a.confidence} ({Math.round(a.probability * 100)}%)
+                  </span>,
+                  a.evidence,
+                  a.alternative ?? '',
+                ])}
+                empty="Every amount column was read as mapped, with high confidence."
+              />
+            </>
           )}
           {tab === 'missing' && (
             <Table head={['Row', 'Identifier', 'Name', 'Field', 'Why missing']} rows={report.missingMandatory.map((m) => [m.row || '', m.identifier, m.name, m.header, m.note ?? ''])} empty="All mandatory fields are filled." />
