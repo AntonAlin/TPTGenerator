@@ -213,6 +213,7 @@ export function App() {
             Field definitions are generated from {spec.meta.sourceFile.split('#')[0].replace('spec/', '')} ({spec.meta.dateLine}). This tool does not use
             market or reference data. Derived values are estimates and are flagged as such. Not legal or regulatory advice.
           </p>
+          <p>© 2026 Anton Ålin. Free to use; not for sale, modification or republication.</p>
           <p class="sister">
             Also free, from the same developer:{' '}
             <a href={NEXUS_URL} target="_blank" rel="noopener noreferrer">

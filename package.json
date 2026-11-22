@@ -1,6 +1,7 @@
 {
   "name": "tpt-generator",
   "private": true,
+  "license": "SEE LICENSE IN LICENSE",
   "version": "0.1.0",
   "description": "Static, in-browser converter from portfolio holdings files to the FinDatEx Solvency II Tripartite Template (TPT).",
   "type": "module",

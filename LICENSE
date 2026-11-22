@@ -1,0 +1,134 @@
+TPT Generator Licence — Free to Use, Not for Sale or Modification
+Version 1.0
+
+Copyright (c) 2026 Anton Ålin. All rights reserved except as granted below.
+
+In short: use it as much as you like, privately or at work, and do what you
+want with the TPT files and reports you make with it. Do not sell it, change
+it, build on it or republish it. This is not open-source software. The full
+terms below are what apply.
+
+
+1. DEFINITIONS
+
+"Software" means the contents of this repository (source code, design, text,
+documentation and other material) and the application published at
+https://tptgenerator.alin.one/.
+
+"You" means the person or legal entity using the Software, including a
+company, fund manager, custodian or other organisation and the people working
+for it.
+
+"Output" means the TPT files, quality reports, exports and other results You
+produce with the Software from Your own data.
+
+
+2. WHAT YOU MAY DO
+
+The copyright holder grants You a free, worldwide, non-exclusive,
+non-transferable licence to:
+
+  a) use the Software for any purpose, private or professional, including in
+     commercial activities, for any number of users within Your organisation;
+
+  b) where You have been given access to the source code, read, study, test
+     and run it, for example to verify how the Software works and that it
+     sends no data anywhere;
+
+  c) host an unmodified copy of the Software on infrastructure You control,
+     for use within Your own organisation only. Nothing may be changed;
+
+  d) use, share, publish, deliver to investors and charge for Your Output
+     without restriction.
+
+
+3. WHAT YOU MAY NOT DO
+
+You may not, in whole or in part:
+
+  a) sell, license, sublicense, rent, lease or otherwise charge for the
+     Software or for access to it, including by including it in a paid product
+     or offering it as a hosted service to others;
+
+  b) modify, adapt, translate or create derivative works of the Software,
+     including building another product or service on its code, design, text,
+     column-detection model or test data;
+
+  c) redistribute or republish the Software, modified or not, outside Your own
+     organisation;
+
+  d) remove or alter copyright notices, rebrand the Software, or present it or
+     any part of it as the work of anyone other than the copyright holder.
+
+Any use not expressly granted in section 2 is reserved by the copyright
+holder. For other uses, ask the copyright holder for written permission.
+
+
+4. FORKS AND COPIES
+
+Where the repository is public on GitHub, GitHub's terms of service allow
+users to view and fork it there. A fork or any other copy gives no rights
+beyond those in this licence; section 3 applies to it as well.
+
+
+5. SUGGESTIONS
+
+Bug reports, ideas and suggestions are welcome. By submitting one You allow
+the copyright holder to use it freely and without compensation.
+
+
+6. TERMINATION
+
+If You breach this licence, Your rights under it end automatically and You
+must stop using the Software and delete any copies You host.
+
+
+7. THIRD-PARTY COMPONENTS AND DATA
+
+The following are part of the Software but governed by their own terms, not
+by this licence:
+
+  - Preact (MIT) and SheetJS Community Edition (Apache 2.0), bundled in the
+    application;
+  - the FinDatEx Tripartite Template in /spec, from which the TPT field
+    definitions are generated. FinDatEx does not assert copyright over the
+    template; the names "FinDatEx" and "Financial Data Exchange" belong to
+    FinDatEx, and the Software is not affiliated with or endorsed by FinDatEx;
+  - reference data: ISO 3166 and ISO 4217 lists from Debian iso-codes via
+    pycountry (LGPL 2.1), NACE Rev. 2 from Eurostat, and the CIC table of
+    Commission Implementing Regulation (EU) 2023/894.
+
+
+8. NO WARRANTY, NO ADVICE, NO LIABILITY
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED. ITS RESULTS INCLUDE ESTIMATES AND ARE FOR INFORMATION ONLY; THEY DO
+NOT CONSTITUTE LEGAL, REGULATORY OR INVESTMENT ADVICE, AND YOU REMAIN
+RESPONSIBLE FOR THE DATA YOU REPORT. TO THE FULLEST EXTENT PERMITTED BY LAW,
+THE COPYRIGHT HOLDER ACCEPTS NO LIABILITY FOR THE ACCURACY OF ITS OUTPUT OR
+FOR ANY DECISIONS, LOSSES OR DAMAGE ARISING FROM ITS USE.
+
+
+9. GOVERNING LAW
+
+This licence is governed by Swedish law. Disputes are settled by Swedish
+courts.
+
+
+---------------------------------------------------------------------------
+SAMMANFATTNING PÅ SVENSKA
+
+TPT Generator är inte öppen källkod. Du får använda programmet fritt, privat
+eller i yrkesmässig verksamhet, med hur många användare som helst i din
+organisation. Har du fått tillgång till källkoden får du läsa och granska den.
+Du får driftsätta en oförändrad kopia internt i din egen organisation och
+använda, leverera, publicera och ta betalt för de TPT-filer och rapporter du
+tar fram.
+
+Du får inte sälja programmet eller ta betalt för tillgång till det, inte ändra
+det eller bygga egna produkter på koden, designen, texterna, modellen för
+kolumnigenkänning eller testdatan, inte sprida eller återpublicera det utanför
+din organisation och inte ta bort upphovsrättsmärkningar eller utge det för
+att vara någon annans verk.
+
+Villkoren på engelska ovan gäller. Svensk lag tillämpas.

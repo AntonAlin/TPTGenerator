@@ -408,3 +408,11 @@ data or for your own review. In particular:
 - FinDatEx does not assert copyright over the template. The names "FinDatEx" and "Financial Data Exchange"
   belong to FinDatEx, and this project is not affiliated with or endorsed by FinDatEx.
 - **Not legal, regulatory or investment advice.** You remain responsible for the data you report.
+
+## Licence
+
+TPT Generator is **not open source**. It is free to use, privately or at work, and you may do what you want with
+the TPT files and reports you make with it. It may not be sold, modified, built upon or republished. The full
+terms, with a Swedish summary, are in [LICENSE](LICENSE). Bundled libraries (Preact, SheetJS), the FinDatEx
+template and the reference data keep their own terms (LICENSE, section 7).
+
