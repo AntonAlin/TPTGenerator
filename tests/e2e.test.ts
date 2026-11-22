@@ -219,9 +219,10 @@ describe('sample-specific results', () => {
     expect(fwd[col('27')].value).toBe(2_000_000);
     expect(rowOf(run, /STOXX/)[col('18')].value).toBe(10);
     expect(rowOf(run, /CASH EUR/)[col('22')].value).toBe(250_000);
-    expect(run.amounts.notes.join(' ')).toMatch(/Market value \(EUR\)": total .* matches after re-reading 1 cell/);
+    // The forward repeats its holding figure in both value columns; the total row agrees.
+    expect(run.amounts.notes.join(' ')).toMatch(/Market value \(EUR\)": the market values add up to the reported total/);
     const fwdReport = run.reports[0].amounts.find((a) => /FX FWD/.test(a.name));
-    expect(fwdReport?.evidence).toMatch(/reported total/);
+    expect(fwdReport?.evidence).toMatch(/reported total|repeats the notional/);
   });
 
   it('"Nominellt/Marknadsvärde": nominal for bonds, market value for the rest, decided by the weights', () => {

@@ -103,7 +103,7 @@ export function App() {
   const amounts = useMemo(
     () =>
       normalized && loaded
-        ? interpretAmounts(normalized.holdings, { portfolioCurrency: base, fx: (c) => fx.table[c]?.rate, nav: navInfo.nav, totals: loaded.table.totals })
+        ? interpretAmounts(normalized.holdings, { portfolioCurrency: base, fx: (c) => fx.table[c]?.rate, nav: navInfo.nav, totals: normalized.totals })
         : null,
     [normalized, loaded, base, fx, navInfo.nav],
   );
@@ -168,7 +168,7 @@ export function App() {
       />
     );
   else if (active === 'export' && result)
-    body = <ExportStep result={result} portfolio={portfolio} fx={fx.table} fxMissing={fx.missing} amountNotes={amounts?.notes ?? []} />;
+    body = <ExportStep result={result} portfolio={portfolio} fx={fx.table} fxMissing={fx.missing} amountNotes={[...(normalized?.notes ?? []), ...(amounts?.notes ?? [])]} />;
   else
     body = (
       <section class="placeholder">

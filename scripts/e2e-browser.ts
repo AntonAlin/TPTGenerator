@@ -151,8 +151,10 @@ try {
     await page.click('text=Use EUR');
     await page.click('text=4. Export & quality report');
     await page.click('button[role=tab]:has-text("Amounts")');
-    await page.waitForSelector('text=matches after re-reading 1 cell');
+    // The forward repeats its holding figure in both value columns; the total row agrees.
+    await page.waitForSelector('text=the market values add up to the reported total');
     await page.waitForSelector('td:has-text("FX FWD EUR/USD 15-DEC-2026")');
+    assert.ok(await page.isVisible('text=repeats the notional'));
   });
 
   await step('"How it works" page: linkable, live example computed by the engine', async () => {
@@ -161,7 +163,7 @@ try {
     assert.equal(new URL(page.url()).hash, '#how-it-works');
     // The example tables are computed by the real pipeline when the page opens.
     await page.waitForSelector('td:has-text("Amount (mixed")');
-    assert.ok(await page.isVisible('text=matches after re-reading 1 cell'));
+    assert.ok(await page.isVisible('text=but for 12,400'));
     assert.ok(await page.isVisible('td:has-text("total row (kept for checks)")'));
     // Nexus Portfolio Lab: linked in the footer and explained on this page.
     const nexus = page.locator('footer a:has-text("Nexus Portfolio Lab")');

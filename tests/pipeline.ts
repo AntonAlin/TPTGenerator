@@ -60,7 +60,7 @@ export function runPipeline(file: string, opts: PipelineOptions = {}) {
   ];
   const fx = buildFxTable(ccys, base, implied, portfolio.fxUser);
   const nav = fundNav(portfolio, (c) => fx.table[c]?.rate).nav;
-  const amounts = interpretAmounts(norm.holdings, { portfolioCurrency: base, fx: (c) => fx.table[c]?.rate, nav, totals: table.totals });
+  const amounts = interpretAmounts(norm.holdings, { portfolioCurrency: base, fx: (c) => fx.table[c]?.rate, nav, totals: norm.totals });
   const result = resolveHoldings(amounts.holdings, {
     ...portfolio.conventions,
     ...DEFAULT_CONVENTIONS,

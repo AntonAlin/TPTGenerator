@@ -173,14 +173,17 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
   /** File value of an amount, with how its cell was interpreted when that was decided cell by cell. */
   const amountFromFile = (role: AmountRole, value: number): Resolved<number> => {
     const ci = h.amounts?.cells.find((c) => c.role === role);
-    if (!ci || !ci.moved) return fromFile(value);
+    const scaledNote = ci?.cell.scaled ? `${ci.cell.scaled}.` : undefined;
+    if (!ci || !ci.moved) return { ...fromFile(value), ...(scaledNote ? { note: scaledNote } : {}) };
     const a = h.amounts!;
+    const alt = a.runnerUp && a.confidence !== 'high' ? `Alternative reading (${Math.round(a.runnerUp.probability * 100)}%): ${a.runnerUp.description}.` : undefined;
+    const note = [scaledNote, alt].filter(Boolean).join(' ');
     return {
       value,
       source: 'file',
       method: `Input file, column "${ci.cell.header}" read as ${ROLE_LABEL[role]}: ${a.evidence[0]}`,
       confidence: a.confidence,
-      ...(a.runnerUp && a.confidence !== 'high' ? { note: `Alternative reading (${Math.round(a.runnerUp.probability * 100)}%): ${a.runnerUp.description}.` } : {}),
+      ...(note ? { note } : {}),
     };
   };
 
@@ -289,7 +292,10 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
     ? amountFromFile('nominal', f.nominal)
     : (isFI || notionalBased) && f.quantity !== undefined
       ? derived(f.quantity, notionalBased ? 'Quantity column used as the contract (notional) amount for this forward/swap/CDS' : 'Quantity column used as nominal amount for this debt instrument', 'medium')
-      : missing();
+      : info.cic[0] === '7' && f.market_value_local !== undefined
+        ? // A cash balance read as the account's value: for cash the balance is also the nominal.
+          derived(f.market_value_local, 'Cash: the balance is the nominal amount (TPT field 19 for CIC 7)', 'high')
+        : missing();
   attrs.quantity =
     f.quantity !== undefined && !((isFI || notionalBased) && f.nominal === undefined)
       ? amountFromFile('quantity', f.quantity)
@@ -310,7 +316,10 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
   const freqNote = freqKnown ? '' : ` Coupon frequency ${frequency}/year is an assumption (change it in step 3).`;
 
   let accrued: Resolved<number>;
-  if (f.accrued_interest !== undefined) accrued = fromFile(f.accrued_interest, 'Input file (assumed quotation currency)');
+  if (f.accrued_interest !== undefined) {
+    accrued = fromFile(f.accrued_interest, 'Input file (assumed quotation currency)');
+    if (h.scaled?.accrued_interest) accrued.note = `${h.scaled.accrued_interest}.`;
+  }
   else if (analytics && nominal !== undefined) {
     accrued = derived(round((analytics.accruedPer100 * nominal) / 100, 2), `Computed: ${analytics.assumptions}`, inputConf, freqNote.trim() || undefined);
   } else if (!isFI) accrued = derived(0, `No accrued interest for ${info.label.toLowerCase()}`, 'high');

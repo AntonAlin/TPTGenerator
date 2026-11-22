@@ -5,9 +5,10 @@
  */
 import type { CanonicalField } from '../detect/canonical.ts';
 import type { AmountInterpretation } from './amounts.ts';
-import type { DetectedTable } from '../ingest/table.ts';
+import type { DetectedTable, TotalRow } from '../ingest/table.ts';
 import type { RawCell } from '../ingest/readFile.ts';
 import { detectDateOrder, detectDecimalSeparator, excelSerialToIso, parseDate, parseNumber, tableDecimalSeparator, type DecimalSeparator } from '../ingest/values.ts';
+import { decideScale, metadataScale, minorUnit, scaleHint } from './scale.ts';
 
 export interface FileValues {
   isin?: string;
@@ -44,6 +45,8 @@ export interface AmountCell {
   /** What the column was mapped to. */
   field: AmountField;
   value: number;
+  /** Why the value was rescaled on reading (e.g. the column is in TSEK), if it was. */
+  scaled?: string;
 }
 
 export interface Holding {
@@ -59,6 +62,8 @@ export interface Holding {
   amounts?: AmountInterpretation;
   /** Values present in the file that could not be parsed (kept for the quality report). */
   unparsed: Partial<Record<keyof FileValues, string>>;
+  /** Values rescaled on reading (thousands, pence), with the reason, by field. */
+  scaled?: Partial<Record<keyof FileValues, string>>;
 }
 
 export interface NormalizeResult {
@@ -67,6 +72,8 @@ export interface NormalizeResult {
   notes: string[];
   /** Text of the market value (portfolio currency) header, for guessing the portfolio currency. */
   portfolioValueHeader?: string;
+  /** The table's totals with the same scaling applied as the holdings (thousands → units). */
+  totals: TotalRow[];
 }
 
 const NUMERIC: CanonicalField[] = ['quantity', 'nominal', 'market_value_local', 'market_value_portfolio', 'price', 'coupon', 'weight', 'accrued_interest', 'fx_rate', 'amount_mixed'];
@@ -81,6 +88,8 @@ export function normalizeHoldings(table: DetectedTable, mapping: CanonicalField[
   const set = (h: Holding, f: CanonicalField, v: string | number) => ((h.file as Record<string, string | number>)[f] = v);
 
   const tableDecimal = tableDecimalSeparator(table.headers.map((_, c) => table.rows.map((r) => r.cells[c])));
+  const decimals = new Map<number, DecimalSeparator | undefined>();
+  const minorRows = new Map<number, string>();
   mapping.forEach((field, col) => {
     if (field === 'ignore') return;
     const values = table.rows.map((r) => r.cells[col]);
@@ -90,6 +99,7 @@ export function normalizeHoldings(table: DetectedTable, mapping: CanonicalField[
       notes.push(`"${table.headers[col]}": values like "${strings.find((x) => /^\s*-?\d{1,3}[.,]\d{3}\s*$/.test(x))}" are ambiguous on their own; read with the file's decimal ${tableDecimal === ',' ? 'comma' : 'point'}.`);
     }
     const order = detectDateOrder(strings) ?? 'DMY';
+    decimals.set(col, decimal);
 
     if (NUMERIC.includes(field)) {
       const parsed = values.map((v) => (blank(v) ? undefined : parseNumber(v, decimal)));
@@ -141,10 +151,62 @@ export function normalizeHoldings(table: DetectedTable, mapping: CanonicalField[
     values.forEach((v, i) => {
       if (blank(v)) return;
       const t = text(v);
-      set(holdings[i], field, UPPER.includes(field) ? t.toUpperCase() : t);
+      // Prices quoted in a minor unit (GBX / GBp pence, ZAc, ILA): the currency is the major one.
+      const major = field === 'currency' ? minorUnit(t) : undefined;
+      if (major) minorRows.set(i, t);
+      set(holdings[i], field, major ?? (UPPER.includes(field) ? t.toUpperCase() : t));
     });
   });
 
+  // Prices in pence and the like: to the major unit, so quantity × price = value.
+  for (const [i, code] of minorRows) {
+    const h = holdings[i];
+    if (h.file.price === undefined) continue;
+    h.file.price = h.file.price / 100;
+    (h.scaled ??= {}).price = `Price quoted in ${code} (1/100 of ${h.file.currency}): divided by 100`;
+  }
+  if (minorRows.size) notes.push(`${minorRows.size} price(s) quoted in a minor currency unit (${[...new Set(minorRows.values())].join(', ')}) divided by 100.`);
+
+  // Amounts in thousands or millions.
+  const totals = table.totals.map((t) => ({ ...t, cells: [...t.cells] }));
+  const meta = metadataScale(table);
+  mapping.forEach((field, col) => {
+    const monetary = field === 'market_value_local' || field === 'market_value_portfolio' || field === 'accrued_interest';
+    const holdingAmount = field === 'quantity' || field === 'nominal' || field === 'amount_mixed';
+    if (!monetary && !holdingAmount) return;
+    const own = scaleHint(table.headers[col]);
+    const hint = own ? { factor: own, source: `the header says so` } : monetary && meta ? { factor: meta.factor, source: `"${meta.line.slice(0, 60)}" above the table` } : undefined;
+    if (!hint && !monetary) return;
+    const valueOf = (h: Holding) => (field === 'accrued_interest' ? h.file.accrued_interest : h.amountCells?.find((c) => c.col === col)?.value);
+    const qOf = (h: Holding) => h.file.quantity ?? h.file.nominal ?? h.amountCells?.find((c) => c.field === 'amount_mixed' || c.field === 'quantity' || c.field === 'nominal')?.value;
+    // A holding column in thousands is checked the other way round: value = q × 1000 × price.
+    const rows = field === 'accrued_interest' ? [] : holdings.map((h) => (holdingAmount ? { q: valueOf(h), price: h.file.price, value: undefined } : { q: qOf(h), price: h.file.price, value: valueOf(h) }));
+    const decision = holdingAmount
+      ? hint && decideScale(table.headers[col], hint, holdings.map((h) => {
+          const mv = h.amountCells?.find((c) => c.field === 'market_value_local')?.value;
+          const q = valueOf(h);
+          return { q: mv, price: 1, value: q !== undefined && h.file.price ? q * h.file.price : undefined };
+        }))
+      : decideScale(table.headers[col], hint, rows);
+    if (!decision) return;
+    for (const h of holdings) {
+      const cell = h.amountCells?.find((c) => c.col === col);
+      if (cell) {
+        cell.value *= decision.factor;
+        cell.scaled = decision.why;
+      }
+      if (field !== 'amount_mixed' && typeof h.file[field] === 'number') {
+        (h.file as Record<string, number>)[field] *= decision.factor;
+        (h.scaled ??= {})[field] = decision.why;
+      }
+    }
+    for (const t of totals) {
+      const n = parseNumber(t.cells[col], decimals.get(col))?.value;
+      if (n !== undefined) t.cells[col] = n * decision.factor;
+    }
+    notes.push(`${decision.why}.`);
+  });
+
   const pvCol = mapping.indexOf('market_value_portfolio');
-  return { holdings, notes, portfolioValueHeader: pvCol >= 0 ? table.headers[pvCol] : undefined };
+  return { holdings, notes, totals, portfolioValueHeader: pvCol >= 0 ? table.headers[pvCol] : undefined };
 }

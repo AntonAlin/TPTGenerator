@@ -193,7 +193,7 @@ function headerTokenFeatures(header: string) {
   const tokens = norm.split(' ').filter(Boolean);
   const rawTokens = header.split(/[^A-Za-z]+/).filter(Boolean);
   return {
-    hdr_ccy_token: rawTokens.some((t) => t.length === 3 && t === t.toUpperCase() && isTptCurrency(t)) || tokens.some((t) => ['sek', 'eur', 'usd', 'nok', 'dkk', 'gbp', 'chf'].includes(t)) ? 1 : 0,
+    hdr_ccy_token: rawTokens.some((t) => t.length === 3 && t === t.toUpperCase() && isTptCurrency(t)) || tokens.some((t) => ['sek', 'eur', 'usd', 'nok', 'dkk', 'gbp', 'chf'].includes(t) || /^[tkm](sek|eur|usd|nok|dkk|gbp|chf)$/.test(t)) ? 1 : 0,
     hdr_local_token: tokens.some((t) => LOCAL_TOKENS.has(t)) ? 1 : 0,
     hdr_base_token: tokens.some((t) => BASE_TOKENS.has(t)) ? 1 : 0,
     hdr_pct_token: tokens.some((t) => PCT_TOKENS.has(t)) ? 1 : 0,

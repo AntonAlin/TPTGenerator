@@ -23,8 +23,13 @@ describe('the How it works example', () => {
     expect(role('SWEDEN 0.75% 12/11/2029')['Antal/Nominellt']).toBe('nominal');
     expect(role('Likvida medel SEK')['Antal/Nominellt']).toBe('nominal');
   });
-  it("drops the forward's notional from the value columns because of the total row", () => {
+  it("drops the forward's notional from the value columns: the row repeats it and the total row agrees", () => {
     expect(role('FX FWD SEK/USD 15-DEC-2026')).toEqual({ 'Antal/Nominellt': 'nominal', 'Marknadsvärde lokal': 'other', 'Marknadsvärde SEK': 'other' });
-    expect(e.amounts.notes.join(' ')).toMatch(/matches after re-reading 1 cell/);
+    const i = e.amounts.holdings.findIndex((h) => h.file.security_name === 'FX FWD SEK/USD 15-DEC-2026');
+    const it = e.amounts.interpretations[i]!;
+    expect(it.evidence.join(' ')).toMatch(/repeats the notional/);
+    expect(it.evidence[0]).toMatch(/adds up to the reported total .* without this figure/);
+    expect(it.confidence).toBe('high');
+    expect(e.amounts.notes.join(' ')).toMatch(/add up to the reported total 13,304,060 but for 12,400/);
   });
 });

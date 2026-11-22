@@ -217,6 +217,26 @@ function scoreAssignment(cells: AmountCell[], roles: AmountRole[], rc: RowContex
       }
     }
   }
+  // A derivative's notional repeated in a value column (directly or converted with the FX rate) is
+  // the same figure twice: read once as the notional, the copy is not a market value. Without this,
+  // dropping a cell cost so much that the copy was read as a second notional or as the value.
+  // The holding column's figure repeated in a value column, as it is or converted with the FX rate,
+  // is the notional shown twice: a forward or swap is never worth its whole notional. (Equal local
+  // and portfolio values are normal; only a repeat of the holding column counts.)
+  const hc = cells.findIndex((c) => c.field === 'amount_mixed' || c.field === 'quantity' || c.field === 'nominal');
+  if (isDerivativeKind(rc.kind) && hc >= 0 && Math.abs(cells[hc].value) >= 1000) {
+    const H = cells[hc].value;
+    cells.forEach((c, i) => {
+      if (i === hc) return;
+      const same = match(c.value, H) === 2 || (fx !== undefined && (match(c.value, H * fx) === 2 || match(c.value * fx, H) === 2));
+      if (!same) return;
+      if (isMvRole(roles[i])) score -= 6;
+      else if (roles[i] === 'other') {
+        score += 4;
+        evidence.push(`"${c.header}" repeats the notional ${fmt(H)}${match(c.value, H) === 2 ? '' : ' in another currency'}: not a market value`);
+      }
+    });
+  }
   // Weight and NAV: a market value in the file, or one derived from quantity/nominal × price.
   if (navEst && navEst > 0) {
     const fileValue = MP ?? (ML !== undefined && fx !== undefined ? ML * fx : undefined);
@@ -229,8 +249,12 @@ function scoreAssignment(cells: AmountCell[], roles: AmountRole[], rc: RowContex
     if (value !== undefined) {
       const share = value / navEst;
       if (w !== undefined) {
-        // Weights are usually given to 0.01 percentage point: allow ±0.5% (min. 0.02 pp).
-        if (Math.abs(share - w) <= Math.max(0.0002, Math.abs(w) * 0.005)) {
+        // Weights are usually given to 0.01 percentage point: allow ±0.5% (min. 0.02 pp), narrowing
+        // for tiny positions, where 0.02 pp is more than the whole weight. A value of the opposite
+        // sign to the weight never matches it.
+        const tol = Math.max(0.0002 * Math.min(1, Math.abs(w) / 0.002 + 0.1), Math.abs(w) * 0.005);
+        const signOk = !(share * w < 0);
+        if (signOk && Math.abs(share - w) <= tol) {
           score += fileValue !== undefined ? 3 : 2.5;
           evidence.push(`${fileValue !== undefined ? 'Market value' : 'Value implied by this reading'} ÷ NAV = weight (${(share * 100).toFixed(2)}%)`);
         } else if (Math.abs(share) > 3 * Math.abs(w) + 0.05) score -= 3;
@@ -374,6 +398,22 @@ export function interpretAmounts(holdings: Holding[], ctx: AmountContext): Amoun
         notes.push(`Column "${header}": the market values add up to the reported total ${fmt(total)}.`);
         continue;
       }
+      // Derivatives already read as showing their notional in this column (their copy dropped): the
+      // total includes their real values, which the rows do not show. A gap that small is theirs.
+      const dropped = holdings.reduce((a, _, ri) => {
+        const k = idxIn(ri);
+        return k >= 0 && chosen[ri]?.[k] === 'other' && isDerivativeKind(kinds[ri]) ? a + Math.abs(cellsOf(ri)[k].value) : a;
+      }, 0);
+      if (dropped > 0 && gap <= 0.05 * dropped && gap <= 0.02 * Math.abs(total)) {
+        holdings.forEach((_, ri) => {
+          const k = idxIn(ri);
+          if (k >= 0 && chosen[ri]?.[k] === 'other' && isDerivativeKind(kinds[ri]) && !forced.has(ri)) {
+            forced.set(ri, `Column "${header}" adds up to the reported total ${fmt(total)} without this figure (but for the derivatives' own values)`);
+          }
+        });
+        notes.push(`Column "${header}": the market values add up to the reported total ${fmt(total)} but for ${fmt(gap)}, within what the derivatives read as showing their notional can be worth (their real values are in the total, not in the rows).`);
+        continue;
+      }
       // Candidate re-readings: a derivative's "market value" that is really something else
       // (typically the notional). Other rows' market values are not second-guessed here.
       const candidates = holdings
@@ -464,7 +504,10 @@ function notAValue(cells: AmountCell[], roles: AmountRole[], k: number, fx?: num
   const same = (a: number) => match(a, v) === 2 || (fx !== undefined && (match(a, v * fx) === 2 || match(a * fx, v) === 2));
   // The same amount elsewhere in the row in local currency (not as a market value) is the notional itself.
   const localV = roles[k] === 'mv_port' && fx ? v / fx : v;
-  const holder = cells.findIndex((c, j) => j !== k && !isMvRole(next[j]) && match(c.value, localV) === 2);
+  // Prefer a cell not read as a value; else a cell read as the local value that holds the same
+  // amount (a holding column taken for the local value because local × FX = the portfolio column).
+  let holder = cells.findIndex((c, j) => j !== k && !isMvRole(next[j]) && match(c.value, localV) === 2);
+  if (holder < 0) holder = cells.findIndex((c, j) => j !== k && next[j] === 'mv_local' && roles[k] === 'mv_port' && match(c.value, localV) === 2);
   if (holder >= 0) {
     next[holder] = 'nominal';
     next[k] = 'other';

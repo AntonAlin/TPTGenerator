@@ -120,7 +120,10 @@ describe('column total that includes a hidden derivative market value', () => {
     expect(r.holdings[2].file.market_value_local).toBeUndefined();
     expect(r.holdings[2].file.nominal).toBe(3_900_000);
     expect(r.holdings[3].file).toMatchObject({ nominal: 1_600_000, market_value_local: 8_300 });
-    expect(r.notes.join(' ')).toMatch(/matches after re-reading 1 cell/);
+    // Forward A repeats its holding figure in the value column, so the row already gives it away;
+    // the total row then only has A's hidden value left over, and B is left alone.
+    expect(r.interpretations[2]!.evidence.join(' ')).toMatch(/repeats the notional/);
+    expect(r.notes.join(' ')).toMatch(/add up to the reported total .* but for 8,000/);
   });
   it('accepts a remainder of a few tenths of a percent of the total when it is small next to the notional', () => {
     // Hedged share class: the hidden forward value is 0.8% of its notional and 0.76% of the total.

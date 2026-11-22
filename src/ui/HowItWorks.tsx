@@ -243,6 +243,10 @@ export function HowItWorks() {
           scores become probabilities: the best reading is used, and its confidence and the runner-up are shown in the Amounts tab of the export step.
         </p>
         <p>
+          For a derivative, its holding figure repeated in a value column, as it is or at the FX rate, gives it away on its own row: a forward or swap is never
+          worth its whole notional, so the figure is read once as the notional and the copies are dropped.
+        </p>
+        <p>
           Then the whole column is checked against the report's own total row. If the market values only add up once a derivative's figure is read as something
           else, that figure was a notional. The remainder may be the derivative's real value, which the total includes but the row doesn't show, so a small gap is
           allowed. Among the re-readings that fit, the one that changes the fewest cells wins.
@@ -291,8 +295,9 @@ export function HowItWorks() {
             </p>
           ))}
           <p class="small muted">
-            On its own row, nothing gives the forward away: local value × FX = SEK value holds for 5,000,000 as well. Only the total row shows that the column adds up
-            without it, so the 5,000,000 goes to field 19 as the notional and the market value fields stay empty rather than wrong.
+            The forward's row gives it away: its holding figure, 5,000,000, appears again in both value columns, the second time in SEK at the FX rate. The total row
+            agrees: the column adds up without those copies, except for the forward's own small value, which only the total includes. So the 5,000,000 goes to field 19
+            as the notional and the market value fields stay empty rather than wrong.
           </p>
         </div>
       </section>
