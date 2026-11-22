@@ -330,7 +330,8 @@ the field for (`src/spec/applicability.ts`):
 | Field | Rule |
 | --- | --- |
 | 27, 28, 30 | Futures and options on equities, currencies and commodities: quantity × contract size × underlying price (× delta for options), the formula of the field 27 comment; a put held long is negative (field 28 comment). Interest rate futures are left out (cheapest-to-deliver). |
-| 33, 38, 40, 41, 32 | Treasury bills: coupon 0, frequency "0", "Bullet", redemption at 100%, fixed rate; yield and duration from price and maturity. |
+| 33, 38, 40, 41, 32 | Treasury bills: coupon 0, frequency "0", "Bullet", redemption at 100%, fixed rate; yield and duration from price and maturity. Commercial paper the same, with medium confidence (it is usually, not always, issued at a discount; a coupon in the file wins). |
+| 91 | Modified duration to the next call date in the file, with the same bond maths, assuming a call at par (medium confidence). |
 | 42 | "Cal" when the file gives a call date. |
 | 59 | Code 9 when the file's rating says "NR", "Not rated" or "WR". A rating is not turned into a step: that needs the mapping tables of Implementing Regulation (EU) 2016/1800. |
 | 92 | Equal to field 90 for a fixed-rate bond without a call date: both are the modified duration to the contractual maturity. |

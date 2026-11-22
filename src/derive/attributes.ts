@@ -62,7 +62,8 @@ export type AttrKey =
   | 'infrastructure'
   | 'counterparty_sector'
   | 'collateral_eligibility'
-  | 'bail_in';
+  | 'bail_in'
+  | 'duration_to_call';
 
 export type AttrKind = 'text' | 'number' | 'date' | 'code' | 'country' | 'currency' | 'cic' | 'nace';
 
@@ -134,6 +135,7 @@ export const ATTRS: AttrDef[] = [
   { key: 'counterparty_sector', label: 'Counterparty sector', tpt: ['137'], kind: 'code' },
   { key: 'collateral_eligibility', label: 'Collateral eligibility', tpt: ['138'], kind: 'code' },
   { key: 'bail_in', label: 'Bail-in rule', tpt: ['142'], kind: 'code' },
+  { key: 'duration_to_call', label: 'Modified duration to next call', tpt: ['91'], kind: 'number' },
 ];
 
 export const ATTR: Record<AttrKey, AttrDef> = Object.fromEntries(ATTRS.map((a) => [a.key, a])) as Record<AttrKey, AttrDef>;

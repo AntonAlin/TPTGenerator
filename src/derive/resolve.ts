@@ -254,11 +254,16 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
   // --- Interest rate characteristics ----------------------------------------
   const pn = ac.parsedName;
   // A treasury bill is a discount instrument: no coupon, repaid at par in one payment at maturity.
-  const bill = effectiveClass === 'treasury_bill' && !pn.coupon;
+  // Commercial paper usually is too; an interest-bearing one has its coupon in the file or the name,
+  // which then wins, so it gets medium confidence.
+  const discountKind = effectiveClass === 'treasury_bill' ? 'Treasury bill' : effectiveClass === 'commercial_paper' ? 'Commercial paper' : undefined;
+  const bill = !!discountKind && !pn.coupon;
+  const billConf: Confidence = effectiveClass === 'treasury_bill' ? 'high' : 'medium';
+  const cpNote = effectiveClass === 'commercial_paper' ? 'Commercial paper is usually issued at a discount; an interest-bearing one needs its coupon in the file.' : undefined;
   attrs.coupon = pick(
     file(f.coupon),
     bill
-      ? (fieldAppliesTo('33', finalCic) ? derived(0, 'Treasury bill: a discount instrument, it pays no coupon', 'high') : undefined)
+      ? (fieldAppliesTo('33', finalCic) ? derived(0, `${discountKind}: a discount instrument, it pays no coupon`, billConf, cpNote) : undefined)
       : isFI && pn.coupon && !floating ? derived(pn.coupon.value, `Parsed from name ("${pn.coupon.text}")`, pn.coupon.confidence) : floating && isFI ? missing('Floating-rate note: current coupon (last fixing + margin) is not in the file.') : undefined,
   );
   attrs.maturity = pick(
@@ -284,17 +289,17 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
         : hints.has('inflation_linked')
           ? derived('Inflation_linked', 'Inflation-linked keyword in the name', 'medium')
           : bill
-            ? derived('Fixed', 'Treasury bill: a zero-coupon (discount) instrument, a fixed rate of 0', 'high')
+            ? derived('Fixed', `${discountKind}: a zero-coupon (discount) instrument, a fixed rate of 0`, billConf, cpNote)
             : hasValue(attrs.coupon)
               ? derived('Fixed', 'Has a coupon and no floating/inflation keyword', attrs.coupon.confidence === 'high' ? 'medium' : 'low')
               : undefined,
   );
   attrs.coupon_frequency = pick(
     file(f.coupon_frequency !== undefined ? String(f.coupon_frequency) : undefined),
-    bill && fieldAppliesTo('38', finalCic) ? derived('0', 'Treasury bill: no coupon payments (field 38: 0 = other than the listed frequencies)', 'high') : undefined,
+    bill && fieldAppliesTo('38', finalCic) ? derived('0', `${discountKind}: no coupon payments (field 38: 0 = other than the listed frequencies)`, billConf, cpNote) : undefined,
   );
-  attrs.redemption_type = pick(undefined, bill && fieldAppliesTo('40', finalCic) ? derived('Bullet', 'Treasury bill: repaid in one payment at maturity', 'high') : undefined);
-  attrs.redemption_rate = pick(undefined, bill && fieldAppliesTo('41', finalCic) ? derived(1, 'Treasury bill: repaid at par (1 = 100%)', 'high') : undefined);
+  attrs.redemption_type = pick(undefined, bill && fieldAppliesTo('40', finalCic) ? derived('Bullet', `${discountKind}: repaid in one payment at maturity`, billConf, cpNote) : undefined);
+  attrs.redemption_rate = pick(undefined, bill && fieldAppliesTo('41', finalCic) ? derived(1, `${discountKind}: repaid at par (1 = 100%)`, billConf, cpNote) : undefined);
   for (const k of ['securitisation', 'guarantee'] as AttrKey[]) {
     attrs[k] = pick(undefined);
   }
@@ -365,6 +370,16 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
     analytics = bondAnalytics({ coupon, maturity, settlement: ctx.valuationDate, cleanPrice: f.price, frequency, dayCount: ctx.dayCount });
   }
   const inputConf = minConfidence(attrs.coupon.confidence, attrs.maturity.confidence, freqKnown ? 'high' : 'medium');
+  // Field 91: the same bond maths to the next call date in the file, called at par then.
+  const callDate = typeof attrs.call_date.value === 'string' ? attrs.call_date.value : undefined;
+  const toCall =
+    info.isFixedIncome && fixedRate && coupon !== undefined && callDate && ctx.valuationDate && callDate > ctx.valuationDate && (!maturity || callDate < maturity) && fieldAppliesTo('91', finalCic)
+      ? bondAnalytics({ coupon, maturity: callDate, settlement: ctx.valuationDate, cleanPrice: f.price, frequency, dayCount: ctx.dayCount })
+      : undefined;
+  attrs.duration_to_call =
+    toCall?.modifiedDuration !== undefined
+      ? derived(round(toCall.modifiedDuration, 6), `Computed to the call date ${callDate} from coupon and clean price: ${toCall.assumptions.replace('bullet redemption at 100', 'called at 100 on that date')}`, minConfidence(inputConf, attrs.call_date.confidence, 'medium'), 'An estimate: assumes the bond is called at par (100) on its next call date.')
+      : missing(callDate && !f.price ? 'Needs the clean price to compute the duration to the call date.' : undefined);
   const freqNote = freqKnown ? '' : ` Coupon frequency ${frequency}/year is an assumption (change it in step 3).`;
 
   let accrued: Resolved<number>;

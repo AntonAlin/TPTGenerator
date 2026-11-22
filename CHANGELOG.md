@@ -20,7 +20,9 @@ the field for, and never over a value in the file:
 - Exposure (fields 27, 28, 30) of equity, currency and commodity futures and options: quantity × contract
   size × underlying price (× delta), as the field 27 comment says; negative for a put held long.
 - Treasury bills: coupon 0, coupon frequency "0", redemption "Bullet" at 100%, and yield and duration from
-  price and maturity.
+  price and maturity. Commercial paper the same, with medium confidence.
+- Modified duration to the next call date (field 91) for fixed-rate bonds with a call date, assuming a call
+  at par (medium confidence).
 - Credit sensitivity (92) equal to the modified duration for fixed-rate bonds without a call date.
 - Delta 1 for currency and commodity futures and FX forwards; "Cal" for bonds with a call date.
 - Credit quality step 9 when the file says the instrument is not rated.

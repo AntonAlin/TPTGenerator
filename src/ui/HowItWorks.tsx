@@ -361,7 +361,10 @@ export function HowItWorks() {
                 that cannot be called; delta 1 for currency and commodity futures and FX forwards; "Cal" for a bond with a call date; code 12 as the counterparty of
                 cash at a bank; share price as NAV ÷ shares.
               </li>
-              <li>Treasury bills as discount instruments: no coupon, repaid at par in one payment, and their yield and duration from price and maturity.</li>
+              <li>
+                Treasury bills, and with medium confidence commercial paper, as discount instruments: no coupon, repaid at par in one payment, and their yield and
+                duration from price and maturity. For a bond with a call date, the duration to that date assuming a call at par.
+              </li>
               <li>
                 The market value of a derivative the file does not value. A future is worth 0: it is margined daily, and the template says listed derivatives with
                 daily margin calls should be close to zero. A forward or swap is the received leg's notional minus the paid leg's, each at its FX rate: undiscounted,

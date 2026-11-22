@@ -128,3 +128,31 @@ describe('share price and number of shares (fields 8, 8b)', () => {
     expect(resolvePortfolioField('8', { '5': '125000000' }, undefined).source).toBe('missing');
   });
 });
+
+describe('commercial paper: usually a discount instrument (medium confidence)', () => {
+  it('no coupon, bullet at par, flagged medium with why; a coupon in the file wins', () => {
+    const cp = one({ security_name: 'NORDEA COMMERCIAL PAPER 15/01/2027', asset_type: 'Commercial paper', currency: 'SEK', nominal: 5_000_000, price: 99.2, maturity_date: '2027-01-15' });
+    expect(String(cp.attrs.cic.value).slice(2)).toBe('23');
+    expect([val(cp, 'coupon'), val(cp, 'coupon_frequency'), val(cp, 'redemption_type'), val(cp, 'redemption_rate')]).toEqual([0, '0', 'Bullet', 1]);
+    expect(cp.attrs.coupon).toMatchObject({ confidence: 'medium', note: expect.stringMatching(/usually issued at a discount/) });
+    expect(val(cp, 'modified_duration') as number).toBeGreaterThan(0.25);
+    const interest = one({ security_name: 'NORDEA COMMERCIAL PAPER 15/01/2027', asset_type: 'Commercial paper', currency: 'SEK', nominal: 5_000_000, price: 100, coupon: 3.1 });
+    expect(interest.attrs.coupon).toMatchObject({ value: 3.1, source: 'file' });
+  });
+});
+
+describe('modified duration to the next call date (field 91)', () => {
+  it('the bond maths to the call date, called at par: shorter than to maturity, marked an estimate', () => {
+    const b = one({ security_name: 'VOLVO 2.5% 30/06/2030', asset_type: 'Corporate bond', currency: 'SEK', nominal: 1_000_000, price: 98, coupon: 2.5, maturity_date: '2030-06-30', call_date: '2029-06-30', coupon_frequency: 1 });
+    const toCall = val(b, 'duration_to_call') as number;
+    const toMat = val(b, 'modified_duration') as number;
+    expect(toCall).toBeGreaterThan(2.4);
+    expect(toCall).toBeLessThan(toMat);
+    expect(b.attrs.duration_to_call).toMatchObject({ source: 'derived', confidence: 'medium', note: expect.stringMatching(/called at par/) });
+    expect(b.attrs.duration_to_call.method).toMatch(/call date 2029-06-30.*called at 100 on that date/);
+  });
+  it('nothing without a call date, or with a call date already past', () => {
+    expect(one({ security_name: 'VOLVO 2.5% 30/06/2030', asset_type: 'Corporate bond', currency: 'SEK', nominal: 1_000_000, price: 98, coupon: 2.5, maturity_date: '2030-06-30' }).attrs.duration_to_call.source).toBe('missing');
+    expect(one({ security_name: 'VOLVO 2.5% 30/06/2030', asset_type: 'Corporate bond', currency: 'SEK', nominal: 1_000_000, price: 98, coupon: 2.5, maturity_date: '2030-06-30', call_date: '2025-06-30' }).attrs.duration_to_call.source).toBe('missing');
+  });
+});
