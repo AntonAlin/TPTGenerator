@@ -11,7 +11,8 @@ import { isCountry } from '../data/iso.ts';
 import { economicZone } from '../data/regions.ts';
 import { isValidIsin, isValidLei, looksLikeIsin } from '../ingest/identifiers.ts';
 import { ATTRS, type AttrKey } from './attributes.ts';
-import { ASSET_CLASSES, inferAssetClass, type AssetClass, type AssetClassResult } from './assetClass.ts';
+import { ASSET_CLASSES, inferAssetClass, isEquitySwapText, type AssetClass, type AssetClassResult } from './assetClass.ts';
+import { isBloombergTicker, listingFromBloomberg } from '../data/bloomberg.ts';
 import { predictRow } from './rowModel.ts';
 import { fieldAppliesTo } from '../spec/applicability.ts';
 import { normalizeHeader } from '../detect/headerMatch.ts';
@@ -204,7 +205,9 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
     undefined,
     isin && attrs.identifier.value === f.isin
       ? derived('1', 'Valid ISIN → type 1 (ISO 6166)', 'high')
-      : missing(f.other_identifier || (f.isin && !isinShaped) ? 'Identifier is not an ISIN: its identification type is unknown.' : undefined),
+      : f.other_identifier && attrs.identifier.value === f.other_identifier && isBloombergTicker(f.other_identifier)
+        ? derived('5', `"${f.other_identifier}" is a Bloomberg ticker → type 5`, 'high')
+        : missing(f.other_identifier || (f.isin && !isinShaped) ? 'Identifier is not an ISIN or a Bloomberg ticker: its identification type is unknown.' : undefined),
   );
   attrs.name = f.security_name ? fromFile(f.security_name) : missing();
 
@@ -216,6 +219,7 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
     taughtType: f.asset_type ? ctx.typeLessons?.get(typeTextKey(f.asset_type)) : undefined,
     name: f.security_name,
     assetTypeText: f.asset_type,
+    callPut: callPutOf(f.call_put),
     section: h.section,
     isin: f.isin,
     hasCoupon: f.coupon !== undefined,
@@ -230,10 +234,26 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
     maturity: f.maturity_date,
     valuationDate: ctx.valuationDate,
   });
-  const derivedCic = deriveCic({ assetClass: ac.assetClass, assetClassConfidence: ac.confidence, isEtf: ac.isEtf, isin: f.isin, fileCountry: f.country, derivativeSub: ac.derivativeSub });
+  const derivedCic = deriveCic({ assetClass: ac.assetClass, assetClassConfidence: ac.confidence, isEtf: ac.isEtf, isin: f.isin, fileCountry: f.country, derivativeSub: ac.derivativeSub, listing: listingFromBloomberg(f.other_identifier) });
   attrs.cic = pick(file(fileCic), derivedCic.cic);
   const finalCic = typeof attrs.cic.value === 'string' ? attrs.cic.value : undefined;
   const effectiveClass = (finalCic && fileCic ? cicToAssetClass(finalCic) : undefined) ?? ac.assetClass;
+  // A CFD or equity swap on a share: the row's ISIN and ticker are the share's, its quantity is a
+  // number of shares at the share's price, and its value is the P&L.
+  const eqSwap = effectiveClass === 'swap' && f.price !== undefined && (ac.derivativeSub?.sub === '4' || isEquitySwapText(f.security_name, f.asset_type));
+  if (eqSwap) {
+    if (f.isin || f.other_identifier) {
+      attrs.identifier = missing("A CFD or equity swap has no identifier of its own: the file's ISIN and ticker are its underlying share's (fields 68 and 70).");
+      attrs.id_type = missing();
+    }
+    if (!fileCic && /\b(cfds?|contracts? for differences?|differenzkontrakt)/i.test(`${f.asset_type ?? ''} ${f.security_name ?? ''}`)) {
+      attrs.cic = {
+        ...attrs.cic,
+        confidence: minConfidence(attrs.cic.confidence, 'medium'),
+        note: [attrs.cic.note, 'The CIC table has no category for CFDs: a CFD pays a share\'s total return against financing, the economics of a total return swap (D4). Change it if your reporting policy classifies CFDs otherwise.'].filter(Boolean).join(' '),
+      };
+    }
+  }
   const info = ASSET_CLASSES[effectiveClass];
   attrs.asset_class = derived(info.label, ac.evidence.join('; '), effectiveClass === ac.assetClass ? ac.confidence : 'high');
   attrs.quotation_zone = quotationZoneFromCic(finalCic) ?? missing('No CIC.');
@@ -323,10 +343,12 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
     effectiveClass === 'call_option' ? derived('Cal', 'Classified as a call option', ac.confidence) : effectiveClass === 'put_option' ? derived('Put', 'Classified as a put option', ac.confidence) : undefined,
   );
   attrs.exercise_type = pick(file(exerciseOf(f.exercise_type)));
-  attrs.underlying_name = pick(file(f.underlying_name));
-  attrs.underlying_id = pick(file(f.underlying_id));
-  attrs.underlying_id_type = pick(undefined, f.underlying_id && isValidIsin(f.underlying_id) ? derived('1', 'Underlying identifier is a valid ISIN → type 1', 'high') : undefined);
-  attrs.underlying_price = pick(file(f.underlying_price));
+  const swapUnderlyingName = eqSwap && f.security_name ? f.security_name.replace(/^\s*(cfds?|trs|total return swaps?|equity swaps?|contracts? for differences?)\s*(long|short)?\s*[-:–]?\s*/i, '').trim() : undefined;
+  attrs.underlying_name = pick(file(f.underlying_name), swapUnderlyingName ? derived(swapUnderlyingName, 'CFD / equity swap: the share named in the row', 'medium') : undefined);
+  attrs.underlying_id = pick(file(f.underlying_id), eqSwap && isin ? derived(isin, "The ISIN on a CFD or equity swap row is its underlying share's", 'high') : undefined);
+  const undId = typeof attrs.underlying_id.value === 'string' ? attrs.underlying_id.value : undefined;
+  attrs.underlying_id_type = pick(undefined, undId && isValidIsin(undId) ? derived('1', 'Underlying identifier is a valid ISIN → type 1', 'high') : undefined);
+  attrs.underlying_price = pick(file(f.underlying_price), eqSwap ? derived(f.price!, "A CFD or equity swap is quoted at its underlying share's price", 'high') : undefined);
   // A currency or commodity future and an FX forward move one for one with their underlying.
   // (Field 93 applies to A3, A5 and E; equity index futures do not need a delta, swaps need DV01.)
   const sub = finalCic?.slice(2);
@@ -344,19 +366,23 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
   attrs.fx_rate = fx !== undefined ? derived(fx, fxEntry!.source === 'user' ? 'FX rate entered by user' : fxEntry!.source === 'identity' ? 'Portfolio currency' : 'Implied from local and portfolio values in the file', fxEntry!.source === 'implied' ? 'medium' : 'high') : missing(ccy ? `No FX rate for ${ccy}: enter it in the fund step.` : 'No currency.');
   attrs.price = file(f.price) ?? missing();
 
-  const notionalBased = ['forward', 'swap', 'credit_derivative'].includes(effectiveClass);
+  const notionalBased = ['forward', 'swap', 'credit_derivative'].includes(effectiveClass) && !eqSwap;
+  const isCash = info.cic[0] === '7' && !isFI;
   attrs.nominal = f.nominal !== undefined
     ? amountFromFile('nominal', f.nominal)
     : (isFI || notionalBased) && f.quantity !== undefined
       ? derived(f.quantity, notionalBased ? 'Quantity column used as the contract (notional) amount for this forward/swap/CDS' : 'Quantity column used as nominal amount for this debt instrument', 'medium')
-      : info.cic[0] === '7' && f.market_value_local !== undefined
-        ? // A cash balance read as the account's value: for cash the balance is also the nominal.
-          derived(f.market_value_local, 'Cash: the balance is the nominal amount (TPT field 19 for CIC 7)', 'high')
-        : missing();
+      : isCash && f.quantity !== undefined
+        ? // The template asks for a cash balance in field 19, never as a quantity (field 18).
+          derived(f.quantity, 'Cash: the balance is the nominal amount (TPT field 19 for CIC 7)', 'high')
+        : info.cic[0] === '7' && f.market_value_local !== undefined
+          ? // A cash balance read as the account's value: for cash the balance is also the nominal.
+            derived(f.market_value_local, 'Cash: the balance is the nominal amount (TPT field 19 for CIC 7)', 'high')
+          : missing();
   attrs.quantity =
-    f.quantity !== undefined && !((isFI || notionalBased) && f.nominal === undefined)
+    f.quantity !== undefined && !isCash && !((isFI || notionalBased) && f.nominal === undefined)
       ? amountFromFile('quantity', f.quantity)
-      : missing(isFI ? 'Debt instrument: quantity reported as nominal (field 19).' : notionalBased ? 'Forward/swap/CDS: amount reported as nominal (field 19).' : undefined);
+      : missing(isFI ? 'Debt instrument: quantity reported as nominal (field 19).' : notionalBased ? 'Forward/swap/CDS: amount reported as nominal (field 19).' : isCash ? 'Cash: the balance is reported as nominal (field 19).' : undefined);
   const nominal = typeof attrs.nominal.value === 'number' ? attrs.nominal.value : undefined;
 
   // Bond analytics (accrued, yield, duration) — fixed coupon bonds only.

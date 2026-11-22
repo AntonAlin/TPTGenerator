@@ -2,7 +2,7 @@
 
 # TPT Generator
 
-**Version 1.1** · [What's new](CHANGELOG.md)
+**Version 1.2** · [What's new](CHANGELOG.md)
 
 A free, static web app that turns a portfolio holdings file (xlsx, xls or csv) with unknown, inconsistent
 column names into a FinDatEx **Solvency II Tripartite Template (TPT)**. It is for fund managers and
@@ -339,6 +339,22 @@ the field for (`src/spec/applicability.ts`):
 | 132, 138, 142 | "0 – Not assessed", as field 132 asks for instruments other than infrastructure investments; 0 for covered bonds and securitisations in field 138, as its comment says. |
 | 137 | Code 12 for cash and deposits with a bank (no ISIN); margin and collateral accounts are left blank (they can be with a clearing house or a broker). |
 | 8, 8b | Share price = NAV ÷ number of shares, and the other way round. |
+
+**Hedge fund files.**
+
+- **CFDs and equity swaps** are total return swaps (CIC D4). The CIC table has no category for CFDs; a CFD
+  pays a share's total return against financing, the economics of a total return swap, so the CIC is
+  marked medium confidence with that reason.
+- Their quantity is a number of shares (field 18), not a notional. Their value is the P&L the file
+  gives, and their exposure is the equivalent position in the share: quantity × share price.
+- The row's ISIN and price are the underlying share's (fields 68, 69, 72), so the swap itself gets no
+  identifier.
+- **Bloomberg tickers** ("ASML NA Equity", "ERICB SS") identify a row without an ISIN with type 5. Their
+  exchange code gives the CIC listing country (NA → NL, SS → SE, US → US, …), ahead of a country
+  column, which is often the country of risk or domicile.
+- **Country of risk** is not read as a country, and theme, book, analyst and side columns are ignored.
+- **Margin and collateral accounts** are cash: the balance is the nominal (field 19), never a quantity.
+- **A plain "Option" type** takes call or put from the call/put column.
 
 Assumptions you can change in step 3:
 

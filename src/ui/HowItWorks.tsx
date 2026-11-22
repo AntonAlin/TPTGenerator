@@ -362,6 +362,10 @@ export function HowItWorks() {
                 cash at a bank; share price as NAV ÷ shares.
               </li>
               <li>
+                Hedge fund positions: CFDs and equity swaps as total return swaps (CIC D4, marked as such: the CIC table has no CFD category), with the share's
+                ISIN and price as their underlying and quantity × share price as exposure; the listing country from a Bloomberg ticker's exchange code.
+              </li>
+              <li>
                 Treasury bills, and with medium confidence commercial paper, as discount instruments: no coupon, repaid at par in one payment, and their yield and
                 duration from price and maturity. For a bond with a call date, the duration to that date assuming a call at par.
               </li>

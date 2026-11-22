@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.2 (2026-11-22)
+
+**Hedge fund files**, from testing a long/short European technology fund's position report:
+
+- CFDs and equity swaps are total return swaps (CIC D4, medium confidence: the CIC table has no CFD
+  category). Their quantity is shares, their value the P&L in the file, their exposure quantity × share
+  price, and the ISIN and price in the row are the underlying share's.
+- Bloomberg tickers identify rows without an ISIN (type 5), and their exchange code gives the CIC listing
+  country, ahead of a country-of-risk or domicile column.
+- Country of risk, theme, strategy, book, analyst and side columns are no longer read as data.
+- Margin and collateral accounts are cash, with the balance as nominal.
+- A plain "Option" type takes call or put from the call/put column.
+- Reconciliation reads a weight sub-total in the unit of its column (0.10 in a percent column is 0.10%).
+
 ## 1.1 (2026-11-22)
 
 **Market values for derivatives the file does not value**

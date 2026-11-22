@@ -40,7 +40,12 @@
       "ric",
       "valoren",
       "internal id",
-      "local code"
+      "local code",
+      "bbg ticker",
+      "bloomberg code",
+      "bloomberg",
+      "bbg code",
+      "bbg id"
     ],
     "sv": [
       "kortnamn",
@@ -626,13 +631,11 @@
     "en": [
       "country",
       "country code",
-      "country of risk",
       "country of issue",
       "domicile",
       "issuer country",
       "country of incorporation",
       "cntry",
-      "risk country",
       "listing country",
       "nationality"
     ],
@@ -641,7 +644,6 @@
       "landkod",
       "emittentland",
       "hemvist",
-      "riskland",
       "noteringsland"
     ],
     "de": [
@@ -649,7 +651,6 @@
       "ländercode",
       "sitzland",
       "emittentenland",
-      "risikoland",
       "domizil",
       "länderschlüssel"
     ],
@@ -657,7 +658,6 @@
       "pays",
       "code pays",
       "pays de l'émetteur",
-      "pays de risque",
       "pays d'émission",
       "domiciliation"
     ]
@@ -1512,7 +1512,21 @@
       "protection",
       "alternative type",
       "strategy",
-      "repayment"
+      "repayment",
+      "country of risk",
+      "risk country",
+      "country of exposure",
+      "theme",
+      "investment theme",
+      "sub-strategy",
+      "book",
+      "analyst",
+      "portfolio manager",
+      "side",
+      "long/short",
+      "long / short",
+      "trader",
+      "prime broker"
     ],
     "sv": [
       "kommentar",
@@ -1532,7 +1546,13 @@
       "portfölj",
       "depå",
       "rad",
-      "förändring %"
+      "förändring %",
+      "riskland",
+      "tema",
+      "strategi",
+      "analytiker",
+      "förvaltare",
+      "sida"
     ],
     "de": [
       "bemerkung",
@@ -1549,7 +1569,12 @@
       "konto",
       "depot",
       "zeile",
-      "veränderung %"
+      "veränderung %",
+      "risikoland",
+      "thema",
+      "strategie",
+      "analyst",
+      "fondsmanager"
     ],
     "fr": [
       "commentaire",
@@ -1562,7 +1587,12 @@
       "dépositaire",
       "compte",
       "ligne",
-      "var %"
+      "var %",
+      "pays de risque",
+      "thème",
+      "stratégie",
+      "analyste",
+      "gérant"
     ]
   }
 }

@@ -106,7 +106,7 @@ export const ASSET_CLASSES: Record<AssetClass, AssetClassInfo> = {
 
 /** Keyword map for asset-type text found in a file column or a section heading (EN/SV/DE/FR). */
 const TYPE_TEXT: [AssetClass, RegExp][] = [
-  ['cash', /\b(cash|kassa|likvid(a|itet)?|bankguthaben|liquidit[ée]s?|bank|current account|kontokorrent)\b/i],
+  ['cash', /\b(cash|kassa|likvid(a|itet)?|bankguthaben|liquidit[ée]s?|bank|current account|kontokorrent|margin( account)?|initial margin|variation margin)\b/i],
   ['deposit_short', /\b(deposit|inl[aå]ning|festgeld|d[ée]p[oô]t)/i],
   ['etf_marker' as AssetClass, /\betf\b/i],
   ['fund_money_market', /(money market|penningmarknad|geldmarkt|mon[ée]taire)/i],
@@ -114,7 +114,9 @@ const TYPE_TEXT: [AssetClass, RegExp][] = [
   ['future', /\b(futures?|terminer|terminskontrakt)\b/i],
   ['forward', /\b(forwards?|fx forward|valutatermin(er)?|devisentermin\w*|fra)\b/i],
   ['credit_derivative', /\b(cds|credit derivatives?|credit default swaps?|kreditderivat\w*)\b/i],
-  ['swap', /\b(swaps?)\b/i],
+  // A CFD has no category of its own in the CIC table: it pays an equity's total return against
+  // financing, the economics of a total return swap.
+  ['swap', /\b(cfds?|contracts? for differences?|differenzkontrakt\w*|equity swaps?|portfolio swaps?|swaps?)\b/i],
   ['call_option', /\b(call|köpoption)/i],
   ['put_option', /\b(put|säljoption)/i],
   ['warrant', /\b(warrants?|optionsschein)/i],
@@ -145,6 +147,8 @@ export interface AssetClassInput {
   /** Maturity date ISO, used to split short/long deposits. */
   maturity?: string;
   valuationDate?: string;
+  /** The file's call/put column, read (resolve.ts callPutOf): decides a plain "Option" type. */
+  callPut?: string;
   /** The row model's reading of the row (rowModel.ts), used where the rules are unsure. */
   rowModel?: RowPrediction;
   /** The class the user gave this row's asset-type text (a code like "OPT" or "21"), in an earlier file or this one. */
@@ -171,7 +175,7 @@ export interface AssetClassResult {
 /** Underlying-based CIC sub-categories for derivatives (categories A–F). */
 const UNDERLYING: { re: RegExp; kind: 'equity' | 'rate' | 'fx' | 'commodity' | 'swaption' | 'irs' | 'ccs' | 'trs' | 'fra' | 'security_swap' }[] = [
   { re: /\bSWAPTION/i, kind: 'swaption' },
-  { re: /\b(TRS|TOTAL RETURN)\b/i, kind: 'trs' },
+  { re: /\b(TRS|TOTAL RETURN|CFDS?|CONTRACTS? FOR DIFFERENCES?|DIFFERENZKONTRAKT\w*|EQUITY SWAPS?|PORTFOLIO SWAPS?)\b/i, kind: 'trs' },
   { re: /\b(CCS|CROSS[- ]CURRENCY|CCIRS)\b/i, kind: 'ccs' },
   { re: /\b(IRS|INTEREST RATE SWAP|OIS)\b/i, kind: 'irs' },
   { re: /\b(FRA|FORWARD RATE AGREEMENT)\b/i, kind: 'fra' },
@@ -221,7 +225,12 @@ function moneyMarketInstrument(text: string, h: Set<NameHint>): AssetClass | und
   return undefined;
 }
 
-function fromText(text: string | undefined, name?: string, h: Set<NameHint> = new Set()): { cls?: AssetClass; etf: boolean; match?: string; guessed?: string } {
+/** A CFD, equity swap or total return swap on a share: priced like the share, valued at its P&L. */
+export function isEquitySwapText(...texts: (string | undefined)[]): boolean {
+  return texts.some((t) => !!t && /\b(cfds?|contracts? for differences?|differenzkontrakt\w*|equity swaps?|portfolio swaps?|total return swaps?|trs)\b/i.test(t));
+}
+
+function fromText(text: string | undefined, name?: string, h: Set<NameHint> = new Set(), callPut?: string): { cls?: AssetClass; etf: boolean; match?: string; guessed?: string } {
   if (!text) return { etf: false };
   const etf = /\betf\b/i.test(text);
   for (const [cls, re] of TYPE_TEXT) {
@@ -229,6 +238,7 @@ function fromText(text: string | undefined, name?: string, h: Set<NameHint> = ne
     const m = re.exec(text);
     if (!m) continue;
     if (cls === ('option_generic' as AssetClass)) {
+      if (callPut === 'Cal' || callPut === 'Put') return { cls: callPut === 'Cal' ? 'call_option' : 'put_option', etf, match: `${m[0]}, ${callPut === 'Cal' ? 'call' : 'put'} in the call/put column` };
       const fromName = optionFromName(name);
       return fromName
         ? { cls: fromName, etf, match: m[0] }
@@ -334,8 +344,8 @@ function byRules(input: AssetClassInput): AssetClassResult {
   const parsed = parseSecurityName(input.name);
   const h = parsed.hints;
   const evidence: string[] = [];
-  const typeText = fromText(input.assetTypeText, input.name, h);
-  const sectionText = fromText(input.section, input.name, h);
+  const typeText = fromText(input.assetTypeText, input.name, h, input.callPut);
+  const sectionText = fromText(input.section, input.name, h, input.callPut);
   // An explicit corporate type in the file is kept, whatever the issuer's name says.
   const keepCorporate = typeText.cls === 'corporate_bond' && /corporate|f[oö]retag|unternehmen|entreprise/i.test(input.assetTypeText ?? '');
   const isEtf = h.has('etf') || typeText.etf || sectionText.etf;

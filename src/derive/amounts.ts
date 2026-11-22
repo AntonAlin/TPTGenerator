@@ -25,7 +25,7 @@
  *     that is the only way the column's market values add up to the total. A
  *     derivative's notional duplicated in other value columns is discarded too.
  */
-import { inferAssetClass, ASSET_CLASSES, type AssetClass } from './assetClass.ts';
+import { inferAssetClass, isEquitySwapText, ASSET_CLASSES, type AssetClass } from './assetClass.ts';
 import type { AmountCell, AmountField, Holding } from './holdings.ts';
 import type { TotalRow } from '../ingest/table.ts';
 import { parseNumber } from '../ingest/values.ts';
@@ -316,19 +316,21 @@ export function interpretAmounts(holdings: Holding[], ctx: AmountContext): Amoun
     if (c === ctx.portfolioCurrency) return 1;
     return ctx.fx?.(c);
   };
-  const kinds = holdings.map((h) =>
-    rowKind(
-      inferAssetClass({
-        name: h.file.security_name,
-        assetTypeText: h.file.asset_type,
-        section: h.section,
-        isin: h.file.isin,
-        hasCoupon: h.file.coupon !== undefined,
-        hasMaturity: h.file.maturity_date !== undefined,
-        price: h.file.price,
-      }).assetClass,
-    ),
-  );
+  const kinds = holdings.map((h) => {
+    const cls = inferAssetClass({
+      name: h.file.security_name,
+      assetTypeText: h.file.asset_type,
+      section: h.section,
+      isin: h.file.isin,
+      hasCoupon: h.file.coupon !== undefined,
+      hasMaturity: h.file.maturity_date !== undefined,
+      price: h.file.price,
+    }).assetClass;
+    // A CFD or equity swap with a share price holds a number of shares, like a listed contract,
+    // not a notional.
+    if (cls === 'swap' && h.file.price !== undefined && isEquitySwapText(h.file.security_name, h.file.asset_type)) return 'listed' as RowKind;
+    return rowKind(cls);
+  });
   const cellsOf = (i: number) => holdings[i].amountCells ?? [];
   const rankAll = (navEst?: number) =>
     holdings.map((h, i) => rankRow(cellsOf(i), { kind: kinds[i], price: h.file.price, accrued: h.file.accrued_interest, fx: fxOf(h), weight: h.file.weight, navEst }));

@@ -92,6 +92,10 @@ IGNORE_HEADERS = {
     "fxrate_traded": ["Deal rate", "Contract rate", "Terminskurs", "Terminkurs", "Kontraktskurs"],
     "avgcost": ["Average cost per unit", "Avg cost", "Snittkurs", "Durchschnittskurs"],
     "liquidity": ["Days to liquidate", "Likvidationsdagar", "Liquidation days"],
+    # Country of risk is not the issuer's country nor the listing country: not a TPT input.
+    "risk_country": ["Country of Risk", "Risk Country", "Riskland", "Risikoland", "Pays de risque", "Country of exposure", "Risk Ctry"],
+    # Hedge fund and asset manager labels: themes, books, analysts.
+    "theme": ["Theme", "Investment Theme", "Strategy", "Sub-Strategy", "Book", "Analyst", "PM", "Side", "Long/Short", "Tema", "Strategi", "Thème", "Thema"],
     "change": ["% change", "1D %", "Förändring %", "Veränderung %", "Var. %"],
     "account_no": ["Account no", "Kontonummer", "Kontonr", "Account number"],
 }
@@ -402,7 +406,7 @@ def make_table(rng: random.Random) -> list[dict]:
     gens = {
         "isin": lambda: [h.isin or None for h in hs],
         "isin_mixed": lambda: [h.isin or h.ticker or rng.choice([f"{h.kind[:3].upper()}-{rng.randint(1000, 9999)}", str(rng.randint(100000, 999999)), f"{h.ccy} CASH", None]) for h in hs],
-        "other_identifier": lambda: [h.ticker or (f"SEC{rng.randint(1000, 999999)}" if rng.random() < 0.5 else None) for h in hs],
+        "other_identifier": lambda: bbg_values(hs, rng) if rng.random() < 0.4 else [h.ticker or (f"SEC{rng.randint(1000, 999999)}" if rng.random() < 0.5 else None) for h in hs],
         "security_name": lambda: [h.name for h in hs],
         "quantity": lambda: [fmt_num(h.qty, style, rng, 0 if float(h.qty).is_integer() else 4) for h in hs],
         "nominal": lambda: [fmt_num(h.qty, style, rng, 0) if h.kind.startswith("bond") else None for h in hs],
@@ -459,6 +463,8 @@ def make_table(rng: random.Random) -> list[dict]:
         "cost": lambda: [fmt_num(round(h.mv_port * rng.uniform(0.6, 1.3), 2), style, rng) for h in hs],
         "pnl": lambda: [fmt_num(round(h.mv_port * rng.uniform(-0.3, 0.4), 2), style, rng) for h in hs],
         "sector": lambda: [rng.choice(SECTORS) if h.kind == "equity" else None for h in hs],
+        "risk_country": lambda: [(h.country if rng.random() < 0.75 else rng.choice(COUNTRIES)) if h.kind != "cash" else None for h in hs],
+        "theme": lambda: theme_values(hs, rng),
         "custodian": lambda: [rng.choice(["SEB", "JP Morgan", "BNP Paribas SS", "Clearstream"])] * n,
         "beta": lambda: [fmt_num(round(rng.uniform(0.4, 1.8), 2), style, rng) if h.kind == "equity" else None for h in hs],
         "volume": lambda: [fmt_num(rng.randint(10_000, 9_000_000), style, rng, 0) if h.kind == "equity" else None for h in hs],
@@ -515,6 +521,34 @@ def make_table(rng: random.Random) -> list[dict]:
     for key, values in cols:
         label = ("amount_mixed" if key.startswith("amount_mixed") else "isin" if key == "isin_mixed" else key) if key in gens else "ignore"
         out.append({"header": pick_header(key, rng, style, pccy), "values": values, "label": label})
+    return out
+
+
+THEMES = ["AI semis", "Enterprise software", "Payments", "Consumer internet", "Defence", "Value", "Quality compounders", "Short: disrupted", "Pair: semis",
+          "Macro hedge", "Core long", "Event driven", "Long", "Short", "Hedge", "Rates", "Credit", "Tema A", "Kärninnehav", "Special situations"]
+BBG_EXCH = {"SE": "SS", "DE": "GY", "FR": "FP", "GB": "LN", "NL": "NA", "FI": "FH", "NO": "NO", "DK": "DC", "CH": "SW", "US": "US", "ES": "SM", "IT": "IM", "BE": "BB", "AT": "AV", "JP": "JT", "CA": "CN", "IE": "ID", "LU": "LX"}
+
+
+def theme_values(hs, rng):
+    pool = rng.sample(THEMES, k=rng.randint(2, 6))
+    return [rng.choice(pool) if rng.random() < 0.9 else None for _ in hs]
+
+
+def bbg_values(hs, rng):
+    """Bloomberg tickers with exchange code and yellow key, as portfolio systems export them."""
+    key = rng.random() < 0.7
+    out = []
+    for h in hs:
+        if h.kind == "cash":
+            out.append(None)
+            continue
+        root = (h.ticker.split()[0] if h.ticker else h.issuer.split()[0][:4].upper()).replace(".", "")
+        if h.kind == "derivative":
+            out.append(f"{root[:2]}{rng.choice('HMUZ')}{rng.randint(5, 9)}" + (" Index" if key else ""))
+        elif h.kind.startswith("bond"):
+            out.append(f"{root} {h.coupon or 0:g} {h.maturity.strftime('%m/%d/%y') if h.maturity else ''}".strip() + (" Corp" if key else ""))
+        else:
+            out.append(f"{root} {BBG_EXCH.get(h.country, 'US')}" + (" Equity" if key else ""))
     return out
 
 

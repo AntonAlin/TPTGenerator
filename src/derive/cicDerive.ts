@@ -1,7 +1,7 @@
 /**
  * Construct a 4-character CIC code: listing country (or XL / XT) + category + sub-category.
  *
- * Positions 1-2 come from, in order: the file's country column (assumed to be the
+ * Positions 1-2 come from, in order: the exchange code of a Bloomberg ticker in the file, the file's country column (assumed to be the
  * listing country, flagged as estimated), else the ISIN prefix (estimated — it is
  * the country of the numbering agency, not necessarily the listing or issuer),
  * else XL. Instruments that are not exchange tradable by nature (cash, deposits,
@@ -20,6 +20,8 @@ export interface CicInput {
   isin?: string;
   /** Country from the file's country column, if any. */
   fileCountry?: string;
+  /** Listing country from a Bloomberg ticker's exchange code, if any. */
+  listing?: { country: string; code: string };
   /** Derivative sub-category from the underlying, if recognised. */
   derivativeSub?: { sub: string; why: string };
 }
@@ -45,6 +47,10 @@ export function deriveCic(input: CicInput): CicDerivation {
     loc = 'XL';
     locConf = 'medium';
     locationNote = 'Fund not identified as an ETF → assumed not listed (XL). Use the listing country if the fund is exchange-listed.';
+  } else if (input.listing && isCountry(input.listing.country)) {
+    loc = input.listing.country;
+    locConf = 'high';
+    locationNote = `Listed in ${loc}: exchange code ${input.listing.code} in the Bloomberg ticker`;
   } else if (input.fileCountry && isCountry(input.fileCountry)) {
     loc = input.fileCountry.toUpperCase();
     locConf = 'low';

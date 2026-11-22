@@ -68,6 +68,8 @@ export interface ClassifyOptions {
   learned?: Map<string, LearnedHint>;
 }
 
+const EXPOSURE_RE = /\b(exposure|exponering|engagement|exposition|risikoposition)\b|\bdelta[ -]?adj|^exp\.?\s*(%|in\b|\()/i;
+
 /**
  * Probability a learned header gives its field: high at once, higher when taught again. A floor,
  * not a certainty: another column can still win the field if it fits much better.
@@ -176,6 +178,7 @@ export function classifyColumns(
   const headerDecides = new Set<number>();
   const learnedFor = learnedLookup(opts.learned);
   const learnedBy = new Map<number, { hint: LearnedHint; reason: string }>();
+  const exposureCols = new Set<number>();
   const probs = feats.map((f, index) => {
     let p = predictProba(f.vector);
     const exact = headerOnlyField(columns[index], f);
@@ -183,6 +186,13 @@ export function classifyColumns(
     if (ei >= 0 && p[ei] < HEADER_ONLY_P) {
       p = withFloor(p, ei, HEADER_ONLY_P);
       headerDecides.add(index);
+    }
+    // An exposure column (delta-adjusted, gross, "% NAV") is not a market value, a holding or a
+    // notional: the converter computes exposure itself (fields 27, 28, 30) from what the row holds.
+    if (EXPOSURE_RE.test(columns[index].header) && !fixed.has(index)) {
+      const ii = model.classes.indexOf('ignore');
+      if (p[ii] < 0.9) p = withFloor(p, ii, 0.9);
+      exposureCols.add(index);
     }
     // The user's own lesson for this header outranks the dictionary and the model.
     const hint = fixed.has(index) ? undefined : learnedFor(columns[index].header);
@@ -288,6 +298,7 @@ export function classifyColumns(
     if (p.source === 'model' && p.field !== p.ranked[0].field) {
       p.reasons.unshift(`Best guess was ${CANONICAL_INFO[p.ranked[0].field].label}, but another column matched it better`);
     }
+    if (p.source === 'model' && exposureCols.has(p.index) && p.field === 'ignore') p.reasons.unshift('An exposure column: the TPT exposure (fields 27, 28, 30) is computed from what each row holds');
     const l = learnedBy.get(p.index);
     if (p.source === 'model' && l) {
       p.reasons.unshift(l.reason);
