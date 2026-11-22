@@ -105,10 +105,28 @@ export function resolvePortfolioField(
       return derivations?.modifiedDuration ?? missing();
     case '11':
       return derived('N', 'This tool does not compute SCR contributions (fields 97–105 are left blank)', 'high');
+    // Share price and number of shares from the NAV and the other one (the field 8b comment notes
+    // that NAV may differ from price × shares by rounding).
+    case '8': {
+      const nav = positive(entered['5']);
+      const shares = positive(entered['8b']);
+      return nav && shares ? derived(round6(nav / shares), `NAV (field 5) ÷ number of shares (field 8b)`, 'high') : missing();
+    }
+    case '8b': {
+      const nav = positive(entered['5']);
+      const price = positive(entered['8']);
+      return nav && price ? derived(round6(nav / price), `NAV (field 5) ÷ share price (field 8)`, 'high') : missing();
+    }
     default:
       return missing();
   }
 }
+
+const positive = (v: string | undefined) => {
+  const n = v === undefined || v === '' ? NaN : Number(v);
+  return Number.isFinite(n) && n > 0 ? n : undefined;
+};
+const round6 = (x: number) => Math.round(x * 1e6) / 1e6;
 
 // ---------------------------------------------------------------------------
 // Fund profiles (reusable portfolio data), stored in the browser.

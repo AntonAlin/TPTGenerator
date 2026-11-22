@@ -14,6 +14,20 @@
   "Kaufbetrag", "Montant vendu", …). The currencies of the legs are added to the FX table of step 3.
 - Options, CDS and swaps without legs still need a pricing model and stay blank.
 
+**More fields filled by the template's own rules**, each only for the instrument types the template asks
+the field for, and never over a value in the file:
+
+- Exposure (fields 27, 28, 30) of equity, currency and commodity futures and options: quantity × contract
+  size × underlying price (× delta), as the field 27 comment says; negative for a put held long.
+- Treasury bills: coupon 0, coupon frequency "0", redemption "Bullet" at 100%, and yield and duration from
+  price and maturity.
+- Credit sensitivity (92) equal to the modified duration for fixed-rate bonds without a call date.
+- Delta 1 for currency and commodity futures and FX forwards; "Cal" for bonds with a call date.
+- Credit quality step 9 when the file says the instrument is not rated.
+- Infrastructure (132), collateral eligibility (138) and bail-in (142) reported as "0 – not assessed".
+- Counterparty sector 12 for cash and deposits with a bank.
+- Share price and number of shares from the NAV and the other one.
+
 ## 1.0 (2026-11-22)
 
 The first release. Everything runs in the browser; no file, value or header ever leaves it.

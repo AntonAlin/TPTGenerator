@@ -356,6 +356,13 @@ export function HowItWorks() {
               <li>Accrued interest, yield to maturity and duration for plain fixed-rate bonds, with the day count you choose.</li>
               <li>FX rates implied by local and portfolio values, the portfolio currency, NAV as the sum of holdings when you don't enter one, weights.</li>
               <li>
+                The template's own rules where the file gives the inputs: the exposure of equity, currency and commodity futures and options as quantity × contract
+                size × underlying price (× delta for options, negative for a put held long); credit sensitivity equal to the modified duration for a fixed-rate bond
+                that cannot be called; delta 1 for currency and commodity futures and FX forwards; "Cal" for a bond with a call date; code 12 as the counterparty of
+                cash at a bank; share price as NAV ÷ shares.
+              </li>
+              <li>Treasury bills as discount instruments: no coupon, repaid at par in one payment, and their yield and duration from price and maturity.</li>
+              <li>
                 The market value of a derivative the file does not value. A future is worth 0: it is margined daily, and the template says listed derivatives with
                 daily margin calls should be close to zero. A forward or swap is the received leg's notional minus the paid leg's, each at its FX rate: undiscounted,
                 so a low-confidence estimate. Options and CDS need a pricing model and stay blank.
@@ -367,16 +374,23 @@ export function HowItWorks() {
           <div>
             <h4>Never guessed: from the file, or left blank</h4>
             <ul>
-              <li>NACE codes, credit quality steps and ratings.</li>
+              <li>NACE codes and ratings. A credit quality step only when the file gives it, or code 9 when the file says the instrument is not rated.</li>
               <li>Issuer and group names and identifiers.</li>
-              <li>Securitisation type, state guarantee, redemption type and call dates.</li>
+              <li>Securitisation type, state guarantee, call dates, and the redemption type of bonds other than bills.</li>
+            </ul>
+            <h4>Not assessed, and said so</h4>
+            <ul>
+              <li>
+                Infrastructure (field 132), collateral eligibility (138) and bail-in (142) are reported as "0 – not assessed" where the template asks for them, as the
+                template instructs; covered bonds and securitisations get 0 for collateral, as field 138 says.
+              </li>
             </ul>
             <h4>Not computed at all</h4>
             <ul>
               <li>SCR contributions (fields 97 to 105b): always blank.</li>
               <li>
-                Look-through, collateral, counterparty sector and eligibility assessments. A derivative's underlying (name, identifier, price), its strike, delta and
-                contract size come from the file when it has them, never from a guess.
+                Look-through and the exposure of interest rate futures (on the cheapest-to-deliver bond). A derivative's underlying (name, identifier, price), its
+                strike, delta and contract size come from the file when it has them, never from a guess.
               </li>
             </ul>
           </div>

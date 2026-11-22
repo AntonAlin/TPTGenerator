@@ -59,7 +59,34 @@ function exposure(id: '27' | '28' | '30', h: ResolvedHolding, nav?: number): Res
     if (!nav) return missing('No NAV to compute the exposure weight.');
     return derived(Math.round(((nominal * fx) / nav) * 1e10) / 1e10, 'Notional exposure (portfolio ccy) ÷ NAV', 'medium');
   }
-  return missing(cic.slice(2) === '22' ? 'Convertible bond: exposure needs the delta (field 28 comment); not derivable without market data.' : 'Derivative exposure needs underlying price, contract size and delta; not derivable without market data.');
+  // Futures and options on equities, currencies and commodities: the formula of the field 27
+  // comment, quantity × contract size × underlying price (× delta for an option), all from the file.
+  // A put's exposure is negative for a long position (field 28 comment). Interest rate futures and
+  // options are left out: their exposure is on the cheapest-to-deliver bond, which a file rarely gives.
+  const sub = cic.slice(2);
+  const isFuture = sub === 'A1' || sub === 'A3' || sub === 'A5';
+  const isOption = /^[BC][135]$/.test(sub);
+  if (isFuture || isOption) {
+    const num = (r: Resolved) => (hasValue(r) && typeof r.value === 'number' ? r.value : undefined);
+    const q = num(a.quantity);
+    const cs = num(a.contract_size);
+    const up = num(a.underlying_price);
+    const d = num(a.delta);
+    const lacking = [q === undefined && 'quantity (field 18)', cs === undefined && 'contract size (field 20)', up === undefined && 'underlying price (field 72)', isOption && d === undefined && 'delta (field 93)'].filter(Boolean);
+    if (lacking.length) return missing(`Exposure = quantity × contract size × underlying price${isOption ? ' × delta' : ''} (field 27 comment): the file has no ${lacking.join(', ')}.`);
+    const put = isOption && cic[2] === 'C';
+    const local = Math.round(q! * cs! * up! * (isOption ? Math.abs(d!) : 1) * (put ? -1 : 1) * 100) / 100;
+    const conf = minConfidence(a.quantity.confidence, a.contract_size.confidence, a.underlying_price.confidence, isOption ? a.delta.confidence : 'high');
+    const how = `Quantity ${q} × contract size ${cs} × underlying price ${up}${isOption ? ` × delta ${Math.abs(d!)}` : ''}${put ? ', negative for a put held long' : ''} (field 27 comment)`;
+    if (id === '27') return derived(local, how, conf, 'The underlying price is taken to be in the quotation currency (field 21).');
+    const fx = a.fx_rate.value;
+    if (typeof fx !== 'number') return missing('No FX rate for the exposure.');
+    const port = Math.round(local * fx * 100) / 100;
+    if (id === '28') return derived(port, `${how} × FX rate ${fx}`, conf);
+    if (!nav) return missing('No NAV to compute the exposure weight.');
+    return derived(Math.round((port / nav) * 1e10) / 1e10, 'Exposure in portfolio currency (field 28) ÷ NAV', conf);
+  }
+  return missing(sub === '22' ? 'Convertible bond: exposure needs the delta (field 28 comment); not derivable without market data.' : 'Derivative exposure needs a pricing model or data the file does not give (cheapest-to-deliver bond, swap or credit details).');
 }
 
 export function buildTptFiles(

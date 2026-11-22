@@ -323,6 +323,22 @@ and a confidence (high / medium / low). Per attribute (`src/derive/resolve.ts`):
   legs come from columns such as "Buy amount", "Sell currency", "Köpbelopp" or "Montant vendu".
 - **Options, CDS** and swaps without legs need a pricing model: left blank and flagged.
 
+**Rules from the template itself.** Where a field's own comment in the template gives the rule, or the
+instrument type settles it, the value is derived, and only for the CIC sub-categories the template asks
+the field for (`src/spec/applicability.ts`):
+
+| Field | Rule |
+| --- | --- |
+| 27, 28, 30 | Futures and options on equities, currencies and commodities: quantity × contract size × underlying price (× delta for options), the formula of the field 27 comment; a put held long is negative (field 28 comment). Interest rate futures are left out (cheapest-to-deliver). |
+| 33, 38, 40, 41, 32 | Treasury bills: coupon 0, frequency "0", "Bullet", redemption at 100%, fixed rate; yield and duration from price and maturity. |
+| 42 | "Cal" when the file gives a call date. |
+| 59 | Code 9 when the file's rating says "NR", "Not rated" or "WR". A rating is not turned into a step: that needs the mapping tables of Implementing Regulation (EU) 2016/1800. |
+| 92 | Equal to field 90 for a fixed-rate bond without a call date: both are the modified duration to the contractual maturity. |
+| 93 | 1 for currency and commodity futures (A3, A5) and FX forwards (E2). |
+| 132, 138, 142 | "0 – Not assessed", as field 132 asks for instruments other than infrastructure investments; 0 for covered bonds and securitisations in field 138, as its comment says. |
+| 137 | Code 12 for cash and deposits with a bank (no ISIN); margin and collateral accounts are left blank (they can be with a clearing house or a broker). |
+| 8, 8b | Share price = NAV ÷ number of shares, and the other way round. |
+
 Assumptions you can change in step 3:
 
 - whether file market values include accrued interest (auto-detected per bond);
@@ -330,8 +346,9 @@ Assumptions you can change in step 3:
 - the coupon frequency per currency (used only inside calculations; field 38 is filled only from the file);
 - whether to estimate the issuer country from the ISIN prefix.
 
-**Never derived:** credit quality step, NACE, issuer group, securitisation type, state guarantee, redemption
-type, call dates, rating agency. These come only from the file; otherwise they are left blank and listed in the report.
+**Never derived:** NACE, issuer group, securitisation type, state guarantee, call dates, rating agency, the
+redemption type of bonds other than bills, and a credit quality step from a rating. These come only from the
+file; otherwise they are left blank and listed in the report.
 
 ## Source profiles and fund profiles
 

@@ -13,6 +13,7 @@ import { isValidIsin, isValidLei, looksLikeIsin } from '../ingest/identifiers.ts
 import { ATTRS, type AttrKey } from './attributes.ts';
 import { ASSET_CLASSES, inferAssetClass, type AssetClass, type AssetClassResult } from './assetClass.ts';
 import { predictRow } from './rowModel.ts';
+import { fieldAppliesTo } from '../spec/applicability.ts';
 import { normalizeHeader } from '../detect/headerMatch.ts';
 import { deriveCic, quotationZoneFromCic, underlyingCategoryFromCic } from './cicDerive.ts';
 import { bondAnalytics, type BondAnalytics, type DayCount, type Frequency } from './fixedIncome.ts';
@@ -252,9 +253,13 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
 
   // --- Interest rate characteristics ----------------------------------------
   const pn = ac.parsedName;
+  // A treasury bill is a discount instrument: no coupon, repaid at par in one payment at maturity.
+  const bill = effectiveClass === 'treasury_bill' && !pn.coupon;
   attrs.coupon = pick(
     file(f.coupon),
-    isFI && pn.coupon && !floating ? derived(pn.coupon.value, `Parsed from name ("${pn.coupon.text}")`, pn.coupon.confidence) : floating && isFI ? missing('Floating-rate note: current coupon (last fixing + margin) is not in the file.') : undefined,
+    bill
+      ? (fieldAppliesTo('33', finalCic) ? derived(0, 'Treasury bill: a discount instrument, it pays no coupon', 'high') : undefined)
+      : isFI && pn.coupon && !floating ? derived(pn.coupon.value, `Parsed from name ("${pn.coupon.text}")`, pn.coupon.confidence) : floating && isFI ? missing('Floating-rate note: current coupon (last fixing + margin) is not in the file.') : undefined,
   );
   attrs.maturity = pick(
     file(f.maturity_date),
@@ -278,18 +283,30 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
         ? derived('Floating', 'Floating-rate keyword in the name', 'medium')
         : hints.has('inflation_linked')
           ? derived('Inflation_linked', 'Inflation-linked keyword in the name', 'medium')
-          : hasValue(attrs.coupon)
-            ? derived('Fixed', 'Has a coupon and no floating/inflation keyword', attrs.coupon.confidence === 'high' ? 'medium' : 'low')
-            : undefined,
+          : bill
+            ? derived('Fixed', 'Treasury bill: a zero-coupon (discount) instrument, a fixed rate of 0', 'high')
+            : hasValue(attrs.coupon)
+              ? derived('Fixed', 'Has a coupon and no floating/inflation keyword', attrs.coupon.confidence === 'high' ? 'medium' : 'low')
+              : undefined,
   );
-  attrs.coupon_frequency = pick(file(f.coupon_frequency !== undefined ? String(f.coupon_frequency) : undefined));
-  for (const k of ['redemption_type', 'redemption_rate', 'callable', 'securitisation', 'guarantee'] as AttrKey[]) {
+  attrs.coupon_frequency = pick(
+    file(f.coupon_frequency !== undefined ? String(f.coupon_frequency) : undefined),
+    bill && fieldAppliesTo('38', finalCic) ? derived('0', 'Treasury bill: no coupon payments (field 38: 0 = other than the listed frequencies)', 'high') : undefined,
+  );
+  attrs.redemption_type = pick(undefined, bill && fieldAppliesTo('40', finalCic) ? derived('Bullet', 'Treasury bill: repaid in one payment at maturity', 'high') : undefined);
+  attrs.redemption_rate = pick(undefined, bill && fieldAppliesTo('41', finalCic) ? derived(1, 'Treasury bill: repaid at par (1 = 100%)', 'high') : undefined);
+  for (const k of ['securitisation', 'guarantee'] as AttrKey[]) {
     attrs[k] = pick(undefined);
   }
   attrs.call_date = pick(file(f.call_date));
+  // A call date in the file means the issuer can call the bond (field 42: Cal).
+  attrs.callable = pick(undefined, f.call_date && isFI && fieldAppliesTo('42', finalCic) ? derived('Cal', 'The file gives a call date (field 43)', 'high') : undefined);
   const cqs = f.cqs !== undefined && Number.isInteger(f.cqs) && f.cqs >= 0 && f.cqs <= 6 ? String(f.cqs) : undefined;
   if (f.cqs !== undefined && cqs === undefined) issues.push(`Credit quality step "${f.cqs}" is not 0–6.`);
-  attrs.cqs = pick(file(cqs));
+  // A rating cell that says the instrument is not rated is code 9 (field 59: no rating available).
+  // A rating itself is not turned into a step here: that needs the official mapping tables.
+  const notRated = !!f.rating && /^(n\.?r\.?|not rated|unrated|no rating|w\.?r\.?|withdrawn|ej (kredit)?betygsatt|ohne rating|non not[ée])$/i.test(f.rating.trim());
+  attrs.cqs = pick(file(cqs), notRated ? derived('9', `The file says "${f.rating}": no rating available (field 59 code 9)`, 'high') : undefined);
   attrs.rating_agency = pick(file(agencyOf(f.rating_agency)));
   attrs.interest_margin = pick(floating ? file(f.spread) : undefined);
 
@@ -305,7 +322,10 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
   attrs.underlying_id = pick(file(f.underlying_id));
   attrs.underlying_id_type = pick(undefined, f.underlying_id && isValidIsin(f.underlying_id) ? derived('1', 'Underlying identifier is a valid ISIN → type 1', 'high') : undefined);
   attrs.underlying_price = pick(file(f.underlying_price));
-  attrs.delta = pick(file(f.delta));
+  // A currency or commodity future and an FX forward move one for one with their underlying.
+  // (Field 93 applies to A3, A5 and E; equity index futures do not need a delta, swaps need DV01.)
+  const sub = finalCic?.slice(2);
+  attrs.delta = pick(file(f.delta), (sub === 'A3' || sub === 'A5' || sub === 'E2') && fieldAppliesTo('93', finalCic) ? derived(1, `Linear derivative (CIC ${sub}): it moves one for one with its underlying`, 'high') : undefined);
   attrs.covered = pick(undefined, ['covered_bond', 'gov_covered_bond'].includes(effectiveClass) ? derived('C', 'Classified as a covered bond', 'medium') : undefined);
   attrs.subordinated = pick(
     undefined,
@@ -494,6 +514,33 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
   );
   const zone = economicZone(typeof attrs.issuer_country.value === 'string' ? attrs.issuer_country.value : undefined);
   attrs.issuer_area = zone ? derived(zone, `Issuer country ${attrs.issuer_country.value} → economic area ${zone}`, minConfidence(attrs.issuer_country.confidence, 'high')) : missing();
+
+  // --- What the template asks to state even when nothing was assessed ------------
+  const cat = finalCic?.[2];
+  // Field 92 and field 90 are both the modified duration to the contractual maturity: equal for a
+  // fixed-rate bond that cannot be called early.
+  attrs.credit_sensitivity =
+    hasValue(attrs.modified_duration) && attrs.interest_rate_type.value === 'Fixed' && !f.call_date && isFI && fieldAppliesTo('92', finalCic)
+      ? derived(attrs.modified_duration.value, 'Fixed-rate bond without a call: credit sensitivity = modified duration to maturity (field 90); field 92 is measured to the contractual maturity too', minConfidence(attrs.modified_duration.confidence, 'high'))
+      : missing();
+  // Field 132: "not assessed" for instruments other than infrastructure investments; this tool
+  // assesses none.
+  attrs.infrastructure = fieldAppliesTo('132', finalCic)
+    ? derived('0', 'Not assessed: this tool does not assess infrastructure eligibility (field 132 asks for "not assessed" for instruments other than infrastructure investments)', 'high')
+    : missing();
+  // Field 138: "0" for covered bonds and securitisations, as the template says; for other bonds
+  // "0" is "not assessed or no collateral", true of a tool that assesses no collateral.
+  attrs.collateral_eligibility = cat && fieldAppliesTo('138', finalCic)
+    ? derived('0', finalCic!.slice(2) === '27' || cat === '6' ? 'Covered bond or securitisation: 0, as the field 138 comment says' : 'Not assessed: this tool does not assess collateral (0 = not assessed or no collateral)', 'high')
+    : missing();
+  // Field 142 (corporate bonds and structured notes): not assessed against the BRRD.
+  attrs.bail_in = fieldAppliesTo('142', finalCic) ? derived('0', 'Not assessed: this tool does not assess bail-in under Directive 2014/59/EU', 'high') : missing();
+  // Field 137 is for instruments without an ISIN; cash and deposits with a bank are code 12. Margin
+  // and collateral accounts can be with a clearing house or a broker (code 13): left blank.
+  const atBroker = /\b(margin|collateral|s[aä]kerhet|broker|clearing|ccp|initial margin|variation margin)\b/i.test(f.security_name ?? '');
+  attrs.counterparty_sector = cat === '7' && !isin && !atBroker && fieldAppliesTo('137', finalCic)
+    ? derived('12', 'Cash or deposit with a bank (field 137 code 12: cash and deposits with central banks, deposit-taking corporations and money market funds)', 'high')
+    : missing(cat === '7' && atBroker ? 'Margin or collateral account: the counterparty can be a clearing house or broker (code 13), not stated in the file.' : undefined);
 
   return { holding: h, assetClass: ac, effectiveClass, cicAlternatives: derivedCic.alternatives, attrs, analytics, issues };
 }

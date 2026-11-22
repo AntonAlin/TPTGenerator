@@ -57,7 +57,12 @@ export type AttrKey =
   | 'modified_duration'
   | 'valuation_yield'
   | 'underlying_category'
-  | 'nace';
+  | 'nace'
+  | 'credit_sensitivity'
+  | 'infrastructure'
+  | 'counterparty_sector'
+  | 'collateral_eligibility'
+  | 'bail_in';
 
 export type AttrKind = 'text' | 'number' | 'date' | 'code' | 'country' | 'currency' | 'cic' | 'nace';
 
@@ -124,6 +129,11 @@ export const ATTRS: AttrDef[] = [
   { key: 'valuation_yield', label: 'Valuation yield', tpt: ['129'], kind: 'number' },
   { key: 'underlying_category', label: 'Underlying category', tpt: ['131'], kind: 'code' },
   { key: 'nace', label: 'NACE', tpt: ['148'], kind: 'nace' },
+  { key: 'credit_sensitivity', label: 'Credit sensitivity', tpt: ['92'], kind: 'number' },
+  { key: 'infrastructure', label: 'Infrastructure investment', tpt: ['132'], kind: 'code' },
+  { key: 'counterparty_sector', label: 'Counterparty sector', tpt: ['137'], kind: 'code' },
+  { key: 'collateral_eligibility', label: 'Collateral eligibility', tpt: ['138'], kind: 'code' },
+  { key: 'bail_in', label: 'Bail-in rule', tpt: ['142'], kind: 'code' },
 ];
 
 export const ATTR: Record<AttrKey, AttrDef> = Object.fromEntries(ATTRS.map((a) => [a.key, a])) as Record<AttrKey, AttrDef>;
