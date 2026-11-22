@@ -185,7 +185,7 @@ export function reconcile(input: ReconcileInput): Reconciliation {
       status: wrongCcy ? 'warn' : Math.abs(1 - share) <= 0.02 ? 'ok' : 'warn',
       detail: wrongCcy
         ? `The NAV is in ${navFromFile.currency}, the portfolio currency is ${input.portfolioCurrency}.`
-        : `The holdings (incl. accrued interest) are ${pct(share)} of it${Math.abs(1 - share) > 1e-4 ? `; the other ${fmt(-d)} is what the file does not list (receivables, fees payable, other liabilities)` : ''}.${input.nav === undefined ? ' It can be used as 5 · Net asset value in step 3.' : input.nav !== navFromFile.value ? ` You entered ${fmt(input.nav)} as the NAV.` : ''}`,
+        : `The holdings (incl. accrued interest) are ${pct(share)} of it${Math.abs(1 - share) > 1e-4 ? `; the other ${fmt(-d)} is what the file does not list (receivables, fees payable, other liabilities)` : ''}.${input.nav === undefined ? ' It can be used as 5 · Net asset valuation in step 3.' : input.nav !== navFromFile.value ? ` You entered ${fmt(input.nav)} as the NAV.` : ''}`,
     });
   } else if (input.nav !== undefined) {
     const share = input.nav ? holdingsSum / input.nav : 0;

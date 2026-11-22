@@ -57,7 +57,7 @@ export function PortfolioStep({ portfolio: p, setPortfolio, fx, implied, derivat
         {suggestions.nav !== undefined && p.level === 'fund' && !p.values['5'] && (
           <p class="small">
             <button type="button" class="linklike" onClick={() => setValue('5', String(suggestions.nav))}>
-              Use {suggestions.nav.toLocaleString('en-US')} as 5 · Net asset value
+              Use {suggestions.nav.toLocaleString('en-US')} as 5 · Net asset valuation
             </button>{' '}
             <span class="muted">({suggestions.navWhy})</span>
           </p>
