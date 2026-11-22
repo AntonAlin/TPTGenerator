@@ -132,7 +132,10 @@ export function reconcile(input: ReconcileInput): Reconciliation {
       }
       // Weights may be in % or as fractions; the file's total is in the same unit as its cells.
       const fileSum = inGroup.reduce((s, h) => s + (cellOf(h) ?? 0), 0);
-      const expectedInUnits = f === 'weight' && Math.abs(expected) > 1.5 ? expected / 100 : expected;
+      // The rows' weights were read as fractions (1 = 100%); the total row is in the column's own unit.
+      // Whichever reading of the total is closer to the rows is its unit: a sub-total of 0.10 in a
+      // column of percentages is 0.10%, not 10%.
+      const expectedInUnits = f === 'weight' && Math.abs(expected / 100 - fileSum) < Math.abs(expected - fileSum) ? expected / 100 : expected;
       const diff = fileSum - expectedInUnits;
       // Rows rounded to thousands or millions each carry up to half a unit of rounding.
       const step = roundingStep(inGroup.map((h) => cellOf(h) ?? 0));

@@ -13,7 +13,7 @@ const MAP: CanonicalField[] = ['isin', 'security_name', 'currency', 'quantity', 
 type Row = [string, string, string, number, number, number, number];
 
 /** A custody report with sections, sub-totals, a total, a NAV line and weights of value ÷ NAV. */
-function run(rows: { section: string; rows: Row[]; subtotalOffset?: number }[], opts: { nav?: number; navLine?: string; totalOffset?: number; userNav?: number; fxUser?: Record<string, number> } = {}) {
+function run(rows: { section: string; rows: Row[]; subtotalOffset?: number }[], opts: { nav?: number; navLine?: string; totalOffset?: number; userNav?: number; fxUser?: Record<string, number>; weightTotals?: boolean } = {}) {
   const nav = opts.nav ?? 1_200_000;
   const grid: RawCell[][] = [['Fund X: holdings 2026-09-30'], [opts.navLine ?? `Fondförmögenhet: ${nav.toLocaleString('sv-SE')} SEK`], [], HEAD];
   let total = 0;
@@ -24,7 +24,7 @@ function run(rows: { section: string; rows: Row[]; subtotalOffset?: number }[], 
       grid.push([...r, Math.round((r[6] / nav) * 1e6) / 1e4]);
       sub += r[6];
     }
-    grid.push([`Summa ${s.section.toLowerCase()}`, '', '', '', '', '', sub + (s.subtotalOffset ?? 0), '']);
+    grid.push([`Summa ${s.section.toLowerCase()}`, '', '', '', '', '', sub + (s.subtotalOffset ?? 0), opts.weightTotals ? Math.round((sub / nav) * 1e6) / 1e4 : '']);
     total += sub;
   }
   grid.push(['Totalt', '', '', '', '', '', total + (opts.totalOffset ?? 0), '']);
@@ -89,6 +89,14 @@ describe('reconciliation', () => {
       ]),
     );
     expect(r.flags.find((f) => f.check === 'rows')!.message).toMatch(/Quantity × price = 61,000, but the market value is 60,000/);
+  });
+
+  it('a weight sub-total under 1.5% is read in percent like its column, not as a fraction', () => {
+    // 0.17% of NAV: once read as 17% and reported as 0.17 apart.
+    const tiny: Row[] = [['SE0000108656', 'Ericsson B', 'SEK', 10, 60, 600, 600], ['SE0000148884', 'SEB A', 'SEK', 10, 150, 1500, 1500]];
+    const r = run([{ section: 'Aktier', rows: tiny }, { section: 'Obligationer', rows: BONDS }], { nav: 1_200_000, weightTotals: true });
+    const w = r.checks.filter((c) => c.kind === 'subtotal' && c.label.includes('Weight'));
+    expect(w.map((c) => c.status)).toEqual(['ok', 'ok']);
   });
 
   it('a user rate that differs from the file is pointed out', () => {
