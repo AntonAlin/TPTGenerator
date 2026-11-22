@@ -1,0 +1,22 @@
+{
+  "$comment": "Minimum accuracy of the matching benchmark on seeds 101-103 per layout (tests/bench.test.ts). Raise a figure when an improvement lands; never lower one to make a test pass.",
+  "mapping": 0.972,
+  "checks": {
+    "found": 0.995,
+    "cic": 0.971,
+    "identifier": 0.995,
+    "holding": 0.984,
+    "currency": 0.993,
+    "mv_local": 0.831,
+    "mv_portfolio": 0.831,
+    "weight": 0.831,
+    "coupon": 0.995,
+    "maturity": 0.995,
+    "contract_size": 0,
+    "strike": 0,
+    "call_put": 0,
+    "underlying_price": 0,
+    "delta": 0,
+    "modified_duration": 0
+  }
+}
