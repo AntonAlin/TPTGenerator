@@ -55,7 +55,7 @@ export function runPipeline(file: string, opts: PipelineOptions = {}) {
 
   const base = baseCurrencyOf(portfolio);
   const ccys = [
-    ...norm.holdings.map((h) => h.file.currency).filter((c): c is string => !!c),
+    ...norm.holdings.flatMap((h) => [h.file.currency, h.file.leg1_currency, h.file.leg2_currency]).filter((c): c is string => !!c),
     ...(portfolio.level === 'share_class' ? portfolio.shareClasses.map((c) => c.values['4']).filter(Boolean) : []),
     ...(base ? [base] : []),
   ];

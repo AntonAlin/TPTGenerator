@@ -45,6 +45,10 @@ export const CANONICAL_FIELDS = [
   'underlying_id',
   'underlying_price',
   'delta',
+  'leg1_amount',
+  'leg1_currency',
+  'leg2_amount',
+  'leg2_currency',
   'ignore',
 ] as const;
 
@@ -95,6 +99,10 @@ export const CANONICAL_INFO: Record<CanonicalField, { label: string; help: strin
   underlying_id: { label: 'Underlying identifier', help: 'ISIN or other code of the underlying asset (TPT fields 68–69).' },
   underlying_price: { label: 'Underlying price', help: 'Last price of the underlying asset (TPT field 72).' },
   delta: { label: 'Delta', help: 'Sensitivity of the derivative to the underlying’s price (TPT field 93).' },
+  leg1_amount: { label: 'Leg 1 amount (bought / received)', help: 'Notional of a forward’s or swap’s first leg, the side bought or received. With leg 2 it values a forward or swap the file does not value.' },
+  leg1_currency: { label: 'Leg 1 currency', help: 'Currency of the first leg (bought / received).' },
+  leg2_amount: { label: 'Leg 2 amount (sold / paid)', help: 'Notional of the second leg, the side sold or paid (may be shown negative).' },
+  leg2_currency: { label: 'Leg 2 currency', help: 'Currency of the second leg (sold / paid).' },
   ignore: { label: '— Ignore this column —', help: 'Not used for the TPT.' },
 };
 

@@ -251,8 +251,13 @@ export const LAYOUTS: Layout[] = [
       { header: 'Strike', expect: 'strike', cell: (h) => h.strike ?? null },
       { header: 'Call / put', expect: 'call_put', cell: (h) => h.callPut ?? null },
       { header: 'Underlying price', expect: 'underlying_price', cell: (h) => h.underlyingPrice ?? null },
-      { header: 'Market value override', expect: 'market_value_local', cell: (h) => (derivative(h) ? h.mvLocal : null) },
+      // As in Nexus: no value for a forward, only its legs (the converter values it from them).
+      { header: 'Market value override', expect: 'market_value_local', cell: (h) => (derivative(h) && h.kind !== 'forward' ? h.mvLocal : null) },
       { header: 'Reported delta', expect: 'delta', cell: (h) => h.delta ?? null },
+      { header: 'Buy currency', expect: 'leg1_currency', cell: (h) => h.legs?.buy.ccy ?? null },
+      { header: 'Buy amount', expect: 'leg1_amount', cell: (h) => h.legs?.buy.amount ?? null },
+      { header: 'Sell currency', expect: 'leg2_currency', cell: (h) => h.legs?.sell.ccy ?? null },
+      { header: 'Sell amount', expect: 'leg2_amount', cell: (h) => h.legs?.sell.amount ?? null },
     ],
   },
   {

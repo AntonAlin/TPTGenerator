@@ -16,7 +16,7 @@ import { predictRow } from './rowModel.ts';
 import { normalizeHeader } from '../detect/headerMatch.ts';
 import { deriveCic, quotationZoneFromCic, underlyingCategoryFromCic } from './cicDerive.ts';
 import { bondAnalytics, type BondAnalytics, type DayCount, type Frequency } from './fixedIncome.ts';
-import type { Holding } from './holdings.ts';
+import type { FileValues, Holding } from './holdings.ts';
 import { ROLE_LABEL, type AmountRole } from './amounts.ts';
 import {
   derived,
@@ -381,6 +381,25 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
     mvLocal = derived(round((nominal ?? f.quantity)!, 2), 'Cash: the balance is the market value', 'high');
   }
 
+  // Derivatives the file does not value. A future is margined daily: what it gained or lost is paid
+  // as variation margin, so after settlement it is worth 0 (the template's own comment on fields 22
+  // and 24). A forward or swap is valued as the difference of its two legs' notionals at today's
+  // FX rates: undiscounted and without forward points, so an estimate, marked as one.
+  let mvPortDerived: Resolved<number> | undefined;
+  if (!mvLocal && f.market_value_portfolio === undefined) {
+    if (effectiveClass === 'future') {
+      const why = 'Future: margined daily, so after the variation margin is paid its market value is 0 (TPT fields 22 and 24: market values of listed derivatives with daily margin calls should be close to zero)';
+      mvLocal = derived(0, why, 'high');
+      mvPortDerived = derived(0, why, 'high');
+    } else if (effectiveClass === 'forward' || effectiveClass === 'swap') {
+      const v = valueFromLegs(f, ccy, effectiveClass === 'swap', (c) => (c === ctx.portfolioCurrency ? 1 : ctx.fx[c]?.rate), ctx.portfolioCurrency);
+      if (v.value !== undefined) {
+        mvPortDerived = derived(v.value, v.method, 'low', LEG_NOTE);
+        if (fx) mvLocal = derived(round(v.value / fx, 2), `${v.method}; ÷ FX rate ${fx} for ${ccy}`, 'low', LEG_NOTE);
+      } else if (v.missing) issues.push(v.missing);
+    }
+  }
+
   // Clean or dirty?
   let conv: 'clean' | 'dirty' = ctx.mvConvention === 'dirty' ? 'dirty' : 'clean';
   let convNote = '';
@@ -411,11 +430,12 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
 
   let mvPort: Resolved<number> | undefined;
   if (f.market_value_portfolio !== undefined) mvPort = amountFromFile('mv_port', f.market_value_portfolio);
+  else if (mvPortDerived) mvPort = mvPortDerived;
   else if (mvLocal?.value !== undefined && fx) {
     mvPort = derived(round(mvLocal.value * fx, 2), `Local value × FX rate ${fx} (${fxEntry!.source})`, minConfidence(mvLocal.confidence, fxEntry!.source === 'implied' ? 'medium' : 'high'));
   }
   [attrs.mv_port_dirty, attrs.mv_port_clean] = splitValue(mvPort, fx ?? 1, 'portfolio-currency');
-  if (!mvPort && mvLocal && !fx) {
+  if (!mvPort && mvLocal && !fx && mvLocal.value !== 0) {
     attrs.mv_port_dirty = missing(`No FX rate for ${ccy}.`);
     attrs.mv_port_clean = missing(`No FX rate for ${ccy}.`);
   }
@@ -521,3 +541,52 @@ export function agencyOf(v: string | undefined): string | undefined {
   return v.trim();
 }
 
+
+const LEG_NOTE =
+  "An estimate: the legs' notionals at today's FX rates, undiscounted, without forward points or accrued swap interest. Use the counterparty's or your valuation system's market value when you have it.";
+
+const fmtAmount = (x: number) => x.toLocaleString('en-US', { maximumFractionDigits: 2 });
+
+/**
+ * A forward's or swap's value in portfolio currency as received leg − paid leg, each at its FX rate.
+ * Leg 1 is the side bought or received and leg 2 the side sold or paid, unless the signs say the
+ * opposite (leg 1 negative, leg 2 positive). A swap's legs without a currency are in the row's
+ * currency; a forward needs both currencies, or one of them and a row currency that differs from it.
+ */
+export function valueFromLegs(
+  f: Pick<FileValues, 'leg1_amount' | 'leg1_currency' | 'leg2_amount' | 'leg2_currency'>,
+  rowCcy: string | undefined,
+  isSwap: boolean,
+  rate: (ccy: string) => number | undefined,
+  portfolioCcy?: string,
+): { value?: number; method: string; missing?: string } {
+  const a1 = f.leg1_amount;
+  const a2 = f.leg2_amount;
+  if (a1 === undefined && a2 === undefined) return { method: '' };
+  if (a1 === undefined || a2 === undefined) return { method: '', missing: 'Only one leg of the forward/swap is in the file: its market value needs both legs.' };
+  let c1 = f.leg1_currency;
+  let c2 = f.leg2_currency;
+  let assumed = '';
+  if (isSwap) {
+    if (!c1 && rowCcy) [c1, assumed] = [rowCcy, ` (leg 1 in the row's currency ${rowCcy})`];
+    if (!c2 && rowCcy) [c2, assumed] = [rowCcy, `${assumed} (leg 2 in the row's currency ${rowCcy})`];
+  } else if (rowCcy && !c1 !== !c2) {
+    // One currency given: the other leg is in the row's currency, if that is a different one.
+    const given = c1 ?? c2;
+    if (given !== rowCcy) {
+      if (!c1) [c1, assumed] = [rowCcy, ` (leg 1 in the row's currency ${rowCcy})`];
+      else [c2, assumed] = [rowCcy, ` (leg 2 in the row's currency ${rowCcy})`];
+    }
+  }
+  if (!c1 || !c2) return { method: '', missing: 'The currency of a forward/swap leg is not in the file: its market value is not estimated.' };
+  // Who receives what: leg 1 unless the signs say leg 2.
+  const swapRoles = a1 < 0 && a2 > 0;
+  const [rAmt, rCcy, rLeg, pAmt, pCcy, pLeg] = swapRoles ? [a2, c2, 2, a1, c1, 1] : [a1, c1, 1, a2, c2, 2];
+  const rr = rate(rCcy);
+  const pr = rate(pCcy);
+  if (rr === undefined || pr === undefined) return { method: '', missing: `No FX rate for ${rr === undefined ? rCcy : pCcy}: the forward/swap is not valued from its legs.` };
+  const value = round(Math.abs(rAmt) * rr - Math.abs(pAmt) * pr, 2);
+  const pc = portfolioCcy ?? 'portfolio currency';
+  const method = `Leg ${rLeg} received ${fmtAmount(Math.abs(rAmt))} ${rCcy} × ${rr} − leg ${pLeg} paid ${fmtAmount(Math.abs(pAmt))} ${pCcy} × ${pr} = ${fmtAmount(value)} ${pc}${assumed}`;
+  return { value, method };
+}

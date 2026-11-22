@@ -127,7 +127,7 @@ describe('resolveHoldings', () => {
     expect(rows[0].issues[0]).toMatch(/not a valid ISIN/);
   });
 
-  it('a cash balance is its market value; a derivative gets no quantity × price value', () => {
+  it('a cash balance is its market value; a future is worth 0, an option gets no quantity × price value', () => {
     const hs = [
       mk({ security_name: 'Custody account NOK', asset_type: 'Cash / deposit', currency: 'NOK', nominal: 4_500_000 }),
       mk({ security_name: 'OMXS30 Index Future', asset_type: 'Future', currency: 'SEK', quantity: -120, price: 2655 }, { index: 1 }),
@@ -137,7 +137,8 @@ describe('resolveHoldings', () => {
     expect(rows[0].attrs.mv_local_clean).toMatchObject({ value: 4_500_000, source: 'derived', confidence: 'high' });
     expect(rows[0].attrs.mv_port_clean.value).toBe(4_050_000);
     expect(rows[1].attrs.cic.value).toBe('XLA1');
-    expect(rows[1].attrs.mv_local_clean.source).toBe('missing');
+    // Margined daily: 0, not contracts × price (that is the underlying's value).
+    expect(rows[1].attrs.mv_local_clean).toMatchObject({ value: 0, source: 'derived', confidence: 'high' });
     expect(rows[2].attrs.mv_local_clean.source).toBe('missing');
   });
 });

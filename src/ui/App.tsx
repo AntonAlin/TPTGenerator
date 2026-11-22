@@ -103,7 +103,8 @@ export function App() {
   const base = baseCurrencyOf(portfolio);
   const fx = useMemo(() => {
     const ccys = [
-      ...(normalized?.holdings.map((h) => h.file.currency).filter((c): c is string => !!c) ?? []),
+      // The currencies of forward and swap legs need a rate too, to value them from their legs.
+      ...(normalized?.holdings.flatMap((h) => [h.file.currency, h.file.leg1_currency, h.file.leg2_currency]).filter((c): c is string => !!c) ?? []),
       ...(portfolio.level === 'share_class' ? portfolio.shareClasses.map((c) => c.values['4']).filter(Boolean) : []),
       ...(base ? [base] : []),
     ];

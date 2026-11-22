@@ -24,7 +24,7 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
 # The class list is the app's own field list, in the same order (src/detect/canonical.ts).
-CLASSES = re.findall(r"'([a-z_]+)'", re.search(r"CANONICAL_FIELDS = \[(.*?)\] as const", (ROOT / "src/detect/canonical.ts").read_text(), re.S).group(1))
+CLASSES = re.findall(r"'([a-z0-9_]+)'", re.search(r"CANONICAL_FIELDS = \[(.*?)\] as const", (ROOT / "src/detect/canonical.ts").read_text(), re.S).group(1))
 
 PARAMS = {
     "objective": "multiclass",

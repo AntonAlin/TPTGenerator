@@ -262,8 +262,9 @@ describe('sample-specific results', () => {
 
 // The demo file of Nexus Portfolio Lab (made by its js/demofile.js): two funds on six month-ends in
 // one table, 59 columns, no market value column (Nexus values holdings itself), and options, swaps,
-// CDS and FX forwards that only a pricing model can value. Those get no market value here: the TPT
-// leaves them blank and flagged rather than guessed.
+// CDS and FX forwards. Options, swaps without legs and CDS need a pricing model: the TPT leaves them
+// blank and flagged rather than guessed. The FX forwards carry both legs, so they are valued as the
+// difference of the legs at the FX rates, marked as a low-confidence estimate.
 describe('nexus_holdings_demo.csv (two funds on six dates, Nexus Portfolio Lab layout)', () => {
   const fxUser = { USD: 10.75, EUR: 11.0, NOK: 0.9, DKK: 1.47, CHF: 12.1 };
   const sek = (p: PortfolioState) => {
@@ -291,7 +292,8 @@ describe('nexus_holdings_demo.csv (two funds on six dates, Nexus Portfolio Lab l
     expect(mapped).toMatchObject({
       Date: 'ignore', Portfolio: 'ignore', 'Instrument type': 'asset_type', Name: 'security_name', ISIN: 'isin', Quantity: 'quantity',
       Price: 'price', Currency: 'currency', 'Coupon %': 'coupon', 'Maturity / expiry': 'maturity_date', 'Market value override': 'market_value_local',
-      'Fixed rate %': 'ignore', 'Risk-free rate %': 'ignore', 'Avg daily volume': 'ignore', 'Buy amount': 'ignore', 'Sell currency': 'ignore',
+      'Fixed rate %': 'ignore', 'Risk-free rate %': 'ignore', 'Avg daily volume': 'ignore',
+      'Buy amount': 'leg1_amount', 'Buy currency': 'leg1_currency', 'Sell amount': 'leg2_amount', 'Sell currency': 'leg2_currency',
     });
     for (const p of run.predictions) if (p.field !== 'ignore') expect(p.confidence, p.header).toBeGreaterThanOrEqual(0.1);
   });
@@ -324,8 +326,13 @@ describe('nexus_holdings_demo.csv (two funds on six dates, Nexus Portfolio Lab l
     expect([v('Custody account NOK', '19'), v('Custody account NOK', '22'), v('Custody account NOK', '24')]).toEqual([4500000, 4500000, 4050000]);
     // Futures: the file's market value 0, not contracts × price.
     expect([v('OMXS30 Index Future', '18'), v('OMXS30 Index Future', '22')]).toEqual([-120, 0]);
-    // Options and swaps need a pricing model: blank, not guessed.
+    // Options, a swap without legs and a CDS need a pricing model: blank, not guessed.
     for (const name of ['Volvo B Call 270', 'SEK 7y payer swap', 'iTraxx Crossover 5y']) expect(v(name, '22'), name).toBeNull();
+    // FX forwards: received leg − paid leg at the step-3 rates (SEK 118.2m − USD 11.8m × 10.75).
+    expect(v('Sell USD / buy SEK', '24')).toBe(118_200_000 - 11_800_000 * 10.75);
+    expect(v('Sell EUR / buy SEK', '24')).toBe(78_600_000 - 7_000_000 * 11.0);
+    const src = run.result.rows.find((r) => r.attrs.name.value === 'Sell USD / buy SEK')!.attrs.mv_port_clean;
+    expect([src.source, src.confidence]).toEqual(['derived', 'low']);
   });
 
   it('every written value passes the spec validation and the report has no errors', () => {

@@ -2,7 +2,7 @@
 
 # TPT Generator
 
-**Version 1.0** · [What's new](CHANGELOG.md)
+**Version 1.1** · [What's new](CHANGELOG.md)
 
 A free, static web app that turns a portfolio holdings file (xlsx, xls or csv) with unknown, inconsistent
 column names into a FinDatEx **Solvency II Tripartite Template (TPT)**. It is for fund managers and
@@ -158,9 +158,9 @@ CI runs `npm run spec:check` and fails if the committed JSON does not match the 
 
 ## Column detection
 
-Each input column is mapped to one of the canonical fields in `src/detect/canonical.ts` (41 inputs plus
-`ignore`: identifiers, amounts, prices, bond terms and analytics, ratings, issuer and group, NACE, and option
-and future terms). The classifier combines four kinds of signal:
+Each input column is mapped to one of the canonical fields in `src/detect/canonical.ts` (45 inputs plus
+`ignore`: identifiers, amounts, prices, bond terms and analytics, ratings, issuer and group, NACE, option
+and future terms, and the two legs of forwards and swaps). The classifier combines four kinds of signal:
 
 1. **Header signals.** Fuzzy matching against `src/detect/synonyms.json` (English, Swedish, German, French).
    Matching ignores case, accents and punctuation. **Edit this file to add header variants.** Changes take
@@ -309,6 +309,19 @@ and a confidence (high / medium / low). Per attribute (`src/derive/resolve.ts`):
 | `fixedIncome.ts` | Coupon schedule; accrued interest (ACT/ACT ICMA, 30E/360, ACT/360, ACT/365F); yield to maturity (Newton with bisection fallback); Macaulay and modified duration. Verified against an independent implementation. |
 | `valuation.ts` | Implied FX per currency (portfolio ÷ local value), portfolio-currency guess, FX table. Detects whether market values are clean or dirty (nominal × price ÷ 100 vs the file value). |
 | `resolve.ts` | Applies the resolution order to every attribute. Also derives NAV (entered, else the sum of holdings, flagged), weights, cash ratio (field 9) and portfolio duration (field 10). |
+
+**Derivatives the file does not value** (only then; a value in the file always wins):
+
+- **Futures** are worth 0. They are margined daily, so what they gained or lost is paid as variation
+  margin; the template's own comment on fields 22 and 24 says listed derivatives with daily margin calls
+  should be close to zero. Derived, high confidence.
+- **Forwards and swaps** are valued from their two legs: the received leg's notional minus the paid leg's,
+  each at its FX rate from step 3 (leg 1 = bought / received, leg 2 = sold / paid, unless the signs say the
+  opposite; a paid leg may be shown negative). A swap's legs without a currency are in the row's currency;
+  a forward needs both currencies, or one and a different row currency. The figure is undiscounted and
+  ignores forward points and accrued swap interest, so it is marked as a low-confidence estimate. The
+  legs come from columns such as "Buy amount", "Sell currency", "Köpbelopp" or "Montant vendu".
+- **Options, CDS** and swaps without legs need a pricing model: left blank and flagged.
 
 Assumptions you can change in step 3:
 

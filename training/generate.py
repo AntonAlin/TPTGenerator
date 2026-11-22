@@ -69,6 +69,10 @@ EXTRA_HEADERS = {
     "underlying_id": ["Underlier ISIN", "Underlying ID code", "Underl. ISIN", "Basiswert ISIN-Code", "Code s-j", "Und. ticker"],
     "underlying_price": ["Spot", "Underlier Px", "Underl. kurs", "Kurs Basiswert (aktuell)", "Cours s-j", "Und. price"],
     "delta": ["Opt Delta", "Delta (adj)", "Delta (opt.)", "Delta Option", "Δ", "Option delta %"],
+    "leg1_amount": ["Amount bought", "Rec. notional", "Köpt belopp (nom.)", "Kaufbetrag Nominal", "Montant acheté (nominal)", "Receive leg amount", "Buy nominal"],
+    "leg1_currency": ["Ccy bought", "Rec. ccy", "Köpt valuta", "Kauf-Whg", "Devise achetée", "Receive leg ccy", "Buy Ccy"],
+    "leg2_amount": ["Amount sold", "Pay notional", "Sålt belopp (nom.)", "Verkaufsbetrag Nominal", "Montant vendu (nominal)", "Pay leg amount", "Sell nominal"],
+    "leg2_currency": ["Ccy sold", "Pay ccy", "Såld valuta", "Verkauf-Whg", "Devise vendue", "Pay leg ccy", "Sell Ccy"],
 }
 
 IGNORE_HEADERS = {
@@ -85,7 +89,7 @@ IGNORE_HEADERS = {
     "volume": ["Avg daily volume", "ADV", "Volym/dag", "Durchschn. Volumen"],
     "riskfree": ["Risk-free rate %", "Market rate %", "Riskfri ränta", "Risikoloser Zins"],
     "impvol": ["Implied vol %", "Implied volatility", "Impl. vol", "Implizite Vola"],
-    "fxlegs": ["Buy amount", "Sell amount", "Köpbelopp", "Säljbelopp"],
+    "fxrate_traded": ["Deal rate", "Contract rate", "Terminskurs", "Terminkurs", "Kontraktskurs"],
     "avgcost": ["Average cost per unit", "Avg cost", "Snittkurs", "Durchschnittskurs"],
     "liquidity": ["Days to liquidate", "Likvidationsdagar", "Liquidation days"],
     "change": ["% change", "1D %", "Förändring %", "Veränderung %", "Var. %"],
@@ -215,6 +219,7 @@ class Holding:
         self.dirty = self.yld = self.mdur = self.spread = self.rate_type = self.freq = self.call_date = None
         self.cqs = self.agency = self.nace = self.group = self.group_lei = None
         self.csize = self.strike = self.cp = self.exercise = self.und_name = self.und_id = self.und_px = self.delta = None
+        self.legs = None
         if kind.startswith("bond"):
             frn = "FRN" in self.name
             self.dirty = round(self.price + (self.accrued or 0) / self.qty * 100, 4) if self.accrued is not None else None
@@ -245,6 +250,16 @@ class Holding:
                 self.name = f"{self.und_name} {'Call' if self.cp == 'call' else 'Put'} {self.strike:g} {(ref + dt.timedelta(days=rng.randint(10, 400))).strftime('%b%y').upper()}"
             else:
                 self.delta = 1.0 if rng.random() < 0.7 else None
+                fx_name = any(w in self.name for w in ("FWD", "Termin", "EUR/SEK"))
+                if fx_name or rng.random() < 0.3:
+                    # Leg 1 bought / received, leg 2 sold / paid: an FX forward's two currencies, or a
+                    # swap's two legs in one currency (same notional).
+                    notional = rng.randint(1, 80) * rng.choice([10_000, 100_000, 1_000_000])
+                    if fx_name:
+                        other = rng.choice([c for c in ("SEK", "EUR", "USD", "NOK", "GBP") if c != self.ccy])
+                        self.legs = ((self.ccy, notional), (other, round(notional * FX_TO[self.ccy] / FX_TO[other] * rng.uniform(0.97, 1.03), 2)))
+                    else:
+                        self.legs = ((self.ccy, notional), (self.ccy, notional))
         cat, sub = CIC_CAT[kind]
         if kind == "bond_corp" and rng.random() < 0.3:
             sub = rng.choice(["2", "4", "6", "8"])
@@ -383,6 +398,7 @@ def make_table(rng: random.Random) -> list[dict]:
         return opts[int(lang_types * len(opts)) % len(opts)] if rng.random() < 0.8 else rng.choice(opts)
 
     blank_cash_px = rng.random() < 0.5
+    leg2_sign = -1 if rng.random() < 0.35 else 1
     gens = {
         "isin": lambda: [h.isin or None for h in hs],
         "isin_mixed": lambda: [h.isin or h.ticker or rng.choice([f"{h.kind[:3].upper()}-{rng.randint(1000, 9999)}", str(rng.randint(100000, 999999)), f"{h.ccy} CASH", None]) for h in hs],
@@ -428,6 +444,11 @@ def make_table(rng: random.Random) -> list[dict]:
         "underlying_id": lambda: [h.und_id for h in hs],
         "underlying_price": lambda: [fmt_num(h.und_px, style, rng, 2) if h.und_px is not None else None for h in hs],
         "delta": lambda: [fmt_num(h.delta, style, rng, 4) if h.delta is not None else None for h in hs],
+        "leg1_amount": lambda: [fmt_num(h.legs[0][1], style, rng, 2) if h.legs else None for h in hs],
+        "leg1_currency": lambda: [h.legs[0][0] if h.legs else None for h in hs],
+        # The sold / paid leg is often shown negative.
+        "leg2_amount": lambda: [fmt_num(h.legs[1][1] * leg2_sign, style, rng, 2) if h.legs else None for h in hs],
+        "leg2_currency": lambda: [h.legs[1][0] if h.legs else None for h in hs],
     }
     noise = {
         "row_id": lambda: [str(i + 1) if not style.raw_numbers else i + 1 for i in range(n)],
@@ -443,7 +464,7 @@ def make_table(rng: random.Random) -> list[dict]:
         "volume": lambda: [fmt_num(rng.randint(10_000, 9_000_000), style, rng, 0) if h.kind == "equity" else None for h in hs],
         "riskfree": lambda: [fmt_num(round(rng.uniform(0, 5), 2), style, rng) if h.kind == "derivative" else None for h in hs],
         "impvol": lambda: [fmt_num(round(rng.uniform(8, 60), 1), style, rng, 1) if h.kind == "derivative" else None for h in hs],
-        "fxlegs": lambda: [fmt_num(rng.randint(1, 50) * 100_000, style, rng, 0) if h.kind == "derivative" and rng.random() < 0.5 else None for h in hs],
+        "fxrate_traded": lambda: [fmt_num(round(rng.uniform(0.5, 12), 4), style, rng, 4) if h.legs and h.legs[0][0] != h.legs[1][0] else None for h in hs],
         "avgcost": lambda: [fmt_num(round(h.price * rng.uniform(0.7, 1.2), 2), style, rng) for h in hs],
         "liquidity": lambda: [fmt_num(round(rng.uniform(0.1, 30), 1), style, rng, 1) for h in hs],
         "change": lambda: [fmt_num(round(rng.uniform(-5, 5), 2), style, rng) for _ in hs],
@@ -458,6 +479,12 @@ def make_table(rng: random.Random) -> list[dict]:
     # Tables with derivatives often carry their terms together; bond tables their analytics.
     if any(h.kind == "derivative" for h in hs) and rng.random() < 0.4:
         chosen += [k for k in ["contract_size", "strike", "call_put", "underlying_name", "underlying_price", "delta", "exercise_type"] if k not in chosen and rng.random() < 0.7]
+    # Forward and swap legs come as a set: both amounts, usually both currencies.
+    if any(h.legs for h in hs) and rng.random() < 0.45:
+        legs = ["leg1_amount", "leg2_amount"] + [k for k in ["leg1_currency", "leg2_currency"] if rng.random() < 0.85]
+        chosen += [k for k in legs if k not in chosen]
+    else:
+        chosen = [k for k in chosen if not k.startswith("leg")]
     if mix == "bond" and rng.random() < 0.5:
         chosen += [k for k in ["yield", "modified_duration", "coupon_frequency", "interest_rate_type", "dirty_price", "spread", "cqs"] if k not in chosen and rng.random() < 0.6]
     if mix == "bond" and "nominal" not in chosen and rng.random() < 0.5:

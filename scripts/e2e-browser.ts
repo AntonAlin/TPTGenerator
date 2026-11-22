@@ -22,6 +22,7 @@ import { preview } from 'vite';
 import { chromium, type Page } from 'playwright';
 import * as XLSX from 'xlsx';
 import spec from '../src/spec/tpt_spec.json' with { type: 'json' };
+import pkg from '../package.json' with { type: 'json' };
 
 const root = resolve(import.meta.dirname, '..');
 const samples = join(root, 'samples');
@@ -66,10 +67,10 @@ try {
   console.log(`Browser e2e against ${url}`);
   await page.goto(url);
 
-  await step('header: logo, version 1.0, self-hosted icons', async () => {
+  await step('header: logo, version, self-hosted icons', async () => {
     await page.goto(url);
     await page.waitForSelector('.brand-logo');
-    assert.equal(await page.textContent('.version'), 'Version 1.0');
+    assert.equal(await page.textContent('.version'), `Version ${pkg.version.split('.').slice(0, 2).join('.')}`);
     const icons = await page.$$eval('link[rel~="icon"], link[rel="apple-touch-icon"]', (ls) => ls.map((l) => (l as HTMLLinkElement).href));
     assert.equal(icons.length, 2);
     for (const href of icons) {

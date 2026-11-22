@@ -1300,6 +1300,156 @@
       "delta de l'option"
     ]
   },
+  "leg1_amount": {
+    "en": [
+      "buy amount",
+      "amount bought",
+      "bought amount",
+      "purchase amount",
+      "receive amount",
+      "amount received",
+      "receive leg notional",
+      "leg 1 amount",
+      "leg 1 notional",
+      "notional leg 1",
+      "receive notional",
+      "buy notional"
+    ],
+    "sv": [
+      "köpbelopp",
+      "köpt belopp",
+      "belopp köpt",
+      "erhållet belopp",
+      "ben 1 belopp",
+      "ben 1 nominellt",
+      "nominellt ben 1"
+    ],
+    "de": [
+      "kaufbetrag",
+      "gekaufter betrag",
+      "betrag gekauft",
+      "empfangener betrag",
+      "nominal bein 1",
+      "betrag bein 1"
+    ],
+    "fr": [
+      "montant acheté",
+      "montant achat",
+      "montant reçu",
+      "nominal jambe 1",
+      "montant jambe 1",
+      "jambe reçue nominal"
+    ]
+  },
+  "leg1_currency": {
+    "en": [
+      "buy currency",
+      "currency bought",
+      "bought currency",
+      "purchase currency",
+      "receive currency",
+      "currency received",
+      "leg 1 currency",
+      "receive leg currency",
+      "buy ccy"
+    ],
+    "sv": [
+      "köpvaluta",
+      "köpt valuta",
+      "valuta köpt",
+      "erhållen valuta",
+      "ben 1 valuta",
+      "valuta ben 1"
+    ],
+    "de": [
+      "kaufwährung",
+      "gekaufte währung",
+      "währung gekauft",
+      "empfangene währung",
+      "währung bein 1"
+    ],
+    "fr": [
+      "devise achetée",
+      "devise achat",
+      "devise reçue",
+      "devise jambe 1"
+    ]
+  },
+  "leg2_amount": {
+    "en": [
+      "sell amount",
+      "amount sold",
+      "sold amount",
+      "sale amount",
+      "pay amount",
+      "amount paid",
+      "pay leg notional",
+      "leg 2 amount",
+      "leg 2 notional",
+      "notional leg 2",
+      "pay notional",
+      "sell notional"
+    ],
+    "sv": [
+      "säljbelopp",
+      "sålt belopp",
+      "belopp sålt",
+      "betalt belopp",
+      "ben 2 belopp",
+      "ben 2 nominellt",
+      "nominellt ben 2"
+    ],
+    "de": [
+      "verkaufsbetrag",
+      "verkaufter betrag",
+      "betrag verkauft",
+      "gezahlter betrag",
+      "nominal bein 2",
+      "betrag bein 2"
+    ],
+    "fr": [
+      "montant vendu",
+      "montant vente",
+      "montant payé",
+      "nominal jambe 2",
+      "montant jambe 2",
+      "jambe payée nominal"
+    ]
+  },
+  "leg2_currency": {
+    "en": [
+      "sell currency",
+      "currency sold",
+      "sold currency",
+      "sale currency",
+      "pay currency",
+      "currency paid",
+      "leg 2 currency",
+      "pay leg currency",
+      "sell ccy"
+    ],
+    "sv": [
+      "säljvaluta",
+      "såld valuta",
+      "valuta såld",
+      "betald valuta",
+      "ben 2 valuta",
+      "valuta ben 2"
+    ],
+    "de": [
+      "verkaufswährung",
+      "verkaufte währung",
+      "währung verkauft",
+      "gezahlte währung",
+      "währung bein 2"
+    ],
+    "fr": [
+      "devise vendue",
+      "devise vente",
+      "devise payée",
+      "devise jambe 2"
+    ]
+  },
   "ignore": {
     "en": [
       "comment",
@@ -1346,10 +1496,6 @@
       "implied volatility",
       "dividend yield",
       "dividend / foreign rate %",
-      "buy amount",
-      "sell amount",
-      "buy currency",
-      "sell currency",
       "average cost",
       "average cost per unit",
       "cost price",

@@ -207,7 +207,13 @@ export function classifyColumns(
     ccyCol >= 0 ? columns[ccyCol].values.map((v) => (v == null ? undefined : String(v).trim().toUpperCase())) : undefined,
   );
   const priceIdx = model.classes.indexOf('price');
-  const evidence = relationEvidence(rel, columns.map((c) => c.header), (col) => probs[col][priceIdx]);
+  // Which factor of amount × price = value is the price: the model's view, and then whole numbers
+  // (holdings are mostly whole numbers, prices mostly not), for when the model sees two prices.
+  const priceLike = (col: number) => {
+    const whole = feats[col].named.integer ?? 0;
+    return probs[col][priceIdx] + 0.4 * (1 - whole) - 0.2 * whole;
+  };
+  const evidence = relationEvidence(rel, columns.map((c) => c.header), priceLike);
   const boosted = new Map<number, string[]>();
   probs.forEach((p, i) => {
     const ev = evidence[i];
@@ -217,8 +223,9 @@ export function classifyColumns(
     probs[i] = w.map((x) => x / sum);
     boosted.set(i, ev.reasons);
   });
-  holdingFromProduct(probs, rel, fixed);
+  holdingFromProduct(probs, rel, fixed, priceLike);
   splitValuePair(probs, feats, rel, fixed, columns, boosted);
+  singleValueInOneCurrency(probs, feats, fixed, columns, boosted);
 
   const preds: ColumnPrediction[] = feats.map((f, index) => ({
     index,
@@ -297,13 +304,13 @@ export function classifyColumns(
  * model split them. Not for a factor that is itself a value (local value × FX rate = portfolio value).
  */
 const HOLDING_FLOOR = 0.7;
-function holdingFromProduct(probs: number[][], rel: ReturnType<typeof findRelations>, fixed: Map<number, unknown>) {
+function holdingFromProduct(probs: number[][], rel: ReturnType<typeof findRelations>, fixed: Map<number, unknown>, priceLike: (col: number) => number) {
   const priceIdx = model.classes.indexOf('price');
   const H = (['quantity', 'nominal', 'amount_mixed'] as const).map((f) => model.classes.indexOf(f));
   const V = (['market_value_local', 'market_value_portfolio'] as const).map((f) => model.classes.indexOf(f));
   for (const p of rel.products) {
     if (p.support < 0.8) continue;
-    const [price, amount] = probs[p.a][priceIdx] >= probs[p.b][priceIdx] ? [p.a, p.b] : [p.b, p.a];
+    const [price, amount] = priceLike(p.a) >= priceLike(p.b) ? [p.a, p.b] : [p.b, p.a];
     if (fixed.has(amount) || probs[price][priceIdx] < 0.5) continue;
     if (V.reduce((s, k) => s + probs[amount][k], 0) >= 0.5 || rel.fx.some((f) => f.local === amount || f.port === amount)) continue;
     const h = H.reduce((s, k) => s + probs[amount][k], 0);
@@ -363,6 +370,32 @@ function splitValuePair(
     const r = `"${columns[a].header}" and "${columns[b].header}" are the same values in two currencies (${why}): ${i === local ? 'the local-currency value' : 'the portfolio-currency value'}`;
     reasons.set(i, [...(reasons.get(i) ?? []), r]);
   }
+}
+
+/**
+ * One market value column whose header names a currency ("Market Value (EUR)") in a file whose rows
+ * are in several currencies holds every row in that one currency: the portfolio-currency value, not
+ * the local one (a local value is in each row's own currency).
+ */
+function singleValueInOneCurrency(probs: number[][], feats: ColumnFeatures[], fixed: Map<number, unknown>, columns: ColumnInput[], reasons: Map<number, string[]>) {
+  const L = model.classes.indexOf('market_value_local');
+  const P = model.classes.indexOf('market_value_portfolio');
+  const values = probs.map((_, i) => i).filter((i) => probs[i][L] + probs[i][P] >= 0.8);
+  if (values.length !== 1 || fixed.has(values[0])) return;
+  const i = values[0];
+  const n = feats[i].named;
+  if (!n.hdr_ccy_token || n.hdr_local_token || probs[i][P] >= probs[i][L]) return;
+  const ccyCol = feats.findIndex((f) => (f.named.currency ?? 0) >= 0.8);
+  if (ccyCol < 0) return;
+  const ccys = new Set(columns[ccyCol].values.filter((v) => typeof v === 'string' && v.trim()).map((v) => String(v).trim().toUpperCase()));
+  if (ccys.size < 2) return;
+  const m = probs[i][L] + probs[i][P];
+  probs[i][L] = m * 0.2;
+  probs[i][P] = m * 0.8;
+  reasons.set(i, [
+    ...(reasons.get(i) ?? []),
+    `"${columns[i].header}" names one currency while the rows are in ${ccys.size} (${[...ccys].slice(0, 4).join(', ')}): the portfolio-currency value`,
+  ]);
 }
 
 /** Lessons by exact header, then by header key (same header with another date in it), if unambiguous. */

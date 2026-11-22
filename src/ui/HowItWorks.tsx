@@ -355,6 +355,11 @@ export function HowItWorks() {
               <li>Coupon and maturity parsed from names like <code>SWEDEN 0.75% 12/11/2029</code>; an ambiguous day/month order gets low confidence.</li>
               <li>Accrued interest, yield to maturity and duration for plain fixed-rate bonds, with the day count you choose.</li>
               <li>FX rates implied by local and portfolio values, the portfolio currency, NAV as the sum of holdings when you don't enter one, weights.</li>
+              <li>
+                The market value of a derivative the file does not value. A future is worth 0: it is margined daily, and the template says listed derivatives with
+                daily margin calls should be close to zero. A forward or swap is the received leg's notional minus the paid leg's, each at its FX rate: undiscounted,
+                so a low-confidence estimate. Options and CDS need a pricing model and stay blank.
+              </li>
               <li>Issuer country from the ISIN prefix, if you allow it (marked as estimated: the prefix is not always the issuer's country).</li>
               <li>Whether market values are clean or dirty, from nominal × price ÷ 100 against the file value.</li>
             </ul>

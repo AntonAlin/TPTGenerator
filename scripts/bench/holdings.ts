@@ -37,6 +37,8 @@ export interface BenchHolding {
   underlying?: string;
   underlyingPrice?: number;
   delta?: number;
+  /** A forward's legs: bought (received) and sold (paid), consistent with its market value. */
+  legs?: { buy: { ccy: string; amount: number }; sell: { ccy: string; amount: number } };
   /** Expected CIC category (3rd character of the CIC). */
   cicCategory: string;
   /** The file shows the notional in the market value columns (only a total row gives it away). */
@@ -208,6 +210,8 @@ export function generateHoldings(seed: number, opts: HoldingOptions = {}): Bench
     h.push({ name: unique(`${base} ${int(2, 10)}Y PAYER IRS`), ticker: `IRS-${digits(4)}`, kind: 'irs', currency: base, country: '', holdingIs: 'notional', holding: notional, mvLocal: round((rnd() - 0.5) * notional * 0.03), mvPortfolio: 0, maturity: dateIn(2028, 2036), cicCategory: 'D', assetType: 'Interest rate swap' });
   }
   for (const r of h) r.mvPortfolio = round(r.mvLocal * fx[r.currency]);
+  // Forwards buy the base currency and sell USD; the bought leg is what makes the value come out.
+  for (const r of h) if (r.kind === 'forward') r.legs = { buy: { ccy: base, amount: round(r.mvPortfolio + r.holding * fx.USD) }, sell: { ccy: 'USD', amount: r.holding } };
   // A forward whose notional is shown as its market value (only a total row gives it away).
   if (forwards > 0 && rnd() < 0.5) h.find((r) => r.kind === 'forward')!.notionalShownAsValue = true;
   const total = round(h.reduce((a, r) => a + r.mvPortfolio, 0));

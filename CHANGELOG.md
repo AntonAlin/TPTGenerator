@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.1 (2026-11-22)
+
+**Market values for derivatives the file does not value**
+
+- Futures are valued at 0: they are margined daily, and the template's comment on fields 22 and 24 says
+  listed derivatives with daily margin calls should be close to zero.
+- Forwards and swaps are valued as the difference of their two legs' notionals at the FX rates of step 3:
+  the received leg minus the paid leg. Marked as a low-confidence estimate (undiscounted, no forward
+  points, no accrued swap interest); a value in the file always wins.
+- Four new input columns are recognised: leg 1 (bought / received) amount and currency, and leg 2
+  (sold / paid) amount and currency, in English, Swedish, German and French ("Buy amount", "Säljvaluta",
+  "Kaufbetrag", "Montant vendu", …). The currencies of the legs are added to the FX table of step 3.
+- Options, CDS and swaps without legs still need a pricing model and stay blank.
+
 ## 1.0 (2026-11-22)
 
 The first release. Everything runs in the browser; no file, value or header ever leaves it.

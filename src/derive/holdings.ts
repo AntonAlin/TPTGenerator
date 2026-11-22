@@ -52,6 +52,11 @@ export interface FileValues {
   underlying_id?: string;
   underlying_price?: number;
   delta?: number;
+  /** A forward's or swap's legs: bought / received, and sold / paid (the latter may be negative). */
+  leg1_amount?: number;
+  leg1_currency?: string;
+  leg2_amount?: number;
+  leg2_currency?: string;
 }
 
 /** Columns whose cells are amounts that may need re-sorting per row (see derive/amounts.ts). */
@@ -100,8 +105,9 @@ export interface NormalizeResult {
 const NUMERIC: CanonicalField[] = [
   'quantity', 'nominal', 'market_value_local', 'market_value_portfolio', 'price', 'coupon', 'weight', 'accrued_interest', 'fx_rate', 'amount_mixed',
   'dirty_price', 'yield', 'modified_duration', 'spread', 'cqs', 'contract_size', 'strike', 'underlying_price', 'delta',
+  'leg1_amount', 'leg2_amount',
 ];
-const UPPER: CanonicalField[] = ['isin', 'currency', 'issuer_lei', 'country', 'cic', 'group_lei', 'nace'];
+const UPPER: CanonicalField[] = ['isin', 'currency', 'issuer_lei', 'country', 'cic', 'group_lei', 'nace', 'leg1_currency', 'leg2_currency'];
 const DATES: CanonicalField[] = ['maturity_date', 'call_date'];
 
 /** Coupon payments per year from a number or a word (EN/SV/DE/FR). */
