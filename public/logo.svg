@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="TPT Generator">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1c4583"/>
+      <stop offset="1" stop-color="#3577cf"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="url(#bg)"/>
+  <!-- A holdings file as it comes: rows of uneven length and position -->
+  <g fill="#ffffff" opacity="0.55">
+    <rect x="9" y="17" width="14" height="5" rx="2.5"/>
+    <rect x="13" y="29.5" width="9" height="5" rx="2.5"/>
+    <rect x="10" y="42" width="12" height="5" rx="2.5"/>
+  </g>
+  <!-- read and mapped -->
+  <path d="M28 24 L35 32 L28 40" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- into the template: one aligned grid, the last cell validated -->
+  <g fill="#ffffff">
+    <rect x="39" y="15" width="6.5" height="9" rx="2"/>
+    <rect x="47.5" y="15" width="6.5" height="9" rx="2"/>
+    <rect x="39" y="27.5" width="6.5" height="9" rx="2"/>
+    <rect x="47.5" y="27.5" width="6.5" height="9" rx="2"/>
+    <rect x="39" y="40" width="6.5" height="9" rx="2"/>
+    <rect x="47.5" y="40" width="6.5" height="9" rx="2" fill="#8fe0b0"/>
+  </g>
+</svg>

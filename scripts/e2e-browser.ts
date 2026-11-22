@@ -66,6 +66,19 @@ try {
   console.log(`Browser e2e against ${url}`);
   await page.goto(url);
 
+  await step('header: logo, version 1.0, self-hosted icons', async () => {
+    await page.goto(url);
+    await page.waitForSelector('.brand-logo');
+    assert.equal(await page.textContent('.version'), 'Version 1.0');
+    const icons = await page.$$eval('link[rel~="icon"], link[rel="apple-touch-icon"]', (ls) => ls.map((l) => (l as HTMLLinkElement).href));
+    assert.equal(icons.length, 2);
+    for (const href of icons) {
+      assert.ok(href.startsWith(origin), `icon not self-hosted: ${href}`);
+      assert.equal((await page.request.get(href)).status(), 200);
+    }
+    assert.ok(await page.evaluate(() => (document.querySelector('.brand-logo') as HTMLImageElement).naturalWidth > 0), 'logo did not load');
+  });
+
   await step('the published build has no source maps', async () => {
     const files = readdirSync(join(root, 'dist'), { recursive: true }).map(String);
     assert.deepEqual(files.filter((f) => f.endsWith('.map')), []);

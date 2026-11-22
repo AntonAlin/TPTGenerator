@@ -20,6 +20,7 @@ import { navFromLines, reconcile } from '../derive/reconcile.ts';
 import { Promo } from './Promo.tsx';
 import { HowItWorks } from './HowItWorks.tsx';
 import { NEXUS_URL } from './links.ts';
+import { APP_VERSION } from './version.ts';
 
 type StepId = 'upload' | 'mapping' | 'fund' | 'export' | 'spec' | 'how';
 
@@ -218,8 +219,13 @@ export function App() {
     <div class="app">
       <header class="app-header">
         <div class="brand">
-          <strong>TPT Generator</strong>
-          <span class="muted">Solvency II Tripartite Template {spec.meta.version}</span>
+          <img class="brand-logo" src={`${import.meta.env.BASE_URL}logo.svg`} alt="" width="40" height="40" />
+          <div class="brand-text">
+            <strong>
+              TPT Generator <span class="version">Version {APP_VERSION}</span>
+            </strong>
+            <span class="muted">Solvency II Tripartite Template {spec.meta.version}</span>
+          </div>
         </div>
         <p class="privacy" role="note">
           Your files are processed only in this browser tab. Nothing is uploaded and the app makes no network requests.{' '}
@@ -250,7 +256,7 @@ export function App() {
             Field definitions are generated from {spec.meta.sourceFile.split('#')[0].replace('spec/', '')} ({spec.meta.dateLine}). This tool does not use
             market or reference data. Derived values are estimates and are flagged as such. Not legal or regulatory advice.
           </p>
-          <p>© 2026 Anton Ålin. Free to use; not for sale, modification or republication.</p>
+          <p>TPT Generator version {APP_VERSION}. © 2026 Anton Ålin. Free to use; not for sale, modification or republication.</p>
           <p class="sister">
             Also free, from the same developer:{' '}
             <a href={NEXUS_URL} target="_blank" rel="noopener noreferrer">

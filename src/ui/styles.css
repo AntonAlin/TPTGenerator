@@ -42,8 +42,11 @@ code { font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; font-size:
 
 .app { max-width: 1400px; margin: 0 auto; padding: 0 16px 32px; }
 .app-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 24px; padding: 16px 0 8px; }
-.brand { display: flex; flex-direction: column; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-logo { width: 40px; height: 40px; flex: none; border-radius: 9px; }
+.brand-text { display: flex; flex-direction: column; }
 .brand strong { font-size: 1.3rem; }
+.version { margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 0.75rem; font-weight: 600; vertical-align: middle; }
 .privacy { margin: 0; padding: 6px 10px; border-radius: 6px; background: var(--accent-soft); color: var(--text); max-width: 560px; }
 
 .steps { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 0 16px; border-bottom: 1px solid var(--border); }

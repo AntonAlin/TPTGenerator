@@ -1,4 +1,8 @@
+<p align="center"><img src="public/logo.svg" alt="TPT Generator logo" width="96" height="96"></p>
+
 # TPT Generator
+
+**Version 1.0** · [What's new](CHANGELOG.md)
 
 A free, static web app that turns a portfolio holdings file (xlsx, xls or csv) with unknown, inconsistent
 column names into a FinDatEx **Solvency II Tripartite Template (TPT)**. It is for fund managers and
