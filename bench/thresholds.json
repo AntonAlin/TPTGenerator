@@ -1,6 +1,6 @@
 {
   "$comment": "Minimum accuracy of the matching benchmark on seeds 101-103 per layout (tests/bench.test.ts). Raise a figure when an improvement lands; never lower one to make a test pass.",
-  "mapping": 0.979,
+  "mapping": 0.987,
   "checks": {
     "found": 0.995,
     "cic": 0.971,

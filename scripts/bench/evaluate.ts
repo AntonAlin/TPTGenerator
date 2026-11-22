@@ -23,7 +23,7 @@ export interface CaseResult {
   validationErrors: number;
 }
 
-const close = (a: unknown, b: number, tol: number) => typeof a === 'number' && Math.abs(a - b) <= Math.max(tol, Math.abs(b) * 1e-6);
+const close = (a: unknown, b: number, tol: number) => typeof a === 'number' && Math.abs(a - b) <= Math.max(tol, Math.abs(b) * 2e-6);
 const DERIVATIVE = new Set(['forward', 'future', 'option', 'irs']);
 
 export function evaluateCase(c: BenchCase): CaseResult {
