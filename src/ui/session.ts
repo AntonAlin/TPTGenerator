@@ -6,7 +6,7 @@ import { readFile, type RawWorkbook } from '../ingest/readFile.ts';
 import { detectTable, type DetectedTable } from '../ingest/table.ts';
 import { applySplit, withDefaultSplit, type SplitChoice } from '../ingest/split.ts';
 import { parseDate } from '../ingest/values.ts';
-import { classifyColumns, type ColumnPrediction, type MappingSource } from '../detect/classify.ts';
+import { classifyColumns, type ColumnPrediction, type LearnedHint, type MappingSource } from '../detect/classify.ts';
 import type { CanonicalField } from '../detect/canonical.ts';
 import type { ColumnInput } from '../detect/features.ts';
 import { profileMapping, type SourceProfile } from '../profiles/profiles.ts';
@@ -66,7 +66,12 @@ export function columnsOf(table: DetectedTable): ColumnInput[] {
   return table.headers.map((header, i) => ({ header, values: table.rows.map((r) => r.cells[i]) }));
 }
 
-export function predict(table: DetectedTable, profile?: SourceProfile, userPins: Map<number, CanonicalField> = new Map()): ColumnPrediction[] {
+export function predict(
+  table: DetectedTable,
+  profile?: SourceProfile,
+  userPins: Map<number, CanonicalField> = new Map(),
+  learned?: Map<string, LearnedHint>,
+): ColumnPrediction[] {
   const fixed = new Map<number, { field: CanonicalField; source: MappingSource }>();
   if (profile) for (const [i, f] of profileMapping(profile, table.headers)) fixed.set(i, { field: f, source: 'profile' });
   for (const [i, f] of userPins) fixed.set(i, { field: f, source: 'user' });
@@ -75,9 +80,18 @@ export function predict(table: DetectedTable, profile?: SourceProfile, userPins:
   if (table.split?.dateCol !== undefined) picker.set(table.split.dateCol, 'Holds each row\'s as-of date: used in the upload step to pick the date to convert');
   if (table.split?.portfolioCol !== undefined) picker.set(table.split.portfolioCol, 'Holds each row\'s portfolio: used in the upload step to pick the portfolio to convert');
   for (const i of picker.keys()) if (!fixed.has(i)) fixed.set(i, { field: 'ignore', source: 'model' });
-  const preds = classifyColumns(columnsOf(table), fixed);
+  const preds = classifyColumns(columnsOf(table), fixed, { learned });
   for (const p of preds) if (picker.has(p.index) && p.source === 'model' && p.field === 'ignore') p.reasons = [picker.get(p.index)!];
   return preds;
+}
+
+/**
+ * What a confirmed mapping teaches: every column the user set by hand, and every column where a
+ * lesson from before applied and the user kept it (taught again). Profile columns teach nothing
+ * here: the profile already remembers that source.
+ */
+export function lessonsFrom(preds: ColumnPrediction[]): { header: string; field: CanonicalField }[] {
+  return preds.filter((p) => p.source === 'user' || (p.source === 'model' && p.learned === p.field)).map((p) => ({ header: p.header, field: p.field }));
 }
 
 /** Up to n distinct non-empty sample values of a column, as display strings. */

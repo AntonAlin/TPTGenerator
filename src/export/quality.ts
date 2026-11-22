@@ -7,6 +7,7 @@ import { looksLikeIsin, isValidIsin } from '../ingest/identifiers.ts';
 import type { Source } from '../derive/provenance.ts';
 import type { TptFile } from './buildTpt.ts';
 import { ROLE_LABEL } from '../derive/amounts.ts';
+import type { Reconciliation } from '../derive/reconcile.ts';
 
 export interface FieldStat {
   id: string;
@@ -87,6 +88,8 @@ export interface QualityReport {
   notDerived: NotDerived[];
   /** Rows whose amount cells were re-sorted, or whose reading is uncertain. */
   amounts: AmountRow[];
+  /** Whether the converted portfolio adds up to the file's own totals, NAV, weights and FX. */
+  reconciliation?: Reconciliation;
 }
 
 const PORTFOLIO_LEVEL = /Portfolio Characteristics/i;
@@ -101,7 +104,7 @@ export function applies(f: SpecField, cic: unknown): boolean {
   return cols.includes(cic[2]);
 }
 
-export function buildQualityReport(file: TptFile): QualityReport {
+export function buildQualityReport(file: TptFile, reconciliation?: Reconciliation): QualityReport {
   const { fields, rows, holdings } = file;
   const ref = (i: number, f: SpecField): CellRef => ({
     row: holdings[i].holding.row + 1,
@@ -254,5 +257,6 @@ export function buildQualityReport(file: TptFile): QualityReport {
     validation,
     notDerived: [...notDerived.values()],
     amounts,
+    ...(reconciliation ? { reconciliation } : {}),
   };
 }

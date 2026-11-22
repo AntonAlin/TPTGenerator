@@ -114,8 +114,13 @@ describe.each(CASES)('$file', ({ file, holdings, options }) => {
   it('writes CSV and the quality report', () => {
     const csv = writeTptCsv(tptFile).replace(/^﻿/, '');
     expect(csv.split('\r\n').filter(Boolean)).toHaveLength(1 + holdings);
-    expect(XLSX.read(writeQualityXlsx(report), { type: 'array' }).SheetNames).toHaveLength(7);
+    expect(XLSX.read(writeQualityXlsx(report), { type: 'array' }).SheetNames).toEqual(['Summary', 'Field completeness', 'Missing mandatory', 'Estimated values', 'Validation', 'Not derivable', 'Amount interpretation', 'Reconciliation']);
     expect(report.notDerived.map((n) => n.fieldId)).toEqual(expect.arrayContaining(['97', '105b']));
+  });
+
+  it('reconciles with the file: no total, weight, FX or row check fails, no row flagged', () => {
+    expect(run.recon.checks.filter((c) => c.status === 'warn').map((c) => `${c.label}: ${c.detail}`)).toEqual([]);
+    expect(run.recon.flags).toEqual([]);
   });
 });
 
@@ -125,6 +130,15 @@ describe('sample-specific results', () => {
     expect(i, `holding ${name}`).toBeGreaterThanOrEqual(0);
     return run.files[0].rows[i];
   };
+
+  it('reconciliation: every sub-total and total of the Swedish custody report, and a notional printed as a value explained', () => {
+    const se = runPipeline('se_custodian_holdings.xlsx').recon;
+    expect(se.checks.filter((c) => c.kind === 'subtotal').map((c) => c.status)).toEqual(['ok', 'ok', 'ok', 'ok']);
+    expect(se.checks.filter((c) => c.kind === 'total').every((c) => c.status === 'ok')).toBe(true);
+    const mixed = runPipeline('en_custodian_mixed_amounts.xlsx').recon.checks.find((c) => c.kind === 'total')!;
+    expect(mixed.status).toBe('ok');
+    expect(mixed.detail).toMatch(/As converted, the 8 row\(s\) add up to the file's total\. As shown they add up to .*: 1 cell\(s\) hold a notional printed in a value column/);
+  });
 
   it('Swedish custodian: government bond analytics, FX-converted equity, cash XT71', () => {
     const run = runPipeline('se_custodian_holdings.xlsx');

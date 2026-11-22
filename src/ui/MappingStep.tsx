@@ -1,22 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { CANONICAL_FIELDS, CANONICAL_INFO, UNIQUE_FIELDS, type CanonicalField } from '../detect/canonical.ts';
 import { LOW_CONFIDENCE, type ColumnPrediction } from '../detect/classify.ts';
-import type { ProfileRepository, SourceProfile } from '../profiles/profiles.ts';
-import { predict, sampleValues, type LoadedSheet } from './session.ts';
+import type { ProfileRepository } from '../profiles/profiles.ts';
+import type { LearnedHeaders, LearnedRepository, ProfileMatch } from '../profiles/learned.ts';
+import { lessonsFrom, predict, sampleValues, type LoadedSheet } from './session.ts';
 import { ProfilesPanel } from './ProfilesPanel.tsx';
 
 interface Props {
   loaded: LoadedSheet;
   repo: ProfileRepository;
+  learnedRepo: LearnedRepository;
   persistent: boolean;
   onMapped: (mapping: CanonicalField[]) => void;
 }
 
 const KEY_FIELDS: CanonicalField[] = ['isin', 'security_name', 'currency', 'market_value_local', 'market_value_portfolio'];
 
-export function MappingStep({ loaded, repo, persistent, onMapped }: Props) {
+export function MappingStep({ loaded, repo, learnedRepo, persistent, onMapped }: Props) {
   const t = loaded.table;
-  const [profile, setProfile] = useState<SourceProfile | undefined>();
+  const [match, setMatch] = useState<ProfileMatch | undefined>();
+  const profile = match?.profile;
+  const [learned, setLearned] = useState<LearnedHeaders>(new Map());
   const [profileChecked, setProfileChecked] = useState(false);
   const [pins, setPins] = useState<Map<number, CanonicalField>>(new Map());
   const [profileName, setProfileName] = useState(loaded.workbook.fileName.replace(/\.[^.]+$/, ''));
@@ -27,9 +31,11 @@ export function MappingStep({ loaded, repo, persistent, onMapped }: Props) {
   useEffect(() => {
     let alive = true;
     setPins(new Map());
-    repo.findFor(t.headers).then((p) => {
+    Promise.all([repo.matchFor(t.headers), learnedRepo.map()]).then(([m, l]) => {
       if (!alive) return;
-      setProfile(p);
+      const p = m?.profile;
+      setMatch(m);
+      setLearned(l);
       setProfileChecked(true);
       if (p) {
         setProfileName(p.name);
@@ -43,9 +49,10 @@ export function MappingStep({ loaded, repo, persistent, onMapped }: Props) {
     return () => {
       alive = false;
     };
-  }, [t, repo, profilesVersion]);
+  }, [t, repo, learnedRepo, profilesVersion]);
 
-  const preds: ColumnPrediction[] = useMemo(() => (profileChecked ? predict(t, profile, pins) : []), [t, profile, pins, profileChecked]);
+  const preds: ColumnPrediction[] = useMemo(() => (profileChecked ? predict(t, profile, pins, learned) : []), [t, profile, pins, learned, profileChecked]);
+  const learnedCount = preds.filter((p) => p.learned).length;
   const mapping = preds.map((p) => p.field);
 
   const duplicates = useMemo(() => {
@@ -71,7 +78,7 @@ export function MappingStep({ loaded, repo, persistent, onMapped }: Props) {
       mapping,
       options: { headerRowOffset: loaded.headerRowOverride, sheetName: loaded.sheetName },
     });
-    setProfile(saved);
+    setMatch({ profile: saved, similarity: 1, mapping: new Map(), unknown: [], exact: true });
     setPins(new Map());
     setProfilesVersion((v) => v + 1);
     setMessage(`Saved source profile "${saved.name}". Files with the same columns will be mapped automatically.`);
@@ -87,10 +94,24 @@ export function MappingStep({ loaded, repo, persistent, onMapped }: Props) {
           <p class="ok">
             Mapping loaded from source profile <strong>{profile.name}</strong> (saved {profile.updatedAt.slice(0, 10)}, used {profile.timesUsed + 1}{' '}
             times). You can still change any column.
+            {match && !match.exact && (
+              <>
+                {' '}
+                The columns differ a little from the profile's ({Math.round(match.similarity * 100)}% the same)
+                {match.unknown.length ? `: ${match.unknown.length} column(s) it does not know were classified from their header and values.` : '.'} Update the
+                profile below to remember this layout too.
+              </>
+            )}
           </p>
         ) : (
           <p class="muted">
             Each column was classified from its header and its values. {lowCount > 0 ? <strong class="warn">{lowCount} low-confidence mapping(s) are highlighted — please check them.</strong> : 'All mappings are high-confidence.'}
+          </p>
+        )}
+        {learnedCount > 0 && (
+          <p class="muted">
+            {learnedCount} column(s) mapped the way you mapped the same header before (marked <span class="badge">learned</span>). What you change by hand
+            here is remembered in this browser for the next file.
           </p>
         )}
         {missingKey.length > 0 && (
@@ -150,7 +171,7 @@ export function MappingStep({ loaded, repo, persistent, onMapped }: Props) {
                         <div class="bar">
                           <span style={{ width: `${Math.round(p.confidence * 100)}%` }} />
                         </div>
-                        {Math.round(p.confidence * 100)}%
+                        {Math.round(p.confidence * 100)}%{p.learned && <span class="badge">learned</span>}
                       </div>
                     ) : (
                       <span class="badge">{p.source === 'profile' ? 'profile' : 'you'}</span>
@@ -185,10 +206,19 @@ export function MappingStep({ loaded, repo, persistent, onMapped }: Props) {
         {message && <p class="ok">{message}</p>}
       </div>
 
-      <ProfilesPanel repo={repo} version={profilesVersion} onChanged={() => setProfilesVersion((v) => v + 1)} />
+      <ProfilesPanel repo={repo} learnedRepo={learnedRepo} version={profilesVersion} onChanged={() => setProfilesVersion((v) => v + 1)} />
 
       <div>
-        <button type="button" class="primary" disabled={duplicates.size > 0} onClick={() => onMapped(mapping)}>
+        <button
+          type="button"
+          class="primary"
+          disabled={duplicates.size > 0}
+          onClick={async () => {
+            // Corrections teach the next file; learning must never stop the conversion.
+            await learnedRepo.learn(lessonsFrom(preds), loaded.workbook.fileName).catch(() => undefined);
+            onMapped(mapping);
+          }}
+        >
           Confirm mapping →
         </button>
       </div>

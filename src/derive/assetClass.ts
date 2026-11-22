@@ -7,6 +7,8 @@
  */
 import { parseSecurityName, type NameHint, type ParsedName } from './parseName.ts';
 import type { Confidence } from './provenance.ts';
+import { familyOf, ROW_CLASS_ASSET, ROW_CLASS_LABEL } from './rowClasses.ts';
+import type { RowPrediction } from './rowModel.ts';
 
 export type AssetClass =
   | 'equity'
@@ -143,7 +145,18 @@ export interface AssetClassInput {
   /** Maturity date ISO, used to split short/long deposits. */
   maturity?: string;
   valuationDate?: string;
+  /** The row model's reading of the row (rowModel.ts), used where the rules are unsure. */
+  rowModel?: RowPrediction;
+  /** The class the user gave this row's asset-type text (a code like "OPT" or "21"), in an earlier file or this one. */
+  taughtType?: { cls: AssetClass; source?: string };
+  /** Internal: decide this class (from a lesson or the row model) and let the rules refine it. */
+  forced?: { cls: AssetClass; confidence: Confidence; evidence: string[] };
 }
+
+/** The row model overrides rules that are unsure (low) from this probability, rules of medium confidence from MEDIUM. */
+export const ROW_MODEL_OVERRIDE_P = 0.8;
+const ROW_MODEL_OVERRIDE_MEDIUM_P = 0.95;
+const pct = (x: number) => `${Math.round(x * 100)}%`;
 
 export interface AssetClassResult {
   assetClass: AssetClass;
@@ -274,8 +287,50 @@ function refine(base: AssetClass, h: Set<NameHint>, input: AssetClassInput, keep
   return base;
 }
 
-/** Infer the asset class from name, type text, section, structure and identifiers. */
+/**
+ * Infer the asset class: a type the user taught first, then the rules (type text, name keywords,
+ * section, structure, identifier), and where the rules are unsure, the row model.
+ */
 export function inferAssetClass(input: AssetClassInput): AssetClassResult {
+  if (input.taughtType) {
+    const where = input.taughtType.source ? ` (you set it in ${input.taughtType.source})` : '';
+    return byRules({ ...input, forced: { cls: input.taughtType.cls, confidence: 'high', evidence: [`Asset type "${input.assetTypeText}" is ${ASSET_CLASSES[input.taughtType.cls].label.toLowerCase()}, as you taught${where}`] } });
+  }
+  const rules = byRules(input);
+  const m = input.rowModel;
+  if (!m || rules.confidence === 'high') return rules;
+  const label = ROW_CLASS_LABEL[m.cls];
+  const from = m.why.length ? ` (from ${m.why.join(', ')})` : '';
+  if (familyOf(rules.assetClass) === m.cls) {
+    if (rules.confidence === 'low' && m.p >= 0.9) {
+      rules.confidence = 'medium';
+      rules.evidence.push(`The row model agrees: ${pct(m.p)} ${label}${from}`);
+    }
+    return rules;
+  }
+  // Which kind of bond (government, corporate, bill) depends on the issuer, which the model does not
+  // know: rules with evidence (a section "Obligationer", a coupon and a maturity) keep their kind.
+  const BONDS = ['gov_bond', 'corporate_bond', 'treasury_bill'];
+  if (rules.confidence !== 'low' && BONDS.includes(familyOf(rules.assetClass) ?? '') && BONDS.includes(m.cls)) return rules;
+  // A bill pays no coupon.
+  if (m.cls === 'treasury_bill' && ((input.hasCoupon && rules.parsedName.coupon?.value !== 0) || (rules.parsedName.coupon?.value ?? 0) > 0)) return rules;
+  const needed = rules.confidence === 'medium' ? ROW_MODEL_OVERRIDE_MEDIUM_P : ROW_MODEL_OVERRIDE_P;
+  if (m.p < needed) {
+    if (m.p >= 0.5) rules.evidence.push(`The row model reads it as ${label} (${pct(m.p)}), not sure enough to override`);
+    return rules;
+  }
+  const rulesSaid = rules.assetClass === 'other' ? 'The rules found no usable evidence' : `The rules alone read ${ASSET_CLASSES[rules.assetClass].label.toLowerCase()} (${rules.confidence} confidence: ${rules.evidence[0]})`;
+  return byRules({
+    ...input,
+    forced: {
+      cls: ROW_CLASS_ASSET[m.cls],
+      confidence: m.p >= 0.95 ? 'medium' : 'low',
+      evidence: [`Row model: ${pct(m.p)} ${label}${from}`, `${rulesSaid}; check it`],
+    },
+  });
+}
+
+function byRules(input: AssetClassInput): AssetClassResult {
   const parsed = parseSecurityName(input.name);
   const h = parsed.hints;
   const evidence: string[] = [];
@@ -289,12 +344,20 @@ export function inferAssetClass(input: AssetClassInput): AssetClassResult {
   const done = (cls: AssetClass, confidence: Confidence): AssetClassResult => {
     const refined = refine(cls, h, input, keepCorporate);
     if (refined !== cls) evidence.push(`Name keywords refine it to ${ASSET_CLASSES[refined].label.toLowerCase()}`);
-    if (isEtf) evidence.push('ETF: classified as a collective investment undertaking (CIC 4x)');
+    // A class decided elsewhere (the user, the row model) is not turned into a fund by "ETF" in the name.
+    const etf = isEtf && !(input.forced && !isFund(refined));
+    if (etf) evidence.push('ETF: classified as a collective investment undertaking (CIC 4x)');
     // The underlying can be in the name or in the type text ("Interest rate swap", "FX forward").
     const sub = derivativeSub(refined, [input.name, input.assetTypeText, input.section].filter(Boolean).join(' · '));
     if (sub) evidence.push(sub.why);
-    return { assetClass: refined, confidence, evidence, isEtf, parsedName: parsed, ...(sub ? { derivativeSub: sub } : {}) };
+    return { assetClass: refined, confidence, evidence, isEtf: etf, parsedName: parsed, ...(sub ? { derivativeSub: sub } : {}) };
   };
+
+  // 0. Decided elsewhere (a type the user taught, the row model): the rules only refine it.
+  if (input.forced) {
+    evidence.push(...input.forced.evidence);
+    return done(input.forced.cls, input.forced.confidence);
+  }
 
   // 1. Explicit asset-type column in the file.
   if (typeText.cls) {

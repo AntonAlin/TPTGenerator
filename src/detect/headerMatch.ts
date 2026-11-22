@@ -19,6 +19,15 @@ export function normalizeHeader(s: string): string {
     .trim();
 }
 
+/** A header with its dates and numbers blanked: "MV 30.09.2026" and "MV 31.10.2026" share a key. */
+export function headerKey(h: string): string {
+  return normalizeHeader(h)
+    .split(' ')
+    .map((t) => (/^\d+$/.test(t) ? '#' : t))
+    .filter((t, i, a) => !(t === '#' && a[i - 1] === '#'))
+    .join(' ');
+}
+
 export function levenshtein(a: string, b: string): number {
   if (a === b) return 0;
   if (!a.length) return b.length;

@@ -4,6 +4,10 @@ import { detectDateOrder, detectDecimalSeparator, excelSerialToIso, parseDate, p
 const n = (s: unknown, d?: ',' | '.') => parseNumber(s, d)?.value;
 
 describe('parseNumber', () => {
+  it.each(['FWD-5472', 'SEC123456', 'OPT 120', 'XYZ 1 000'])('an identifier with letters is not a number: %s', (v) => expect(parseNumber(v)).toBeUndefined());
+  it.each([['SEK 1 000', 1000], ['EUR -12.5', -12.5], ['12 USD', 12], ['1,000 €', 1000]])('a real currency code or symbol is stripped: %s', (v, want) =>
+    expect(parseNumber(v)?.value).toBe(want),
+  );
   it.each([
     ['1234.56', 1234.56],
     ['1,234.56', 1234.56],

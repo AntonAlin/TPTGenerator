@@ -11,16 +11,29 @@ import { CANONICAL_INFO } from '../detect/canonical.ts';
 import synonyms from '../detect/synonyms.json';
 import type { AmountRole } from '../derive/amounts.ts';
 import { runExample } from './howItWorksExample.ts';
+import { rowModel } from '../derive/rowModel.ts';
 import { NEXUS_URL } from './links.ts';
 
 const pct = (x: number, digits = 1) => `${(x * 100).toFixed(digits)}%`;
 const num = (v: unknown) => (typeof v === 'number' ? v.toLocaleString('en-US', { maximumFractionDigits: 3 }) : v instanceof Date ? v.toISOString().slice(0, 10) : String(v ?? ''));
 
-const metrics = model.metrics as { validationAccuracy: number; validationHighConfidenceAccuracy: number; validationHighConfidenceShare: number; trainColumns: number; validationColumns: number };
+const metrics = model.metrics as {
+  validationAccuracy: number;
+  validationHighConfidenceAccuracy: number;
+  validationHighConfidenceShare: number;
+  trainColumns: number;
+  validationColumns: number;
+  baselineValidationAccuracy?: number;
+  calibrationErrorBefore?: number;
+  calibrationErrorAfter?: number;
+};
+const isTrees = (model as { type?: string }).type === 'gradient-boosted-trees';
+const treeCount = (model as { trees?: unknown[] }).trees?.length ?? 0;
 const synonymCount = Object.entries(synonyms as Record<string, unknown>)
   .filter(([k, v]) => !k.startsWith('$') && v && typeof v === 'object')
   .reduce((n, [, v]) => n + Object.values(v as Record<string, string[]>).reduce((m, list) => m + list.length, 0), 0);
 const fieldCount = model.classes.filter((c) => c !== 'ignore').length;
+const rowMetrics = rowModel.metrics as { validationAccuracy: number; validationHighConfidenceAccuracy: number; validationHighConfidenceShare: number; trainRows: number };
 
 const ROLE_LABEL: Record<AmountRole, string> = {
   quantity: 'Quantity → field 18',
@@ -177,16 +190,34 @@ export function HowItWorks() {
           </li>
         </ul>
         <p>
-          These {model.featureNames.length} measurements go into a classifier (multinomial logistic regression) trained on {metrics.trainColumns.toLocaleString('en-US')}{' '}
-          columns from synthetic messy files with held-out header spellings, typos and generic names such as "Column 7". On held-out data it gets{' '}
-          {pct(metrics.validationAccuracy)} of columns right, and {pct(metrics.validationHighConfidenceAccuracy)} of those it is at least{' '}
-          {pct(LOW_CONFIDENCE, 0)} sure about ({pct(metrics.validationHighConfidenceShare, 0)} of columns). The model is a table of weights evaluated in this page;
-          nothing is sent anywhere.
+          These {model.featureNames.length} measurements go into a classifier,{' '}
+          {isTrees ? `${treeCount.toLocaleString('en-US')} gradient-boosted decision trees` : 'a multinomial logistic regression'}, trained on{' '}
+          {metrics.trainColumns.toLocaleString('en-US')} columns from synthetic messy files with held-out header spellings, typos and generic names such as "Column
+          7". On tables it never saw in training it gets {pct(metrics.validationAccuracy)} of columns right
+          {metrics.baselineValidationAccuracy !== undefined ? ` (the previous model, a logistic regression, got ${pct(metrics.baselineValidationAccuracy)})` : ''}, and{' '}
+          {pct(metrics.validationHighConfidenceAccuracy)} of those it is at least {pct(LOW_CONFIDENCE, 0)} sure about ({pct(metrics.validationHighConfidenceShare, 0)}{' '}
+          of columns).
+          {metrics.calibrationErrorAfter !== undefined
+            ? ` Its confidence is calibrated on held-out tables, so a mapping shown at 80% is right about 80% of the time (average gap ${pct(metrics.calibrationErrorAfter)}).`
+            : ''}{' '}
+          The model runs in this page; nothing is sent anywhere.
         </p>
         <p>
-          Each kind of input goes to at most one column: the most confident (column, field) pairs are assigned first. Mappings under {pct(LOW_CONFIDENCE, 0)} are
-          highlighted for review, every mapping lists its evidence, and a confirmed mapping can be saved as a source profile, so the next file with the same columns
-          is mapped automatically.
+          On top of the model, the app looks for relations between the columns' numbers: a column that is another column times a third (quantity × price = value), one
+          that converts another at one rate per currency (local → portfolio value), and one that is each row's share of another (a weight). Those relations hold
+          whatever the headers say, so even columns called "Col6" are matched.
+        </p>
+        <p>
+          All columns are then assigned at once: the combination with the highest joint probability, each kind of input to at most one column. Two value columns the
+          model cannot tell apart are split by the relation between them (one rate per currency turns one into the other) and by their headers, and a sparse column
+          (a "Strike" filled only for the options) lets an exact header decide. Mappings under {pct(LOW_CONFIDENCE, 0)} are highlighted for review and every mapping
+          lists its evidence.
+        </p>
+        <p>
+          <strong>It learns from you, in this browser.</strong> A column you map by hand is remembered by its header and maps the same way in the next file, from any
+          source, as long as its values can hold that field (a lesson about "Värde" cannot turn a text column into a market value). A confirmed mapping can also be
+          saved as a source profile; it applies to that source's next file even when the columns changed a little: a new date in a header, a column added or
+          dropped, another order. Lessons and profiles can be listed, removed, exported and imported; none of it leaves the browser.
         </p>
         <div class="example">
           <div class="example-label">Example: the columns of the report above</div>
@@ -312,7 +343,14 @@ export function HowItWorks() {
           <div>
             <h4>Derived, with a confidence</h4>
             <ul>
-              <li>Asset class, from the asset type column, section headings, name keywords (ETF, FRN, covered, future, forward…), coupon and maturity, price level and identifier.</li>
+              <li>
+                Asset class, from the asset type column, section headings, name keywords (ETF, FRN, covered, future, forward…), coupon and maturity, price level and
+                identifier. Where those rules are unsure, a second model reads the row from what it carries: strike, delta, contract size, coupon, maturity, how
+                quantity, price and value relate, trader shorthand such as <code>ERIC B 70C</code> or <code>FESX Z6</code>. On held-out tables it gets{' '}
+                {pct(rowMetrics.validationAccuracy)} of rows right, and {pct(rowMetrics.validationHighConfidenceAccuracy)} of the{' '}
+                {pct(rowMetrics.validationHighConfidenceShare, 0)} it is at least 80% sure of; it only overrides the rules when it is that sure, and its readings are
+                marked for review. A file's own type codes ("OPT", "21") can be given a class once and are remembered.
+              </li>
               <li>CIC code: listing country (from a country column or the ISIN prefix, marked as estimated), category and sub-category. Derivative sub-categories follow the underlying (an FX forward is E2, an index future A1).</li>
               <li>Coupon and maturity parsed from names like <code>SWEDEN 0.75% 12/11/2029</code>; an ambiguous day/month order gets low confidence.</li>
               <li>Accrued interest, yield to maturity and duration for plain fixed-rate bonds, with the day count you choose.</li>
@@ -331,7 +369,10 @@ export function HowItWorks() {
             <h4>Not computed at all</h4>
             <ul>
               <li>SCR contributions (fields 97 to 105b): always blank.</li>
-              <li>Look-through, underlying-asset fields of derivatives, collateral, counterparty sector and eligibility assessments.</li>
+              <li>
+                Look-through, collateral, counterparty sector and eligibility assessments. A derivative's underlying (name, identifier, price), its strike, delta and
+                contract size come from the file when it has them, never from a guess.
+              </li>
             </ul>
           </div>
         </div>
@@ -349,6 +390,12 @@ export function HowItWorks() {
           optional Source sheet giving every cell's origin and method, and a quality report listing completeness per field, missing mandatory fields, every estimated
           value and every field left blank on purpose.
         </p>
+        <p>
+          <strong>Reconciliation.</strong> The converted portfolio is checked against what the file itself says: every total and sub-total row against the rows it
+          covers (as shown and as converted, with the cells that were re-read named), a NAV written above or below the table against the holdings (and offered as
+          field 5), the file's weights against 100% and against value ÷ NAV row by row, one FX rate per currency against the rate the TPT uses, and each row's quantity
+          × price against its value. Rows that do not reconcile are listed; nothing is changed to make them fit.
+        </p>
       </section>
 
       <section class="card" id="how-tested">
@@ -360,6 +407,11 @@ export function HowItWorks() {
             sections, subtotals, a mixed holding column and, sometimes, a forward whose notional is printed as its value. Every holding's fields are compared with
             the answer key on every test run.
           </li>
+          <li>
+            A matching benchmark: twelve realistic layouts (Swedish custody reports, a German depot statement in thousands, a French .xls inventory, a fund
+            administrator export with several funds and dates, prices in pence, meaningless headers and more), each scored field by field against its answer key.
+            Its figures are gates that may only go up.
+          </li>
           <li>Sample files in the styles of custodians and fund administrators in several languages, run end to end and validated against the template.</li>
           <li>A browser test drives the built app through the whole workflow and checks that it makes no network requests.</li>
         </ul>
@@ -369,7 +421,8 @@ export function HowItWorks() {
         <h3>Privacy</h3>
         <p>
           Your file never leaves this tab. There is no server behind the app, no analytics and no tracking. The page's Content-Security-Policy forbids it from making
-          network requests at all, so it could not send your data even by mistake. Saved source and fund profiles stay in this browser's storage. The affiliate
+          network requests at all, so it could not send your data even by mistake. Saved source and fund profiles, and what the app learns from your corrections, stay in
+          this browser's storage. The affiliate
           banner's image is served from this site: nothing is requested from the advertiser unless you click it. You can check this yourself: open your
           browser's developer tools, go to the Network tab and use the app. No request carries your file.
         </p>

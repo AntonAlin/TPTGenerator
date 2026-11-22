@@ -44,6 +44,16 @@ export type AttrKey =
   | 'cqs'
   | 'credit_rating'
   | 'rating_agency'
+  | 'interest_margin'
+  | 'contract_size'
+  | 'call_put'
+  | 'strike'
+  | 'exercise_type'
+  | 'underlying_id'
+  | 'underlying_id_type'
+  | 'underlying_name'
+  | 'underlying_price'
+  | 'delta'
   | 'modified_duration'
   | 'valuation_yield'
   | 'underlying_category'
@@ -100,6 +110,16 @@ export const ATTRS: AttrDef[] = [
   { key: 'cqs', label: 'Credit quality step', tpt: ['59'], kind: 'code' },
   { key: 'credit_rating', label: 'Rating', tpt: ['112'], kind: 'text' },
   { key: 'rating_agency', label: 'Rating agency', tpt: ['113'], kind: 'text' },
+  { key: 'interest_margin', label: 'Interest rate margin %', tpt: ['37'], kind: 'number' },
+  { key: 'contract_size', label: 'Contract size', tpt: ['20'], kind: 'number' },
+  { key: 'call_put', label: 'Call / put', tpt: ['60'], kind: 'code' },
+  { key: 'strike', label: 'Strike', tpt: ['61'], kind: 'number' },
+  { key: 'exercise_type', label: 'Exercise type', tpt: ['64'], kind: 'code' },
+  { key: 'underlying_id', label: 'Underlying identifier', tpt: ['68'], kind: 'text' },
+  { key: 'underlying_id_type', label: 'Underlying id type', tpt: ['69'], kind: 'code' },
+  { key: 'underlying_name', label: 'Underlying', tpt: ['70'], kind: 'text' },
+  { key: 'underlying_price', label: 'Underlying price', tpt: ['72'], kind: 'number' },
+  { key: 'delta', label: 'Delta', tpt: ['93'], kind: 'number' },
   { key: 'modified_duration', label: 'Modified duration', tpt: ['90'], kind: 'number' },
   { key: 'valuation_yield', label: 'Valuation yield', tpt: ['129'], kind: 'number' },
   { key: 'underlying_category', label: 'Underlying category', tpt: ['131'], kind: 'code' },

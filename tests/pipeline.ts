@@ -13,6 +13,7 @@ import { normalizeHoldings } from '../src/derive/holdings.ts';
 import { buildFxTable, guessPortfolioCurrency, impliedFxRates } from '../src/derive/valuation.ts';
 import { DEFAULT_CONVENTIONS, resolveHoldings } from '../src/derive/resolve.ts';
 import { interpretAmounts } from '../src/derive/amounts.ts';
+import { reconcile } from '../src/derive/reconcile.ts';
 import { baseCurrencyOf, emptyPortfolio, fundNav, type PortfolioState } from '../src/portfolio/portfolio.ts';
 import { buildTptFiles } from '../src/export/buildTpt.ts';
 import { buildQualityReport } from '../src/export/quality.ts';
@@ -70,8 +71,9 @@ export function runPipeline(file: string, opts: PipelineOptions = {}) {
     nav,
   });
   const files = buildTptFiles(result, portfolio, fx.table, { today: '2026-10-05', freeText: 'e2e' });
-  const reports = files.map(buildQualityReport);
-  return { wb, table, predictions, mapping, norm, implied, guess, portfolio, fx, amounts, result, files, reports };
+  const recon = reconcile({ table, mapping, holdings: amounts.holdings, totals: norm.totals, rows: result.rows, fx: fx.table, portfolioCurrency: base, nav });
+  const reports = files.map((f) => buildQualityReport(f, recon));
+  return { wb, table, predictions, mapping, norm, implied, guess, portfolio, fx, amounts, result, files, reports, recon };
 }
 
 /** Write the TPT workbook and read it back as a 2-D array (what a recipient would see). */

@@ -49,6 +49,26 @@ EXTRA_HEADERS = {
     "accrued_interest": ["Accrued Int.", "Upplupen ränta (lokal)", "Stückzinsen FW", "Int. courus", "Accrued interest local"],
     "fx_rate": ["FX", "Exch. rate", "Valutakurs (bas)", "Devisenkurs EUR", "FX rate to base", "Cours de change"],
     "cic": ["CIC Code", "Solvency CIC", "CIC (S2)", "CIC-kod"],
+    "dirty_price": ["Dirty Px", "Price incl. AI", "Kurs inkl. upplupet", "Kurs inkl. Stückzinsen", "Prix coupon couru", "Full Px"],
+    "yield": ["YTM %", "Yld", "Eff. ränta", "Rendite (%)", "Tx rendement", "Yield (ytm)"],
+    "modified_duration": ["Mod Dur", "MDuration", "Mod. dur. (år)", "Mod. Duration (J.)", "Duration mod.", "Dur (mod)"],
+    "spread": ["Margin (bp)", "Spread vs index", "Räntemarg. (bp)", "Aufschlag (BP)", "Marge (pb)", "DM (bp)"],
+    "interest_rate_type": ["Fixed/Float", "Rate basis", "Räntebas (fast/rörlig)", "Zinsbasis", "Taux (fixe/var.)", "Cpn type"],
+    "coupon_frequency": ["Cpn freq", "Freq.", "Kupong/år", "Zahlungen p.a.", "Fréq.", "Payment freq."],
+    "call_date": ["Next Call", "Call dt", "Nästa inlösen", "Kündigung", "Date call", "First call"],
+    "cqs": ["CQS (Solvency II)", "Cred. qual. step", "Kreditkval.steg", "Bonitätsstufe S2", "ECQ"],
+    "rating_agency": ["Agency (rating)", "Rating src", "Ratingbolag", "Ratingagentur (Quelle)", "Agence (note)"],
+    "nace": ["NACE Rev. 2", "Nace cd", "SNI 2007", "WZ 2008", "NAF code", "Sector (NACE)"],
+    "group_name": ["Parent name", "Group (issuer)", "Koncernbolag", "Konzernmutter", "Groupe (émetteur)", "Ultimate parent name"],
+    "group_lei": ["Parent LEI", "Group LEI code", "Koncern LEI", "Konzern LEI-Code", "LEI groupe"],
+    "contract_size": ["Mult.", "Contract mult", "Kontraktsstl.", "Kontraktgr.", "Quotité contrat", "Lot"],
+    "strike": ["Strike Px", "Exercise Px", "Lösenpris (kr)", "Basis", "Prix exerc.", "K"],
+    "call_put": ["Put/Call flag", "Opt type", "Köp/sälj (option)", "C/P", "Type opt.", "Call-Put"],
+    "exercise_type": ["Ex. style", "Exercise", "Lösen (typ)", "Ausübung (Art)", "Exercice", "Opt style"],
+    "underlying_name": ["Underlying desc", "Underlier", "Underl. tillgång", "Basiswert (Name)", "Sous-jacent (nom)", "Und. name"],
+    "underlying_id": ["Underlier ISIN", "Underlying ID code", "Underl. ISIN", "Basiswert ISIN-Code", "Code s-j", "Und. ticker"],
+    "underlying_price": ["Spot", "Underlier Px", "Underl. kurs", "Kurs Basiswert (aktuell)", "Cours s-j", "Und. price"],
+    "delta": ["Opt Delta", "Delta (adj)", "Delta (opt.)", "Delta Option", "Δ", "Option delta %"],
 }
 
 IGNORE_HEADERS = {
@@ -61,8 +81,13 @@ IGNORE_HEADERS = {
     "pnl": ["Unrealised P/L", "Unrealized gain/loss", "Orealiserat resultat", "Unrealisierter G/V", "Plus/moins-value", "P&L"],
     "sector": ["Sector", "Industry", "Bransch", "Sektor", "Secteur", "GICS sector"],
     "custodian": ["Custodian", "Depository", "Förvaringsinstitut", "Verwahrstelle", "Dépositaire"],
-    "yield": ["Yield", "YTM", "Avkastning", "Rendite", "Rendement", "Yield to maturity"],
-    "duration": ["Duration", "Mod. duration", "Durationen", "Duration (yrs)", "Sensibilité"],
+    "beta": ["Beta", "Beta (1y)", "Beta mot index"],
+    "volume": ["Avg daily volume", "ADV", "Volym/dag", "Durchschn. Volumen"],
+    "riskfree": ["Risk-free rate %", "Market rate %", "Riskfri ränta", "Risikoloser Zins"],
+    "impvol": ["Implied vol %", "Implied volatility", "Impl. vol", "Implizite Vola"],
+    "fxlegs": ["Buy amount", "Sell amount", "Köpbelopp", "Säljbelopp"],
+    "avgcost": ["Average cost per unit", "Avg cost", "Snittkurs", "Durchschnittskurs"],
+    "liquidity": ["Days to liquidate", "Likvidationsdagar", "Liquidation days"],
     "change": ["% change", "1D %", "Förändring %", "Veränderung %", "Var. %"],
     "account_no": ["Account no", "Kontonummer", "Kontonr", "Account number"],
 }
@@ -87,6 +112,22 @@ ASSET_TYPES = {
 CIC_CAT = {"equity": ("3", "1"), "bond_gov": ("1", "1"), "bond_corp": ("2", "1"), "fund": ("4", "1"), "cash": ("7", "1"), "derivative": ("A", "1")}
 SECTORS = ["Financials", "Industrials", "IT", "Health Care", "Banks", "Fastigheter", "Industri", "Finans", "Energie", "Immobilier", "Utilities", "Consumer"]
 NOTES = ["Pledged as collateral", "Check price", "See prospectus", "Ny position", "Wird verkauft", "Restricted", "Illiquid - fair valued", "Corporate action pending", ""]
+
+
+RATE_TYPE = {
+    "fixed": ["Fixed", "Fixed", "FIX", "Fast", "Fest", "Fixe", "fixed"],
+    "float": ["Floating", "Float", "FRN", "Rörlig", "Variabel", "Variable", "floating"],
+}
+CQS = {"AAA": 0, "AA": 1, "A": 2, "BBB": 3, "BB": 4, "B": 5, "CCC": 6, "AAA1": 0, "AA1": 1, "AA2": 1, "A1": 2, "A2": 2, "BAA": 3, "BA1": 4, "BA": 4}
+FREQ_WORDS = {1: ["Annual", "annually", "årlig", "jährlich", "annuel"], 2: ["Semi-annual", "halvår", "halbjährlich", "semestriel"], 4: ["Quarterly", "kvartal", "vierteljährlich", "trimestriel"], 12: ["Monthly", "månad", "monatlich", "mensuel"]}
+CP_WORDS = {"call": ["Call", "call", "C", "CALL", "Köp", "Kaufoption"], "put": ["Put", "put", "P", "PUT", "Sälj", "Verkaufsoption"]}
+EX_WORDS = {"american": ["American", "AM", "Amerikansk", "amerikanisch"], "european": ["European", "EU", "Europeisk", "europäisch", "européenne"]}
+NACE_SECTIONS = [("K", "64", "1", "9"), ("C", "29", "1", "0"), ("C", "21", "2", "0"), ("J", "61", "1", "0"), ("D", "35", "1", "1"), ("L", "68", "2", "0"), ("G", "47", "1", "1"), ("H", "49", "1", "0"), ("C", "26", "1", "1"), ("K", "65", "1", "2")]
+
+
+def nace_code(rng: random.Random) -> str:
+    s, div, grp, cls = rng.choice(NACE_SECTIONS)
+    return rng.choice([f"{s}{div}.{grp}.{cls}", f"{s}{div}{grp}{cls}", f"{div}.{grp}{cls}", f"{s}{div}.{grp}", f"{div}.{grp}{cls}Z", s])
 
 
 def isin_check(payload: str) -> str:
@@ -170,6 +211,40 @@ class Holding:
         self.mv_local = round(self.qty * self.price * factor, 2)
         self.mv_port = round(self.mv_local * self.fx, 2)
         self.accrued = round(self.qty * (self.coupon or 0) / 100 * rng.uniform(0, 1), 2) if kind.startswith("bond") else None
+        # --- extra attributes (new input fields) ---
+        self.dirty = self.yld = self.mdur = self.spread = self.rate_type = self.freq = self.call_date = None
+        self.cqs = self.agency = self.nace = self.group = self.group_lei = None
+        self.csize = self.strike = self.cp = self.exercise = self.und_name = self.und_id = self.und_px = self.delta = None
+        if kind.startswith("bond"):
+            frn = "FRN" in self.name
+            self.dirty = round(self.price + (self.accrued or 0) / self.qty * 100, 4) if self.accrued is not None else None
+            self.yld = round(rng.uniform(0, 9), 3)
+            self.mdur = round(rng.uniform(0.1, 0.4), 3) if frn else round(rng.uniform(0.3, 20), 3)
+            self.spread = (rng.randint(20, 600) if rng.random() < 0.7 else round(rng.uniform(0.2, 6), 2)) if frn else None
+            self.rate_type = rng.choice(RATE_TYPE["float" if frn else "fixed"])
+            self.freq = rng.choice([1, 1, 2, 4, 12]) if not frn else 4
+            if kind == "bond_corp" and rng.random() < 0.25 and self.maturity:
+                self.call_date = ref + dt.timedelta(days=rng.randint(30, max(31, (self.maturity - ref).days - 1)))
+            self.cqs = CQS.get(self.rating.rstrip("+-123").upper()[:3], rng.randint(0, 6)) if self.rating else None
+            self.agency = rng.choice(["S&P", "Moody's", "Fitch", "S&P", "Moody's"]) if self.rating else None
+        if kind in ("equity", "bond_corp"):
+            self.nace = nace_code(rng)
+            if rng.random() < 0.5:
+                self.group = company(rng).split()[0] + rng.choice([" Group", " Holding AB", " AG", " Groupe"])
+                self.group_lei = make_lei(rng)
+        if kind == "derivative":
+            self.csize = rng.choice([1, 10, 25, 50, 100, 100, 1000])
+            self.und_px = round(rng.uniform(20, 5000), 2)
+            self.und_name = rng.choice(["OMXS30", "EURO STOXX 50", "S&P 500", "DAX", "Volvo B", "Ericsson B", "SAP SE", "Brent", "Gold", "EUR/USD"])
+            self.und_id = make_isin(rng) if rng.random() < 0.5 else self.und_name.split()[0].upper()[:6]
+            if rng.random() < 0.55:  # an option
+                self.cp = rng.choice(["call", "put"])
+                self.strike = round(self.und_px * rng.uniform(0.8, 1.2), rng.choice([0, 2]))
+                self.exercise = rng.choice(["american", "european", "european"])
+                self.delta = round(rng.uniform(0.05, 0.95) * (1 if self.cp == "call" else -1), 4)
+                self.name = f"{self.und_name} {'Call' if self.cp == 'call' else 'Put'} {self.strike:g} {(ref + dt.timedelta(days=rng.randint(10, 400))).strftime('%b%y').upper()}"
+            else:
+                self.delta = 1.0 if rng.random() < 0.7 else None
         cat, sub = CIC_CAT[kind]
         if kind == "bond_corp" and rng.random() < 0.3:
             sub = rng.choice(["2", "4", "6", "8"])
@@ -258,10 +333,18 @@ def mutate_header(h: str, rng: random.Random, style: Style) -> str:
     return h
 
 
+# Generic identifier headers over a column of ISINs mixed with internal codes for the lines
+# without one (derivatives, cash): common in fund admin and portfolio system exports.
+ID_HEADERS = ["Identifier", "Security identifier", "Instrument ID", "Security ID", "ID", "Sec ID", "Instrument identifier",
+              "Värdepappers-ID", "Identitet", "Kennung", "Wertpapierkennung", "Identifiant", "Code valeur", "Asset ID"]
+
+
 def pick_header(label: str, rng: random.Random, style: Style, pccy: str) -> str:
     r = rng.random()
     if r < 0.05:
         return rng.choice(["", f"Column {rng.randint(1, 30)}", f"Unnamed: {rng.randint(1, 30)}", f"F{rng.randint(1, 30)}"])
+    if label == "isin_mixed":
+        return mutate_header(rng.choice(ID_HEADERS), rng, style)
     if label == "amount_mixed_nv":
         h = rng.choice(EXTRA_HEADERS["amount_mixed_nv"])
     elif label in SYNONYMS and r < 0.62:
@@ -299,15 +382,18 @@ def make_table(rng: random.Random) -> list[dict]:
         opts = ASSET_TYPES[h.kind]
         return opts[int(lang_types * len(opts)) % len(opts)] if rng.random() < 0.8 else rng.choice(opts)
 
+    blank_cash_px = rng.random() < 0.5
     gens = {
         "isin": lambda: [h.isin or None for h in hs],
+        "isin_mixed": lambda: [h.isin or h.ticker or rng.choice([f"{h.kind[:3].upper()}-{rng.randint(1000, 9999)}", str(rng.randint(100000, 999999)), f"{h.ccy} CASH", None]) for h in hs],
         "other_identifier": lambda: [h.ticker or (f"SEC{rng.randint(1000, 999999)}" if rng.random() < 0.5 else None) for h in hs],
         "security_name": lambda: [h.name for h in hs],
         "quantity": lambda: [fmt_num(h.qty, style, rng, 0 if float(h.qty).is_integer() else 4) for h in hs],
         "nominal": lambda: [fmt_num(h.qty, style, rng, 0) if h.kind.startswith("bond") else None for h in hs],
         "market_value_local": lambda: [fmt_num(h.mv_local, style, rng) for h in hs],
         "market_value_portfolio": lambda: [fmt_num(h.mv_port, style, rng) for h in hs],
-        "price": lambda: [fmt_num(h.price, style, rng, 4 if h.kind.startswith("bond") else 2) for h in hs],
+        # Real files often leave the price of a cash line or a derivative blank.
+        "price": lambda: [None if (h.kind == "cash" and blank_cash_px) or (h.kind == "derivative" and rng.random() < 0.25) else fmt_num(h.price, style, rng, 4 if h.kind.startswith("bond") else 2) for h in hs],
         "currency": lambda: [h.ccy if rng.random() < 0.97 else h.ccy.lower() for h in hs],
         "coupon": lambda: [pct_str(fmt_num(h.coupon, style, rng, 3), style) if h.coupon is not None else None for h in hs],
         "maturity_date": lambda: [fmt_date(h.maturity, style) for h in hs],
@@ -322,6 +408,26 @@ def make_table(rng: random.Random) -> list[dict]:
         "cic": lambda: [h.cic for h in hs],
         "amount_mixed": lambda: [fmt_num(h.qty, style, rng, 0 if float(h.qty).is_integer() else 4) for h in hs],
         "amount_mixed_nv": lambda: [fmt_num(h.qty, style, rng, 0) if h.kind.startswith("bond") else fmt_num(h.mv_local, style, rng) for h in hs],
+        "dirty_price": lambda: [fmt_num(h.dirty, style, rng, 4) if h.dirty is not None else None for h in hs],
+        "yield": lambda: [pct_str(fmt_num(h.yld, style, rng, 3), style) if h.yld is not None else None for h in hs],
+        "modified_duration": lambda: [fmt_num(h.mdur, style, rng, 3) if h.mdur is not None else None for h in hs],
+        "spread": lambda: [fmt_num(h.spread, style, rng, 0 if isinstance(h.spread, int) else 2) if h.spread is not None else None for h in hs],
+        "interest_rate_type": lambda: [h.rate_type for h in hs],
+        "coupon_frequency": lambda: freq_values(hs, rng, style),
+        "call_date": lambda: [fmt_date(h.call_date, style) for h in hs],
+        "cqs": lambda: [(h.cqs if style.raw_numbers else str(h.cqs)) if h.cqs is not None else None for h in hs],
+        "rating_agency": lambda: [h.agency for h in hs],
+        "nace": lambda: [h.nace for h in hs],
+        "group_name": lambda: [h.group for h in hs],
+        "group_lei": lambda: [h.group_lei for h in hs],
+        "contract_size": lambda: [fmt_num(h.csize, style, rng, 0) if h.csize is not None else None for h in hs],
+        "strike": lambda: [fmt_num(h.strike, style, rng, 2) if h.strike is not None else None for h in hs],
+        "call_put": lambda: [rng.choice(CP_WORDS[h.cp]) if h.cp else None for h in hs],
+        "exercise_type": lambda: [rng.choice(EX_WORDS[h.exercise]) if h.exercise else None for h in hs],
+        "underlying_name": lambda: [h.und_name for h in hs],
+        "underlying_id": lambda: [h.und_id for h in hs],
+        "underlying_price": lambda: [fmt_num(h.und_px, style, rng, 2) if h.und_px is not None else None for h in hs],
+        "delta": lambda: [fmt_num(h.delta, style, rng, 4) if h.delta is not None else None for h in hs],
     }
     noise = {
         "row_id": lambda: [str(i + 1) if not style.raw_numbers else i + 1 for i in range(n)],
@@ -333,16 +439,27 @@ def make_table(rng: random.Random) -> list[dict]:
         "pnl": lambda: [fmt_num(round(h.mv_port * rng.uniform(-0.3, 0.4), 2), style, rng) for h in hs],
         "sector": lambda: [rng.choice(SECTORS) if h.kind == "equity" else None for h in hs],
         "custodian": lambda: [rng.choice(["SEB", "JP Morgan", "BNP Paribas SS", "Clearstream"])] * n,
-        "yield": lambda: [fmt_num(round(rng.uniform(0, 7), 3), style, rng, 3) if h.kind.startswith("bond") else None for h in hs],
-        "duration": lambda: [fmt_num(round(rng.uniform(0.1, 15), 2), style, rng) if h.kind.startswith("bond") else None for h in hs],
+        "beta": lambda: [fmt_num(round(rng.uniform(0.4, 1.8), 2), style, rng) if h.kind == "equity" else None for h in hs],
+        "volume": lambda: [fmt_num(rng.randint(10_000, 9_000_000), style, rng, 0) if h.kind == "equity" else None for h in hs],
+        "riskfree": lambda: [fmt_num(round(rng.uniform(0, 5), 2), style, rng) if h.kind == "derivative" else None for h in hs],
+        "impvol": lambda: [fmt_num(round(rng.uniform(8, 60), 1), style, rng, 1) if h.kind == "derivative" else None for h in hs],
+        "fxlegs": lambda: [fmt_num(rng.randint(1, 50) * 100_000, style, rng, 0) if h.kind == "derivative" and rng.random() < 0.5 else None for h in hs],
+        "avgcost": lambda: [fmt_num(round(h.price * rng.uniform(0.7, 1.2), 2), style, rng) for h in hs],
+        "liquidity": lambda: [fmt_num(round(rng.uniform(0.1, 30), 1), style, rng, 1) for h in hs],
         "change": lambda: [fmt_num(round(rng.uniform(-5, 5), 2), style, rng) for _ in hs],
         "account_no": lambda: [f"{rng.randint(1000, 9999)}-{rng.randint(100000, 999999)}"] * n,
     }
 
-    core = ["security_name"] + (["isin"] if rng.random() < 0.85 else ["other_identifier"])
-    optional = [k for k in gens if k not in core]
+    r_id = rng.random()
+    core = ["security_name"] + (["isin"] if r_id < 0.7 else ["isin_mixed"] if r_id < 0.85 else ["other_identifier"])
+    optional = [k for k in gens if k not in core and k != "isin_mixed" and not (k == "isin" and "isin_mixed" in core)]
     rng.shuffle(optional)
-    chosen = core + optional[: rng.randint(3, min(14, len(optional)))]
+    chosen = core + optional[: rng.randint(3, min(20, len(optional)))]
+    # Tables with derivatives often carry their terms together; bond tables their analytics.
+    if any(h.kind == "derivative" for h in hs) and rng.random() < 0.4:
+        chosen += [k for k in ["contract_size", "strike", "call_put", "underlying_name", "underlying_price", "delta", "exercise_type"] if k not in chosen and rng.random() < 0.7]
+    if mix == "bond" and rng.random() < 0.5:
+        chosen += [k for k in ["yield", "modified_duration", "coupon_frequency", "interest_rate_type", "dirty_price", "spread", "cqs"] if k not in chosen and rng.random() < 0.6]
     if mix == "bond" and "nominal" not in chosen and rng.random() < 0.5:
         chosen.append("nominal")
     # Mixed amount columns: one column holding units for equities, nominal for bonds, the balance for cash
@@ -354,14 +471,38 @@ def make_table(rng: random.Random) -> list[dict]:
         chosen = [k for k in chosen if k not in ("quantity", "nominal", "market_value_local")] + ["amount_mixed_nv"]
     noise_keys = rng.sample(list(noise), k=rng.choice([0, 1, 1, 2, 3, 4]))
     cols = [(k, gens[k]()) for k in chosen] + [(k, noise[k]()) for k in noise_keys]
+    # Gaps: real files leave cells blank here and there (a price not yet in, a rating not known).
+    # Without them every field column is full in training, and a column with a few blanks would
+    # look like noise to the model.
+    for _, values in cols:
+        if values and rng.random() < 0.3:
+            share = rng.uniform(0.05, 0.35)
+            for i in range(len(values)):
+                if rng.random() < share:
+                    values[i] = None
     rng.shuffle(cols)
-    if "isin" in chosen and rng.random() < 0.5:  # identifiers usually first
-        cols.sort(key=lambda kv: kv[0] != "isin")
+    if ("isin" in chosen or "isin_mixed" in chosen) and rng.random() < 0.5:  # identifiers usually first
+        cols.sort(key=lambda kv: kv[0] not in ("isin", "isin_mixed"))
 
     out = []
     for key, values in cols:
-        label = ("amount_mixed" if key.startswith("amount_mixed") else key) if key in gens else "ignore"
+        label = ("amount_mixed" if key.startswith("amount_mixed") else "isin" if key == "isin_mixed" else key) if key in gens else "ignore"
         out.append({"header": pick_header(key, rng, style, pccy), "values": values, "label": label})
+    return out
+
+
+def freq_values(hs, rng, style):
+    words = rng.random() < 0.4
+    lang = rng.randrange(4)
+    out = []
+    for h in hs:
+        if h.freq is None:
+            out.append(None)
+        elif words:
+            ws = FREQ_WORDS[h.freq]
+            out.append(ws[min(lang, len(ws) - 1)])
+        else:
+            out.append(h.freq if style.raw_numbers else str(h.freq))
     return out
 
 

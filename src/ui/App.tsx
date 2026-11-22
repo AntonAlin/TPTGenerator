@@ -7,13 +7,16 @@ import { PortfolioStep } from './PortfolioStep.tsx';
 import { ExportStep } from './ExportStep.tsx';
 import { dateFromMetadata, type LoadedSheet } from './session.ts';
 import { ProfileRepository } from '../profiles/profiles.ts';
+import { LearnedRepository } from '../profiles/learned.ts';
 import { openStore } from '../profiles/store.ts';
 import { FundProfileRepository, baseCurrencyOf, emptyPortfolio, fundNav, type PortfolioState } from '../portfolio/portfolio.ts';
 import type { CanonicalField } from '../detect/canonical.ts';
 import { normalizeHoldings } from '../derive/holdings.ts';
 import { buildFxTable, guessPortfolioCurrency, impliedFxRates } from '../derive/valuation.ts';
 import { resolveHoldings } from '../derive/resolve.ts';
+import type { AssetClass } from '../derive/assetClass.ts';
 import { interpretAmounts } from '../derive/amounts.ts';
+import { navFromLines, reconcile } from '../derive/reconcile.ts';
 import { Promo } from './Promo.tsx';
 import { HowItWorks } from './HowItWorks.tsx';
 import { NEXUS_URL } from './links.ts';
@@ -41,6 +44,7 @@ const stepFromHash = (): StepId => (typeof location !== 'undefined' && location.
 
 interface Stores {
   profiles: ProfileRepository;
+  learned: LearnedRepository;
   funds: FundProfileRepository;
   persistent: boolean;
 }
@@ -63,11 +67,14 @@ export function App() {
   const [mapping, setMapping] = useState<CanonicalField[] | null>(null);
   const [portfolio, setPortfolio] = useState<PortfolioState>(emptyPortfolio);
   const [stores, setStores] = useState<Stores | null>(null);
+  const [typeLessons, setTypeLessons] = useState<Map<string, { cls: AssetClass; source?: string }>>(new Map());
 
   useEffect(() => {
     (async () => {
       const s = await openStore();
-      setStores({ profiles: new ProfileRepository(s), funds: new FundProfileRepository(s), persistent: s.persistent });
+      const learned = new LearnedRepository(s);
+      setStores({ profiles: new ProfileRepository(s), learned, funds: new FundProfileRepository(s), persistent: s.persistent });
+      setTypeLessons(await learned.typeMap().catch(() => new Map()));
     })();
   }, []);
 
@@ -79,6 +86,7 @@ export function App() {
     const split = loaded.table.split;
     const splitDate = split?.choice.date;
     const metaDate = dateFromMetadata(loaded.table);
+    const navLine = navFromLines(loaded.table.skipped.filter((r) => r.reason === 'above-header' || r.reason === 'note').map((r) => r.preview));
     return {
       baseCurrency: g.currency,
       baseWhy: g.why,
@@ -86,6 +94,8 @@ export function App() {
       valuationDateWhy: splitDate ? `the rows chosen in the upload step have this date in "${loaded.table.headers[split!.dateCol!]}"` : 'found above the table in the file',
       portfolioName: split?.choice.portfolio,
       portfolioNameWhy: split?.portfolioCol !== undefined ? `from the file's "${loaded.table.headers[split.portfolioCol]}" column` : undefined,
+      nav: navLine?.value,
+      navWhy: navLine ? `written in the file: "${navLine.line.slice(0, 80)}"${navLine.currency ? ` (${navLine.currency})` : ''}` : undefined,
     };
   }, [normalized, loaded]);
 
@@ -117,10 +127,20 @@ export function App() {
             portfolioCurrency: base,
             fx: fx.table,
             nav: navInfo.nav,
+            typeLessons,
           })
         : null,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [amounts, portfolio, base, fx, navInfo.nav, stores],
+    [amounts, portfolio, base, fx, navInfo.nav, stores, typeLessons],
+  );
+
+  // Does the result add up to the file's own totals, NAV, weights and FX? Reported, never applied.
+  const recon = useMemo(
+    () =>
+      result && amounts && normalized && loaded && mapping
+        ? reconcile({ table: loaded.table, mapping, holdings: amounts.holdings, totals: normalized.totals, rows: result.rows, fx: fx.table, portfolioCurrency: base, nav: navInfo.nav })
+        : undefined,
+    [result, amounts, normalized, loaded, mapping, fx, base, navInfo.nav],
   );
 
   const step = STEPS.find((s) => s.id === active)!;
@@ -146,6 +166,7 @@ export function App() {
       <MappingStep
         loaded={loaded}
         repo={stores.profiles}
+        learnedRepo={stores.learned}
         persistent={stores.persistent}
         onMapped={(m) => {
           setMapping(m);
@@ -168,7 +189,23 @@ export function App() {
       />
     );
   else if (active === 'export' && result)
-    body = <ExportStep result={result} portfolio={portfolio} fx={fx.table} fxMissing={fx.missing} amountNotes={[...(normalized?.notes ?? []), ...(amounts?.notes ?? [])]} />;
+    body = (
+      <ExportStep
+        result={result}
+        portfolio={portfolio}
+        fx={fx.table}
+        fxMissing={fx.missing}
+        amountNotes={[...(normalized?.notes ?? []), ...(amounts?.notes ?? [])]}
+        typeLessons={typeLessons}
+        reconciliation={recon}
+        onTeachType={async (shown, cls) => {
+          if (!stores) return;
+          if (cls) await stores.learned.teachType(shown, cls, loaded?.workbook.fileName ?? 'this file');
+          else await stores.learned.forgetType(shown);
+          setTypeLessons(await stores.learned.typeMap());
+        }}
+      />
+    );
   else
     body = (
       <section class="placeholder">

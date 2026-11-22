@@ -92,14 +92,16 @@ commit, so re-deploying a commit that was already published from a branch keeps 
 ```
 spec/                 Official FinDatEx template + annex, CIC and NACE sources, spec config/overrides
 scripts/              build-spec.ts, extract-features.ts, make-samples.ts, e2e-browser.ts, reference data builders
-training/             Synthetic data generator and model training (Python + numpy)
+training/             Synthetic data generators and model training (Python, LightGBM): columns and rows
 samples/              Synthetic messy holdings files used by the tests
 src/spec/             Spec parser, generated tpt_spec.json, field validation
 src/ingest/           File reading, table detection, number/date parsing, ISIN/LEI/CUSIP/SEDOL validation
-src/detect/           Canonical fields, synonym dictionary, features, model.json, classifier
-src/derive/           Name parsing, asset class, CIC, fixed income, valuation/FX, field resolution
+src/detect/           Canonical fields, synonym dictionary, features, relations, model.json, classifier
+src/ml/               Tree-ensemble inference shared by the column and row models
+src/derive/           Name parsing, asset class (rules + row model), CIC, fixed income, valuation/FX, scaling,
+                      amount interpretation, field resolution, reconciliation
 src/portfolio/        Fund/share-class data and fund profiles
-src/profiles/         Source profiles and the key-value store (IndexedDB / memory)
+src/profiles/         Source profiles, what is learned from corrections, the key-value store (IndexedDB / memory)
 src/export/           TPT builder, quality report, xlsx/csv writers
 src/data/             Bundled reference data: ISO 3166/4217, CIC table, NACE, EEA/OECD lists
 src/ui/               Preact UI
@@ -152,8 +154,9 @@ CI runs `npm run spec:check` and fails if the committed JSON does not match the 
 
 ## Column detection
 
-Each input column is mapped to one of 21 canonical fields (`src/detect/canonical.ts`). The classifier
-combines three kinds of signal:
+Each input column is mapped to one of the canonical fields in `src/detect/canonical.ts` (41 inputs plus
+`ignore`: identifiers, amounts, prices, bond terms and analytics, ratings, issuer and group, NACE, and option
+and future terms). The classifier combines four kinds of signal:
 
 1. **Header signals.** Fuzzy matching against `src/detect/synonyms.json` (English, Swedish, German, French).
    Matching ignores case, accents and punctuation. **Edit this file to add header variants.** Changes take
@@ -161,42 +164,55 @@ combines three kinds of signal:
    sector, cost, P/L, …).
 2. **Value signals** (`src/detect/features.ts`):
    - ISIN check digit (Luhn) and LEI check digits (ISO 17442);
-   - ISO 4217, ISO 3166 and CIC codes, ratings, dates (many formats);
-   - decimal comma/point, percentages, columns summing to ~100% or ~1, row numbers, text vs numbers;
-   - cross-column checks: value = quantity × price, weight = value ÷ total.
-3. **Model.** Multinomial logistic regression over 67 features. Weights are in `src/detect/model.json` and
-   inference is a few lines of TypeScript: no ML runtime in the browser.
+   - ISO 4217, ISO 3166 and CIC codes, ratings, dates (many formats), call/put and rate-type words,
+     coupon frequencies, NACE codes, rating agencies;
+   - decimal comma/point, percentages, columns summing to ~100% or ~1, row numbers, text vs numbers.
+3. **Model.** Gradient-boosted decision trees (LightGBM, 75 features), calibrated with a temperature fitted on
+   held-out tables. The trees are exported to `src/detect/model.json` and evaluated by a few lines of
+   TypeScript (`src/ml/trees.ts`): no ML runtime in the browser.
+4. **Relations between columns** (`src/detect/relations.ts`), found in the numbers whatever the headers say:
+   a × b = c (quantity × price = value, nominal × price ÷ 100 = value), one rate per currency (local →
+   portfolio value), a share of another column's total (weight). They add evidence to the model's
+   probabilities; in a × b = c with a clear price, the other factor is a holding amount; two value columns
+   the model cannot tell apart are split into local and portfolio by the FX relation or a "local" header.
 
-Each field except `ignore` goes to at most one column. Mappings below 60% confidence are highlighted, and
-every mapping lists its evidence.
+All columns are then assigned at once (Hungarian algorithm): the highest joint probability, each field to at
+most one column, no field below 10%. A sparse column (under 40% filled) whose header is an exact synonym of
+one field takes that field. Mappings below 60% confidence are highlighted, and every mapping lists its
+evidence.
 
-**Source profiles.** A confirmed mapping is saved under a fingerprint of the normalised headers. The next
-file with the same headers, in any order, is mapped automatically.
+**Source profiles.** A confirmed mapping can be saved as a profile. It applies to the next file with the same
+headers in any order, and also to a file from the same source whose columns changed a little (a date in a
+header, a column added or dropped): at least 60% of the headers in common, dates and numbers in headers
+ignored (`src/profiles/learned.ts`). Unknown columns are classified as usual.
+
+**Learning from corrections.** Every column the user maps by hand is remembered by its header (IndexedDB,
+this browser only) and maps the same way in the next file from any source, with at least 85% probability
+(92% and 96% when taught two and three times), but only if the values can hold the field. The latest
+correction wins. Lessons are listed in the profiles panel, can be forgotten, and are exported and imported
+with the profiles.
 
 ### Retraining the column model
 
 ```bash
 python3 -m venv training/.venv
 training/.venv/bin/pip install -r training/requirements.txt
-training/retrain.sh            # TABLES=4000 SEED=7 by default
+TABLES=8000 training/retrain.sh    # TABLES=4000 SEED=7 by default
 npm test
 ```
 
 1. `training/generate.py` creates synthetic messy tables. It varies:
    - headers: dictionary and held-out variants, four languages, typos, generic "Column 7" names;
-   - number and date formats;
-   - noise columns and asset mixes.
+   - number and date formats, blank cells here and there, mixed identifier columns;
+   - noise columns and asset mixes, bond analytics and derivative terms.
 2. `scripts/extract-features.ts` computes features with **the same TypeScript code the browser uses**, so
    training and inference cannot drift apart.
-3. `training/train.py` trains with numpy only and writes `src/detect/model.json` with validation metrics.
+3. `training/train.py` trains the trees (and, for comparison, the previous logistic regression) on a split by
+   table, fits the temperature, checks that the exported JSON reproduces LightGBM's scores, and writes
+   `src/detect/model.json` with its validation metrics. `--reuse` re-exports the last trained model.
 
-Current model (67 features, 22 classes including mixed amounts):
-
-- 97.4% validation accuracy;
-- 99.6% on the 92% of columns predicted with ≥ 60% confidence.
-
-Most remaining confusion is between "mixed amount" and "quantity". Both go through the same cell-by-cell
-interpretation, so it only changes how strongly the column mapping is trusted.
+The current figures (validation accuracy, accuracy of the confident share, calibration error, the logistic
+regression baseline) are in `src/detect/model.json` under `metrics` and on the app's "How it works" page.
 
 If you change the feature list you must retrain: the app refuses a model trained on a different feature set.
 
@@ -241,6 +257,39 @@ confidence and the runner-up reading. These show in the export step (**Amounts**
 Also, a column whose numbers can't show their decimal style on their own (e.g. only `94,125`) is read with the
 decimal style of the rest of the file.
 
+## Asset class per row
+
+`src/derive/assetClass.ts` decides each row's asset class in this order:
+
+1. **A class the user taught** for the row's asset-type text (the export step's **Asset types** tab: a file's
+   own codes such as "OPT" or "21"). Remembered in this browser.
+2. **Rules:** the asset-type text, name keywords, section headings, coupon and maturity, price level,
+   identifier.
+3. **The row model** (`src/derive/rowModel.ts`), where the rules are unsure: gradient-boosted trees over the
+   row's own evidence (strike, delta, contract size, coupon, maturity, how quantity, price and value relate,
+   trader shorthand such as `ERIC B 70C` or `FESX Z6`). It overrides unsure rules only at 80% or more (95%
+   against rules of medium confidence), and its readings are marked for review and listed in the Asset types tab.
+
+Retrain it with:
+
+```bash
+npx tsx scripts/row-training.ts 4000 11 > training/data/rows.jsonl
+training/.venv/bin/python training/train_rows.py training/data/rows.jsonl src/derive/rowModel.json
+```
+
+The training rows come from their own generator, not the benchmark's, so the benchmark scores it on names and
+layouts it did not see.
+
+## Reconciliation
+
+`src/derive/reconcile.ts` checks the converted portfolio against what the file itself says, and changes
+nothing: every total and sub-total row against the rows it covers (as shown and as converted); a NAV written
+above or below the table ("Fondförmögenhet 1 234 567 890", "Total net assets EUR 98.7m") against the
+holdings, offered as field 5; the weights against 100% and against value ÷ NAV per row; one FX rate per
+currency against the rate the TPT uses; each row's quantity × price against its value. Results are in the
+export step (**Reconciliation** tab) and the quality report (**Reconciliation** sheet), with the rows that do
+not reconcile.
+
 ## Derivations
 
 Every value carries its source (file, user, derived, missing). Derived values also carry the method
@@ -269,7 +318,10 @@ type, call dates, rating agency. These come only from the file; otherwise they a
 
 ## Source profiles and fund profiles
 
-- **Source profiles** remember column mappings per source.
+- **Source profiles** remember column mappings per source, and fit the same source's next file when its
+  columns changed a little.
+- **Learned headers and asset types** remember the columns and type codes you corrected (see Column
+  detection and Asset class per row).
 - **Fund profiles** remember identification, management company and conventions. NAV, dates and FX rates
   change every period, so they are not saved.
 

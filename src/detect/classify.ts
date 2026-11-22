@@ -1,17 +1,25 @@
 /**
- * Column classification: logistic-regression inference over the features,
+ * Column classification: a model over the column features (gradient-boosted trees, calibrated;
+ * the earlier logistic regression is still understood), relations between columns, a joint
  * one-to-one assignment, confidence and human-readable reasons.
  */
 import modelJson from './model.json';
 import { CANONICAL_FIELDS, CANONICAL_INFO, UNIQUE_FIELDS, type CanonicalField } from './canonical.ts';
 import { extractFeatures, FEATURE_NAMES, type ColumnFeatures, type ColumnInput } from './features.ts';
 import { findRelations, relationEvidence } from './relations.ts';
+import { headerKey, normalizeHeader } from './headerMatch.ts';
+import { softmax, treeProba, type Tree } from '../ml/trees.ts';
 
 interface Model {
+  type?: 'multinomial-logistic-regression' | 'gradient-boosted-trees';
   featureNames: string[];
   classes: string[];
-  weights: number[][];
-  bias: number[];
+  /** Logistic regression. */
+  weights?: number[][];
+  bias?: number[];
+  /** Gradient-boosted trees: tree k adds to class k mod classes; scores divided by the temperature. */
+  trees?: Tree[];
+  temperature?: number;
   trainedAt: string;
   metrics: Record<string, unknown>;
 }
@@ -28,16 +36,17 @@ export const LOW_CONFIDENCE = 0.6;
 export const MIN_CLAIM = 0.1;
 
 /**
- * A column with too few values to judge by (under 20% of rows filled, at most two distinct values,
- * e.g. a "Market value override" column that only has 0 for the futures) gives the model almost
- * nothing but its header. When that header is an exact synonym of one field, the header decides:
- * the field gets at least this probability, which still leaves the mapping highlighted for review.
+ * A sparse column (under 40% of rows filled: a "Market value override" with values only for the
+ * derivatives, a "Strike" filled only for the options) gives the model little but its header, and
+ * the few values look alike across fields (small numbers, a few rows). When that header is an exact
+ * synonym of one field, the header decides: the field gets at least this probability, which still
+ * leaves the mapping highlighted for review.
  */
 const HEADER_ONLY_P = 0.55;
+const SPARSE_FILL = 0.4;
 function headerOnlyField(col: ColumnInput, f: ColumnFeatures): CanonicalField | undefined {
   const filled = col.values.filter((v) => v != null && !(typeof v === 'string' && !v.trim()));
-  if (!col.values.length || filled.length / col.values.length >= 0.2) return undefined;
-  if (new Set(filled.map((v) => String(v))).size > 2) return undefined;
+  if (!col.values.length || filled.length / col.values.length >= SPARSE_FILL) return undefined;
   const exact = model.classes.filter((c) => (f.named[`hdr_${c}`] ?? 0) >= 0.97);
   return exact.length === 1 ? (exact[0] as CanonicalField) : undefined;
 }
@@ -48,6 +57,44 @@ function withFloor(p: number[], i: number, floor: number): number[] {
 }
 
 export type MappingSource = 'model' | 'profile' | 'user';
+
+/** A header the user mapped by hand before (profiles/learned.ts), by normalised header. */
+export interface LearnedHint {
+  field: CanonicalField;
+  times: number;
+  sources: string[];
+}
+export interface ClassifyOptions {
+  learned?: Map<string, LearnedHint>;
+}
+
+/**
+ * Probability a learned header gives its field: high at once, higher when taught again. A floor,
+ * not a certainty: another column can still win the field if it fits much better.
+ */
+export function learnedFloor(times: number): number {
+  return times >= 3 ? 0.96 : times === 2 ? 0.92 : 0.85;
+}
+
+const NUMERIC_FIELDS = new Set<CanonicalField>([
+  'quantity', 'nominal', 'market_value_local', 'market_value_portfolio', 'price', 'coupon', 'weight', 'accrued_interest', 'fx_rate', 'amount_mixed',
+  'dirty_price', 'yield', 'modified_duration', 'spread', 'cqs', 'contract_size', 'strike', 'underlying_price', 'delta',
+]);
+
+/**
+ * Whether a column's values can hold a field at all. A lesson learned on one file's "Värde" must
+ * not turn another file's text column of the same name into a market value.
+ */
+export function valuesFit(field: CanonicalField, f: ColumnFeatures): boolean {
+  if (field === 'ignore' || f.profile.nonEmpty < 2) return true;
+  const s = f.profile.stats;
+  if (NUMERIC_FIELDS.has(field)) return s.numeric >= 0.6;
+  if (field === 'maturity_date' || field === 'call_date') return s.date >= 0.6;
+  if (field === 'isin') return f.named.isin_valid >= 0.3;
+  if (field === 'currency') return f.named.currency >= 0.5;
+  if (field === 'issuer_lei' || field === 'group_lei') return f.named.lei_valid >= 0.3;
+  return true;
+}
 
 export interface ColumnPrediction {
   index: number;
@@ -62,6 +109,8 @@ export interface ColumnPrediction {
   /** Decimal separator detected for the column's values, if any. */
   decimal?: ',' | '.';
   features: ColumnFeatures;
+  /** The field a header learned from the user's earlier corrections pointed to, when one applied. */
+  learned?: CanonicalField;
 }
 
 function checkModel(m: Model) {
@@ -73,11 +122,8 @@ function checkModel(m: Model) {
 checkModel(model);
 
 export function predictProba(x: number[], m: Model = model): number[] {
-  const z = m.weights.map((w, c) => w.reduce((s, wi, i) => s + wi * x[i], m.bias[c]));
-  const max = Math.max(...z);
-  const e = z.map((v) => Math.exp(v - max));
-  const sum = e.reduce((a, b) => a + b, 0);
-  return e.map((v) => v / sum);
+  if (m.trees) return treeProba({ featureNames: m.featureNames, classes: m.classes, trees: m.trees, temperature: m.temperature }, x);
+  return softmax(m.weights!.map((w, c) => w.reduce((s, wi, i) => s + wi * x[i], m.bias![c])));
 }
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -124,9 +170,12 @@ export function explain(f: ColumnFeatures, field: CanonicalField): string[] {
 export function classifyColumns(
   columns: ColumnInput[],
   fixed: Map<number, { field: CanonicalField; source: MappingSource }> = new Map(),
+  opts: ClassifyOptions = {},
 ): ColumnPrediction[] {
   const feats = extractFeatures(columns);
   const headerDecides = new Set<number>();
+  const learnedFor = learnedLookup(opts.learned);
+  const learnedBy = new Map<number, { hint: LearnedHint; reason: string }>();
   const probs = feats.map((f, index) => {
     let p = predictProba(f.vector);
     const exact = headerOnlyField(columns[index], f);
@@ -134,6 +183,19 @@ export function classifyColumns(
     if (ei >= 0 && p[ei] < HEADER_ONLY_P) {
       p = withFloor(p, ei, HEADER_ONLY_P);
       headerDecides.add(index);
+    }
+    // The user's own lesson for this header outranks the dictionary and the model.
+    const hint = fixed.has(index) ? undefined : learnedFor(columns[index].header);
+    const li = hint ? model.classes.indexOf(hint.field) : -1;
+    if (hint && li >= 0) {
+      const label = CANONICAL_INFO[hint.field].label;
+      if (valuesFit(hint.field, f)) {
+        if (p[li] < learnedFloor(hint.times)) p = withFloor(p, li, learnedFloor(hint.times));
+        const more = hint.times > 1 ? ` (taught ${hint.times} times)` : '';
+        learnedBy.set(index, { hint, reason: `You mapped "${columns[index].header}" to ${label} before, in ${hint.sources[0] ?? 'an earlier file'}${more}` });
+      } else {
+        learnedBy.set(index, { hint, reason: `You mapped "${columns[index].header}" to ${label} before, but these values cannot be one, so that lesson was not used` });
+      }
     }
     return p;
   });
@@ -155,6 +217,8 @@ export function classifyColumns(
     probs[i] = w.map((x) => x / sum);
     boosted.set(i, ev.reasons);
   });
+  holdingFromProduct(probs, rel, fixed);
+  splitValuePair(probs, feats, rel, fixed, columns, boosted);
 
   const preds: ColumnPrediction[] = feats.map((f, index) => ({
     index,
@@ -217,8 +281,99 @@ export function classifyColumns(
     if (p.source === 'model' && p.field !== p.ranked[0].field) {
       p.reasons.unshift(`Best guess was ${CANONICAL_INFO[p.ranked[0].field].label}, but another column matched it better`);
     }
+    const l = learnedBy.get(p.index);
+    if (p.source === 'model' && l) {
+      p.reasons.unshift(l.reason);
+      if (p.field === l.hint.field) p.learned = l.hint.field;
+    }
   }
   return preds;
+}
+
+/**
+ * In amount × price = value, once one factor is clearly the price, the other is the holding amount,
+ * however much its numbers look like something else (a short column of round quantities can look
+ * like prices to the model). Its holding fields get at least HOLDING_FLOOR together, split as the
+ * model split them. Not for a factor that is itself a value (local value × FX rate = portfolio value).
+ */
+const HOLDING_FLOOR = 0.7;
+function holdingFromProduct(probs: number[][], rel: ReturnType<typeof findRelations>, fixed: Map<number, unknown>) {
+  const priceIdx = model.classes.indexOf('price');
+  const H = (['quantity', 'nominal', 'amount_mixed'] as const).map((f) => model.classes.indexOf(f));
+  const V = (['market_value_local', 'market_value_portfolio'] as const).map((f) => model.classes.indexOf(f));
+  for (const p of rel.products) {
+    if (p.support < 0.8) continue;
+    const [price, amount] = probs[p.a][priceIdx] >= probs[p.b][priceIdx] ? [p.a, p.b] : [p.b, p.a];
+    if (fixed.has(amount) || probs[price][priceIdx] < 0.5) continue;
+    if (V.reduce((s, k) => s + probs[amount][k], 0) >= 0.5 || rel.fx.some((f) => f.local === amount || f.port === amount)) continue;
+    const h = H.reduce((s, k) => s + probs[amount][k], 0);
+    if (h >= HOLDING_FLOOR) continue;
+    const share = h > 1e-9 ? H.map((k) => probs[amount][k] / h) : [1, 0, 0];
+    const rest = 1 - h;
+    for (let k = 0; k < probs[amount].length; k++) if (!H.includes(k)) probs[amount][k] *= (1 - HOLDING_FLOOR) / rest;
+    H.forEach((k, j) => (probs[amount][k] = HOLDING_FLOOR * share[j]));
+  }
+}
+
+/**
+ * Two market value columns the model cannot tell apart ("Col6"/"Col7", or "Market Value Local" and
+ * "Market Value USD" both read as local): one is the local value and the other the portfolio value.
+ * Which one is which comes from the headers when one says local, else, when one rate per currency
+ * converts one into the other, from the order (files put the local value first). The pair's
+ * probability of being a value is kept; only how it splits between local and portfolio changes.
+ */
+function splitValuePair(
+  probs: number[][],
+  feats: ColumnFeatures[],
+  rel: ReturnType<typeof findRelations>,
+  fixed: Map<number, unknown>,
+  columns: ColumnInput[],
+  reasons: Map<number, string[]>,
+) {
+  const L = model.classes.indexOf('market_value_local');
+  const P = model.classes.indexOf('market_value_portfolio');
+  const valueP = (i: number) => probs[i][L] + probs[i][P];
+  // One rate per currency between two columns makes both values, whatever else they look like
+  // (a converted value is no unit count). Without it, both must look like values already.
+  const fxPair = rel.fx.find((f) => f.support >= 0.8 && !fixed.has(f.local) && !fixed.has(f.port));
+  const pair = fxPair
+    ? [Math.min(fxPair.local, fxPair.port), Math.max(fxPair.local, fxPair.port)]
+    : probs.map((_, i) => i).filter((i) => !fixed.has(i) && valueP(i) >= 0.8);
+  if (pair.length !== 2) return;
+  const [a, b] = pair;
+  const topLocal = (i: number) => probs[i][L] >= probs[i][P];
+  if (topLocal(a) !== topLocal(b) && valueP(a) >= 0.5 && valueP(b) >= 0.5) return;
+  const localTok = (i: number) => (feats[i].named.hdr_local_token ?? 0) >= 1;
+  let local: number;
+  let why: string;
+  if (localTok(a) !== localTok(b)) {
+    local = localTok(a) ? a : b;
+    why = `"${columns[local].header}" says local`;
+  } else if (fxPair) {
+    local = a;
+    why = 'one rate per currency converts one into the other, and the local value comes first';
+  } else return;
+  for (const i of [a, b]) {
+    const m = Math.max(valueP(i), fxPair ? 0.9 : 0);
+    const rest = 1 - valueP(i);
+    // Other fields shrink to make room, in proportion.
+    if (rest > 0) for (let k = 0; k < probs[i].length; k++) if (k !== L && k !== P) probs[i][k] *= (1 - m) / rest;
+    probs[i][L] = m * (i === local ? 0.8 : 0.2);
+    probs[i][P] = m * (i === local ? 0.2 : 0.8);
+    const r = `"${columns[a].header}" and "${columns[b].header}" are the same values in two currencies (${why}): ${i === local ? 'the local-currency value' : 'the portfolio-currency value'}`;
+    reasons.set(i, [...(reasons.get(i) ?? []), r]);
+  }
+}
+
+/** Lessons by exact header, then by header key (same header with another date in it), if unambiguous. */
+function learnedLookup(learned?: Map<string, LearnedHint>): (header: string) => LearnedHint | undefined {
+  if (!learned?.size) return () => undefined;
+  const byKey = new Map<string, LearnedHint | null>();
+  for (const [h, l] of learned) {
+    const k = headerKey(h);
+    byKey.set(k, byKey.has(k) ? null : l);
+  }
+  return (header) => learned.get(normalizeHeader(header)) ?? byKey.get(headerKey(header)) ?? undefined;
 }
 
 /** Whether a relation reason supports the field the column got (so only relevant reasons are shown). */

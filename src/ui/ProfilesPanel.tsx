@@ -1,31 +1,44 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { ProfileRepository, SourceProfile } from '../profiles/profiles.ts';
+import type { LearnedHeader, LearnedRepository, LearnedType } from '../profiles/learned.ts';
+import { CANONICAL_INFO } from '../detect/canonical.ts';
+import { ASSET_CLASSES } from '../derive/assetClass.ts';
 import { downloadBlob } from './session.ts';
 
 interface Props {
   repo: ProfileRepository;
+  learnedRepo: LearnedRepository;
   version: number;
   onChanged: () => void;
 }
 
-export function ProfilesPanel({ repo, version, onChanged }: Props) {
+export function ProfilesPanel({ repo, learnedRepo, version, onChanged }: Props) {
   const [profiles, setProfiles] = useState<SourceProfile[]>([]);
+  const [learned, setLearned] = useState<LearnedHeader[]>([]);
+  const [types, setTypes] = useState<LearnedType[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
     repo.list().then(setProfiles);
-  }, [repo, version]);
+    learnedRepo.list().then(setLearned);
+    learnedRepo.types().then(setTypes);
+  }, [repo, learnedRepo, version]);
 
   async function exportAll() {
-    const data = await repo.exportAll();
+    const data = { ...(await repo.exportAll()), learned: await learnedRepo.list(), learnedTypes: await learnedRepo.types() };
     downloadBlob(JSON.stringify(data, null, 2), `tpt-source-profiles-${new Date().toISOString().slice(0, 10)}.json`, 'application/json');
   }
 
   async function importFile(file: File | undefined) {
     if (!file) return;
     try {
-      const res = await repo.importAll(JSON.parse(await file.text()));
-      setMsg(`Imported ${res.imported} profile(s)${res.skipped ? `, skipped ${res.skipped} invalid` : ''}.`);
+      const data = JSON.parse(await file.text());
+      const res = await repo.importAll(data);
+      const l = await learnedRepo.importAll(data?.learned);
+      const t = await learnedRepo.importTypes(data?.learnedTypes);
+      const skipped = res.skipped + l.skipped + t.skipped;
+      const extra = [l.imported && `${l.imported} learned header(s)`, t.imported && `${t.imported} asset type(s)`].filter(Boolean).join(' and ');
+      setMsg(`Imported ${res.imported} profile(s)${extra ? ` and ${extra}` : ''}${skipped ? `, skipped ${skipped} invalid` : ''}.`);
       onChanged();
     } catch (e) {
       setMsg(e instanceof Error ? e.message : String(e));
@@ -35,7 +48,9 @@ export function ProfilesPanel({ repo, version, onChanged }: Props) {
   return (
     <details class="card">
       <summary>
-        <strong>Saved source profiles ({profiles.length})</strong>
+        <strong>
+          Saved source profiles ({profiles.length}) and learned headers ({learned.length})
+        </strong>
       </summary>
       {profiles.length > 0 && (
         <table class="grid compact">
@@ -74,8 +89,92 @@ export function ProfilesPanel({ repo, version, onChanged }: Props) {
           </tbody>
         </table>
       )}
+      <h4>Learned from your corrections</h4>
+      {learned.length ? (
+        <>
+          <p class="muted small">
+            When you map a column by hand, its header is remembered here and maps the same way in the next file from any source, as long as the values fit.
+            The latest correction wins.
+          </p>
+          <table class="grid compact">
+            <thead>
+              <tr>
+                <th>Header</th>
+                <th>Maps to</th>
+                <th>Taught</th>
+                <th>Last file</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {learned.map((l) => (
+                <tr key={l.header}>
+                  <td>
+                    <code>{l.header}</code>
+                  </td>
+                  <td>{CANONICAL_INFO[l.field].label}</td>
+                  <td>{l.times}×</td>
+                  <td class="muted">{l.sources[0]}</td>
+                  <td>
+                    <button
+                      type="button"
+                      class="secondary small"
+                      onClick={async () => {
+                        await learnedRepo.forget(l.header);
+                        onChanged();
+                      }}
+                    >
+                      Forget
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      ) : (
+        <p class="muted small">Nothing yet. Columns you map by hand are remembered here for the next file.</p>
+      )}
+      {types.length > 0 && (
+        <>
+          <h4>Asset types you set</h4>
+          <table class="grid compact">
+            <thead>
+              <tr>
+                <th>Asset type text</th>
+                <th>Class</th>
+                <th>Last file</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {types.map((t) => (
+                <tr key={t.text}>
+                  <td>
+                    <code>{t.shown}</code>
+                  </td>
+                  <td>{ASSET_CLASSES[t.cls].label}</td>
+                  <td class="muted">{t.sources[0]}</td>
+                  <td>
+                    <button
+                      type="button"
+                      class="secondary small"
+                      onClick={async () => {
+                        await learnedRepo.forgetType(t.shown);
+                        onChanged();
+                      }}
+                    >
+                      Forget
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
       <div class="filters">
-        <button type="button" class="secondary" disabled={!profiles.length} onClick={exportAll}>
+        <button type="button" class="secondary" disabled={!profiles.length && !learned.length && !types.length} onClick={exportAll}>
           Export all as JSON
         </button>
         <label class="button secondary">

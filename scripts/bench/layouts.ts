@@ -4,8 +4,7 @@
  * number formats, scale, extra columns); none is a copy of a real institution's file.
  *
  * A column says which input field the converter should map it to (`expect`, alternatives with |)
- * and how to write each holding's cell. `later` marks fields the converter may learn to read; they
- * count as right when mapped to that field or ignored.
+ * and how to write each holding's cell.
  */
 import { round, type BenchHolding, type BenchPortfolio } from './holdings.ts';
 
@@ -243,17 +242,17 @@ export const LAYOUTS: Layout[] = [
       { header: 'Currency', expect: 'currency', cell: (h) => h.currency },
       { header: 'Beta', expect: 'ignore', cell: (h) => (h.kind === 'equity' ? 1.05 : null) },
       { header: 'Avg daily volume', expect: 'ignore', cell: (h) => (h.kind === 'equity' ? 1_200_000 + h.holding : null) },
-      { header: 'Duration (yrs)', expect: 'modified_duration|ignore', cell: (h) => h.modifiedDuration ?? null },
-      { header: 'Yield %', expect: 'yield|ignore', cell: (h) => h.yieldPct ?? null },
+      { header: 'Duration (yrs)', expect: 'modified_duration', cell: (h) => h.modifiedDuration ?? null },
+      { header: 'Yield %', expect: 'yield', cell: (h) => h.yieldPct ?? null },
       { header: 'Coupon %', expect: 'coupon', cell: (h) => h.coupon ?? null },
       { header: 'Maturity / expiry', expect: 'maturity_date', cell: (h) => h.maturity ?? null },
       { header: 'Rating', expect: 'rating', cell: (h) => h.rating ?? null },
-      { header: 'Multiplier', expect: 'contract_size|ignore', cell: (h) => h.contractSize ?? null },
-      { header: 'Strike', expect: 'strike|ignore', cell: (h) => h.strike ?? null },
-      { header: 'Call / put', expect: 'call_put|ignore', cell: (h) => h.callPut ?? null },
-      { header: 'Underlying price', expect: 'underlying_price|ignore', cell: (h) => h.underlyingPrice ?? null },
+      { header: 'Multiplier', expect: 'contract_size', cell: (h) => h.contractSize ?? null },
+      { header: 'Strike', expect: 'strike', cell: (h) => h.strike ?? null },
+      { header: 'Call / put', expect: 'call_put', cell: (h) => h.callPut ?? null },
+      { header: 'Underlying price', expect: 'underlying_price', cell: (h) => h.underlyingPrice ?? null },
       { header: 'Market value override', expect: 'market_value_local', cell: (h) => (derivative(h) ? h.mvLocal : null) },
-      { header: 'Reported delta', expect: 'delta|ignore', cell: (h) => h.delta ?? null },
+      { header: 'Reported delta', expect: 'delta', cell: (h) => h.delta ?? null },
     ],
   },
   {
@@ -289,12 +288,12 @@ export const LAYOUTS: Layout[] = [
       { header: 'Maturity Date', expect: 'maturity_date', cell: (h) => (h.maturity && !derivative(h) ? dmy(h.maturity) : null) },
       { header: 'Nominal / Shares', expect: 'amount_mixed|nominal|quantity', cell: holding },
       { header: 'Clean Price', expect: 'price', cell: (h) => h.price ?? null },
-      { header: 'Dirty Price', expect: 'dirty_price|ignore', cell: (h) => (h.accruedLocal !== undefined && h.price !== undefined ? round(h.price + (h.accruedLocal / h.holding) * 100, 4) : null) },
+      { header: 'Dirty Price', expect: 'dirty_price', cell: (h) => (h.accruedLocal !== undefined && h.price !== undefined ? round(h.price + (h.accruedLocal / h.holding) * 100, 4) : null) },
       { header: 'Accrued Interest', expect: 'accrued_interest', cell: (h) => h.accruedLocal ?? null },
       { header: 'Currency', expect: 'currency', cell: (h) => h.currency },
       { header: 'Market Value (EUR)', expect: 'market_value_portfolio', cell: shownPort },
-      { header: 'Yield to Maturity', expect: 'yield|ignore', cell: (h) => h.yieldPct ?? null },
-      { header: 'Mod. Duration', expect: 'modified_duration|ignore', cell: (h) => h.modifiedDuration ?? null },
+      { header: 'Yield to Maturity', expect: 'yield', cell: (h) => h.yieldPct ?? null },
+      { header: 'Mod. Duration', expect: 'modified_duration', cell: (h) => h.modifiedDuration ?? null },
       { header: 'Rating', expect: 'rating', cell: (h) => h.rating ?? null },
       { header: 'Weight', expect: 'weight', cell: weightFrac },
     ],
@@ -312,12 +311,12 @@ export const LAYOUTS: Layout[] = [
       { header: 'Position', expect: 'amount_mixed|quantity|nominal', cell: holding },
       { header: 'Price', expect: 'price', cell: (h) => h.price ?? null },
       { header: 'Currency', expect: 'currency', cell: (h) => h.currency },
-      { header: 'Contract Size', expect: 'contract_size|ignore', cell: (h) => h.contractSize ?? null },
-      { header: 'Strike', expect: 'strike|ignore', cell: (h) => h.strike ?? null },
-      { header: 'Call/Put', expect: 'call_put|ignore', cell: (h) => (h.callPut ? h.callPut.toUpperCase() : null) },
-      { header: 'Underlying', expect: 'underlying_name|ignore', cell: (h) => h.underlying ?? null },
-      { header: 'Underlying Price', expect: 'underlying_price|ignore', cell: (h) => h.underlyingPrice ?? null },
-      { header: 'Delta', expect: 'delta|ignore', cell: (h) => h.delta ?? null },
+      { header: 'Contract Size', expect: 'contract_size', cell: (h) => h.contractSize ?? null },
+      { header: 'Strike', expect: 'strike', cell: (h) => h.strike ?? null },
+      { header: 'Call/Put', expect: 'call_put', cell: (h) => (h.callPut ? h.callPut.toUpperCase() : null) },
+      { header: 'Underlying', expect: 'underlying_name', cell: (h) => h.underlying ?? null },
+      { header: 'Underlying Price', expect: 'underlying_price', cell: (h) => h.underlyingPrice ?? null },
+      { header: 'Delta', expect: 'delta', cell: (h) => h.delta ?? null },
       { header: 'MTM (local)', expect: 'market_value_local', cell: shownLocal },
       { header: 'MTM (SEK)', expect: 'market_value_portfolio', cell: shownPort },
     ],

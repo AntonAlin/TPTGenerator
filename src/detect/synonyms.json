@@ -792,6 +792,514 @@
       "nombre/nominal"
     ]
   },
+  "dirty_price": {
+    "en": [
+      "dirty price",
+      "dirty price %",
+      "dirty price incl accrued",
+      "dirty price % incl accrued",
+      "full price",
+      "price incl accrued",
+      "price including accrued",
+      "gross price",
+      "all-in price"
+    ],
+    "sv": [
+      "smutsigt pris",
+      "kurs inkl upplupen ränta",
+      "dirty-kurs"
+    ],
+    "de": [
+      "dirty preis",
+      "kurs inkl stückzinsen",
+      "bruttokurs"
+    ],
+    "fr": [
+      "prix plein coupon",
+      "cours plein coupon",
+      "cours coupon couru inclus"
+    ]
+  },
+  "yield": {
+    "en": [
+      "yield",
+      "ytm",
+      "yield to maturity",
+      "yield %",
+      "ytw",
+      "yield to worst",
+      "valuation yield",
+      "yield to maturity %"
+    ],
+    "sv": [
+      "effektiv ränta",
+      "ränta till förfall",
+      "yield",
+      "marknadsränta"
+    ],
+    "de": [
+      "rendite",
+      "rendite %",
+      "rendite bis endfälligkeit",
+      "effektivverzinsung"
+    ],
+    "fr": [
+      "rendement",
+      "taux de rendement",
+      "rendement actuariel"
+    ]
+  },
+  "modified_duration": {
+    "en": [
+      "modified duration",
+      "mod duration",
+      "mod. duration",
+      "duration",
+      "duration (yrs)",
+      "md",
+      "mod dur",
+      "effective duration"
+    ],
+    "sv": [
+      "duration",
+      "modifierad duration",
+      "mod. duration"
+    ],
+    "de": [
+      "duration",
+      "modifizierte duration",
+      "mod. duration"
+    ],
+    "fr": [
+      "duration",
+      "duration modifiée",
+      "sensibilité"
+    ]
+  },
+  "spread": {
+    "en": [
+      "spread",
+      "spread bp",
+      "spread (bp)",
+      "margin",
+      "quoted margin",
+      "discount margin",
+      "spread over index",
+      "frn margin",
+      "interest margin"
+    ],
+    "sv": [
+      "spread",
+      "marginal",
+      "räntemarginal",
+      "kreditmarginal",
+      "räntetillägg"
+    ],
+    "de": [
+      "spread",
+      "aufschlag",
+      "marge",
+      "zinsaufschlag"
+    ],
+    "fr": [
+      "spread",
+      "marge",
+      "marge de crédit",
+      "écart de taux"
+    ]
+  },
+  "interest_rate_type": {
+    "en": [
+      "interest rate type",
+      "rate type",
+      "coupon type",
+      "fixed/floating",
+      "fixed or floating",
+      "coupon structure"
+    ],
+    "sv": [
+      "räntetyp",
+      "räntebas",
+      "fast/rörlig",
+      "kupongtyp"
+    ],
+    "de": [
+      "zinsart",
+      "zinstyp",
+      "kupontyp",
+      "fix/variabel"
+    ],
+    "fr": [
+      "type de taux",
+      "nature du taux",
+      "taux fixe/variable"
+    ]
+  },
+  "coupon_frequency": {
+    "en": [
+      "coupon frequency",
+      "frequency",
+      "payment frequency",
+      "coupon freq",
+      "payments per year",
+      "payments / year",
+      "coupons per year"
+    ],
+    "sv": [
+      "kupongfrekvens",
+      "frekvens",
+      "betalningar per år",
+      "räntebetalningar per år"
+    ],
+    "de": [
+      "kuponfrequenz",
+      "zahlungsfrequenz",
+      "zinszahlungen pro jahr",
+      "frequenz"
+    ],
+    "fr": [
+      "fréquence",
+      "fréquence du coupon",
+      "périodicité",
+      "périodicité du coupon"
+    ]
+  },
+  "call_date": {
+    "en": [
+      "call date",
+      "next call date",
+      "first call date",
+      "call/put date",
+      "next call",
+      "put date"
+    ],
+    "sv": [
+      "call-datum",
+      "nästa call-datum",
+      "inlösendatum",
+      "förtida inlösen"
+    ],
+    "de": [
+      "kündigungstermin",
+      "nächster kündigungstermin",
+      "call datum"
+    ],
+    "fr": [
+      "date de call",
+      "date de remboursement anticipé",
+      "prochaine date de call"
+    ]
+  },
+  "cqs": {
+    "en": [
+      "credit quality step",
+      "cqs",
+      "cqs (s2)",
+      "credit quality step (s2)",
+      "solvency ii cqs"
+    ],
+    "sv": [
+      "kreditkvalitetssteg",
+      "cqs"
+    ],
+    "de": [
+      "bonitätsstufe",
+      "kreditqualitätsstufe",
+      "cqs"
+    ],
+    "fr": [
+      "échelon de qualité de crédit",
+      "cqs"
+    ]
+  },
+  "rating_agency": {
+    "en": [
+      "rating agency",
+      "agency",
+      "rating source",
+      "cra"
+    ],
+    "sv": [
+      "ratinginstitut",
+      "kreditvärderingsinstitut"
+    ],
+    "de": [
+      "ratingagentur",
+      "agentur"
+    ],
+    "fr": [
+      "agence de notation",
+      "agence"
+    ]
+  },
+  "nace": {
+    "en": [
+      "nace",
+      "nace code",
+      "nace rev 2",
+      "nace sector",
+      "economic sector code",
+      "nace activity"
+    ],
+    "sv": [
+      "nace",
+      "nace-kod",
+      "sni",
+      "sni-kod",
+      "näringsgren"
+    ],
+    "de": [
+      "nace",
+      "nace-code",
+      "wz-code",
+      "wirtschaftszweig"
+    ],
+    "fr": [
+      "nace",
+      "code nace",
+      "code naf"
+    ]
+  },
+  "group_name": {
+    "en": [
+      "issuer group",
+      "group name",
+      "ultimate parent",
+      "parent company",
+      "issuer parent",
+      "group"
+    ],
+    "sv": [
+      "koncern",
+      "emittentkoncern",
+      "moderbolag",
+      "koncernnamn"
+    ],
+    "de": [
+      "konzern",
+      "emittentengruppe",
+      "muttergesellschaft",
+      "konzernname"
+    ],
+    "fr": [
+      "groupe",
+      "groupe émetteur",
+      "maison mère",
+      "société mère"
+    ]
+  },
+  "group_lei": {
+    "en": [
+      "group lei",
+      "issuer group lei",
+      "parent lei",
+      "ultimate parent lei"
+    ],
+    "sv": [
+      "koncern-lei",
+      "moderbolag lei"
+    ],
+    "de": [
+      "konzern-lei",
+      "lei konzern"
+    ],
+    "fr": [
+      "lei du groupe",
+      "lei société mère"
+    ]
+  },
+  "contract_size": {
+    "en": [
+      "contract size",
+      "multiplier",
+      "contract multiplier",
+      "lot size",
+      "point value",
+      "contract size (units)"
+    ],
+    "sv": [
+      "kontraktsstorlek",
+      "multiplikator",
+      "kontraktsvolym"
+    ],
+    "de": [
+      "kontraktgröße",
+      "multiplikator",
+      "kontraktvolumen"
+    ],
+    "fr": [
+      "taille du contrat",
+      "quotité",
+      "multiplicateur"
+    ]
+  },
+  "strike": {
+    "en": [
+      "strike",
+      "strike price",
+      "exercise price",
+      "strike level"
+    ],
+    "sv": [
+      "lösenpris",
+      "lösen",
+      "strike",
+      "lösenkurs"
+    ],
+    "de": [
+      "basispreis",
+      "ausübungspreis",
+      "strike"
+    ],
+    "fr": [
+      "prix d'exercice",
+      "strike",
+      "prix d’exercice"
+    ]
+  },
+  "call_put": {
+    "en": [
+      "call/put",
+      "call / put",
+      "put/call",
+      "option type",
+      "call or put",
+      "cp",
+      "c/p",
+      "put call"
+    ],
+    "sv": [
+      "köp/sälj",
+      "optionstyp",
+      "call/put",
+      "köp eller sälj"
+    ],
+    "de": [
+      "call/put",
+      "optionsart",
+      "optionstyp"
+    ],
+    "fr": [
+      "call/put",
+      "type d'option",
+      "type d’option"
+    ]
+  },
+  "exercise_type": {
+    "en": [
+      "exercise type",
+      "exercise style",
+      "option style",
+      "exercise"
+    ],
+    "sv": [
+      "lösentyp",
+      "optionsstil",
+      "typ av lösen"
+    ],
+    "de": [
+      "ausübungsart",
+      "optionsstil",
+      "ausübung"
+    ],
+    "fr": [
+      "type d'exercice",
+      "style d'exercice"
+    ]
+  },
+  "underlying_name": {
+    "en": [
+      "underlying",
+      "underlying name",
+      "underlying asset",
+      "underlying instrument",
+      "underlying security"
+    ],
+    "sv": [
+      "underliggande",
+      "underliggande tillgång",
+      "underliggande instrument"
+    ],
+    "de": [
+      "basiswert",
+      "basiswert name",
+      "underlying"
+    ],
+    "fr": [
+      "sous-jacent",
+      "actif sous-jacent",
+      "nom du sous-jacent"
+    ]
+  },
+  "underlying_id": {
+    "en": [
+      "underlying isin",
+      "underlying id",
+      "underlying identifier",
+      "underlying ticker",
+      "underlying code"
+    ],
+    "sv": [
+      "underliggande isin",
+      "underliggande id"
+    ],
+    "de": [
+      "basiswert isin",
+      "isin basiswert",
+      "basiswert id"
+    ],
+    "fr": [
+      "isin sous-jacent",
+      "code sous-jacent",
+      "identifiant du sous-jacent"
+    ]
+  },
+  "underlying_price": {
+    "en": [
+      "underlying price",
+      "underlying spot",
+      "spot price",
+      "underlying level",
+      "price of underlying",
+      "underlying last price"
+    ],
+    "sv": [
+      "underliggande kurs",
+      "underliggandes kurs",
+      "spotkurs"
+    ],
+    "de": [
+      "kurs basiswert",
+      "basiswertkurs",
+      "basiswert kurs"
+    ],
+    "fr": [
+      "cours du sous-jacent",
+      "prix du sous-jacent",
+      "spot"
+    ]
+  },
+  "delta": {
+    "en": [
+      "delta",
+      "option delta",
+      "reported delta",
+      "delta (option)",
+      "sensitivity (delta)"
+    ],
+    "sv": [
+      "delta",
+      "optionsdelta"
+    ],
+    "de": [
+      "delta",
+      "optionsdelta"
+    ],
+    "fr": [
+      "delta",
+      "delta de l'option"
+    ]
+  },
   "ignore": {
     "en": [
       "comment",
@@ -809,10 +1317,6 @@
       "unrealised p l",
       "unrealized gain loss",
       "p&l",
-      "yield",
-      "ytm",
-      "duration",
-      "modified duration",
       "purchase date",
       "trade date",
       "settlement date",
@@ -849,38 +1353,20 @@
       "average cost",
       "average cost per unit",
       "cost price",
-      "strike",
-      "strike price",
-      "underlying price",
-      "multiplier",
-      "contract size",
-      "reported delta",
-      "delta",
-      "next call date",
       "call price %",
       "pool factor",
       "prepayment speed",
-      "spread (bp)",
       "market spread (bp)",
       "days to liquidate",
       "equity share %",
       "leverage / participation",
       "look-through class",
-      "exercise style",
       "premium / margining",
       "direction",
       "protection",
       "alternative type",
       "strategy",
-      "repayment",
-      "dirty price",
-      "dirty price %",
-      "dirty price % incl accrued",
-      "dirty price incl accrued",
-      "full price",
-      "price incl accrued",
-      "price including accrued",
-      "gross price"
+      "repayment"
     ],
     "sv": [
       "kommentar",
@@ -890,7 +1376,6 @@
       "anskaffningsvärde",
       "orealiserat resultat",
       "avkastning",
-      "duration",
       "anskaffningsdatum",
       "affärsdag",
       "likviddag",
@@ -910,8 +1395,6 @@
       "branche",
       "einstandswert",
       "unrealisierter g v",
-      "rendite",
-      "duration",
       "kaufdatum",
       "handelstag",
       "valuta datum",
@@ -928,8 +1411,6 @@
       "secteur",
       "prix de revient",
       "plus moins value",
-      "rendement",
-      "sensibilité",
       "date d'achat",
       "date de valorisation",
       "dépositaire",

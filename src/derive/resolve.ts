@@ -6,11 +6,14 @@
  * and record the source of every value.
  */
 import { parseCic } from '../data/cic.ts';
+import { normalizeNace } from '../data/nace.ts';
 import { isCountry } from '../data/iso.ts';
 import { economicZone } from '../data/regions.ts';
 import { isValidIsin, isValidLei, looksLikeIsin } from '../ingest/identifiers.ts';
 import { ATTRS, type AttrKey } from './attributes.ts';
 import { ASSET_CLASSES, inferAssetClass, type AssetClass, type AssetClassResult } from './assetClass.ts';
+import { predictRow } from './rowModel.ts';
+import { normalizeHeader } from '../detect/headerMatch.ts';
 import { deriveCic, quotationZoneFromCic, underlyingCategoryFromCic } from './cicDerive.ts';
 import { bondAnalytics, type BondAnalytics, type DayCount, type Frequency } from './fixedIncome.ts';
 import type { Holding } from './holdings.ts';
@@ -50,7 +53,14 @@ export interface ResolveContext extends Conventions {
   fx: Record<string, FxEntry>;
   /** Net asset value in portfolio currency entered by the user. */
   nav?: number;
+  /** Asset-type texts the user gave a class to (by typeTextKey), from this file or earlier ones. */
+  typeLessons?: Map<string, { cls: AssetClass; source?: string }>;
+  /** Use the row asset-class model where the rules are unsure (default true). */
+  rowModel?: boolean;
 }
+
+/** How an asset-type text is looked up in the lessons: case, accents and punctuation do not matter. */
+export const typeTextKey = (t: string) => normalizeHeader(t);
 
 export interface ResolvedHolding {
   holding: Holding;
@@ -201,6 +211,8 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
   const fileCic = f.cic && parseCic(f.cic).valid ? f.cic : undefined;
   if (f.cic && !fileCic) issues.push(`CIC "${f.cic}" in the file is not valid: ${parseCic(f.cic).errors.join(' ')}`);
   const ac = inferAssetClass({
+    rowModel: ctx.rowModel === false ? undefined : predictRow(f, ctx.valuationDate),
+    taughtType: f.asset_type ? ctx.typeLessons?.get(typeTextKey(f.asset_type)) : undefined,
     name: f.security_name,
     assetTypeText: f.asset_type,
     section: h.section,
@@ -259,7 +271,7 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
     issues.push(`Coupon in the file (${f.coupon}) differs from the name (${pn.coupon.value}).`);
   }
   attrs.interest_rate_type = pick(
-    undefined,
+    file(rateTypeOf(f.interest_rate_type)),
     !isFI
       ? undefined
       : floating
@@ -270,10 +282,30 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
             ? derived('Fixed', 'Has a coupon and no floating/inflation keyword', attrs.coupon.confidence === 'high' ? 'medium' : 'low')
             : undefined,
   );
-  attrs.coupon_frequency = pick(undefined);
-  for (const k of ['redemption_type', 'redemption_rate', 'callable', 'call_date', 'securitisation', 'guarantee', 'cqs', 'rating_agency'] as AttrKey[]) {
+  attrs.coupon_frequency = pick(file(f.coupon_frequency !== undefined ? String(f.coupon_frequency) : undefined));
+  for (const k of ['redemption_type', 'redemption_rate', 'callable', 'securitisation', 'guarantee'] as AttrKey[]) {
     attrs[k] = pick(undefined);
   }
+  attrs.call_date = pick(file(f.call_date));
+  const cqs = f.cqs !== undefined && Number.isInteger(f.cqs) && f.cqs >= 0 && f.cqs <= 6 ? String(f.cqs) : undefined;
+  if (f.cqs !== undefined && cqs === undefined) issues.push(`Credit quality step "${f.cqs}" is not 0–6.`);
+  attrs.cqs = pick(file(cqs));
+  attrs.rating_agency = pick(file(agencyOf(f.rating_agency)));
+  attrs.interest_margin = pick(floating ? file(f.spread) : undefined);
+
+  // --- Derivative terms (file only: nothing here is derivable without market data) ---------
+  attrs.contract_size = pick(file(f.contract_size));
+  attrs.strike = pick(file(f.strike));
+  attrs.call_put = pick(
+    file(callPutOf(f.call_put)),
+    effectiveClass === 'call_option' ? derived('Cal', 'Classified as a call option', ac.confidence) : effectiveClass === 'put_option' ? derived('Put', 'Classified as a put option', ac.confidence) : undefined,
+  );
+  attrs.exercise_type = pick(file(exerciseOf(f.exercise_type)));
+  attrs.underlying_name = pick(file(f.underlying_name));
+  attrs.underlying_id = pick(file(f.underlying_id));
+  attrs.underlying_id_type = pick(undefined, f.underlying_id && isValidIsin(f.underlying_id) ? derived('1', 'Underlying identifier is a valid ISIN → type 1', 'high') : undefined);
+  attrs.underlying_price = pick(file(f.underlying_price));
+  attrs.delta = pick(file(f.delta));
   attrs.covered = pick(undefined, ['covered_bond', 'gov_covered_bond'].includes(effectiveClass) ? derived('C', 'Classified as a covered bond', 'medium') : undefined);
   attrs.subordinated = pick(
     undefined,
@@ -316,7 +348,9 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
   const freqNote = freqKnown ? '' : ` Coupon frequency ${frequency}/year is an assumption (change it in step 3).`;
 
   let accrued: Resolved<number>;
-  if (f.accrued_interest !== undefined) {
+  if (f.accrued_interest === undefined && f.dirty_price !== undefined && f.price !== undefined && isFI && nominal !== undefined) {
+    accrued = derived(round(((f.dirty_price - f.price) * nominal) / 100, 2), 'Dirty price − clean price, × nominal ÷ 100', 'high');
+  } else if (f.accrued_interest !== undefined) {
     accrued = fromFile(f.accrued_interest, 'Input file (assumed quotation currency)');
     if (h.scaled?.accrued_interest) accrued.note = `${h.scaled.accrued_interest}.`;
   }
@@ -386,9 +420,14 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
     attrs.mv_port_clean = missing(`No FX rate for ${ccy}.`);
   }
 
+  if (f.modified_duration !== undefined || f.yield !== undefined) {
+    // The file's own analytics come first; what it lacks is computed below where possible.
+    if (f.modified_duration !== undefined) attrs.modified_duration = fromFile(f.modified_duration);
+    if (f.yield !== undefined) attrs.valuation_yield = fromFile(f.yield, 'Input file (in %)');
+  }
   if (analytics?.modifiedDuration !== undefined) {
-    attrs.modified_duration = derived(round(analytics.modifiedDuration, 6), `Computed from coupon, maturity and clean price: ${analytics.assumptions}`, minConfidence(inputConf, 'medium'), freqNote.trim() || undefined);
-    attrs.valuation_yield = derived(
+    if (f.modified_duration === undefined) attrs.modified_duration = derived(round(analytics.modifiedDuration, 6), `Computed from coupon, maturity and clean price: ${analytics.assumptions}`, minConfidence(inputConf, 'medium'), freqNote.trim() || undefined);
+    if (f.yield === undefined) attrs.valuation_yield = derived(
       round(analytics.yieldToMaturity! * 100, 6),
       `Yield to maturity solved from the clean price + accrued: ${analytics.assumptions}`,
       minConfidence(inputConf, 'medium'),
@@ -400,8 +439,8 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
       : !ctx.valuationDate
         ? 'Enter the valuation date to compute duration and yield.'
         : 'Needs coupon, maturity and clean price.';
-    attrs.modified_duration = missing(why);
-    attrs.valuation_yield = missing(why);
+    if (f.modified_duration === undefined) attrs.modified_duration = missing(why);
+    if (f.yield === undefined) attrs.valuation_yield = missing(why);
   }
 
   // --- Issuer ------------------------------------------------------------------
@@ -411,7 +450,15 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
   attrs.issuer_id = pick(lei ? fromFile(lei, 'Issuer LEI from the file') : undefined);
   const idVal = typeof attrs.issuer_id.value === 'string' ? attrs.issuer_id.value : undefined;
   attrs.issuer_id_type = pick(undefined, idVal && isValidLei(idVal) ? derived('1', 'Issuer id is a valid LEI → type 1', 'high') : undefined);
-  for (const k of ['group_name', 'group_id', 'group_id_type', 'nace'] as AttrKey[]) attrs[k] = missing();
+  attrs.group_name = pick(file(f.group_name));
+  const groupLei = f.group_lei && isValidLei(f.group_lei) ? f.group_lei : undefined;
+  if (f.group_lei && !groupLei) issues.push(`Group LEI "${f.group_lei}" fails the ISO 17442 check.`);
+  attrs.group_id = pick(groupLei ? fromFile(groupLei, 'Group LEI from the file') : undefined);
+  attrs.group_id_type = pick(undefined, groupLei ? derived('1', 'Group id is a valid LEI → type 1', 'high') : undefined);
+  // NACE only from the file, reformatted to the TPT format; never guessed from names.
+  const naceCode = f.nace ? normalizeNace(f.nace) : undefined;
+  if (f.nace && !naceCode) issues.push(`"${f.nace}" is not a NACE Rev. 2 code.`);
+  attrs.nace = pick(naceCode ? fromFile(naceCode, naceCode === f.nace ? 'Input file' : `Input file ("${f.nace}" written as a TPT NACE code)`) : undefined);
 
   const isinCountry = f.isin?.slice(0, 2);
   let countryDerived: Resolved | undefined;
@@ -433,3 +480,44 @@ function resolveOne(h: Holding, ctx: ResolveContext): ResolvedHolding {
 
 /** Confidence label helper for UIs. */
 export const confidenceOf = (r: Resolved): Confidence | undefined => r.confidence;
+
+/** Interest rate type as written ("fast", "rörlig", "fixe", "FRN") → the TPT code (field 32). */
+export function rateTypeOf(v: string | undefined): string | undefined {
+  if (!v) return undefined;
+  const t = v.trim().toLowerCase();
+  if (/^(fixed|fix|fixe|fast|fest|festverzinslich|fixed rate|taux fixe)$/.test(t)) return 'Fixed';
+  if (/^(floating|float|frn|rörlig|variabel verzinslich|floating rate|taux variable|flottant)$/.test(t)) return 'Floating';
+  if (/^(variable|variabel|var)$/.test(t)) return 'Variable';
+  if (/inflation|real|index-?linked|realränte/.test(t)) return 'Inflation_linked';
+  return undefined;
+}
+/** Option type as written ("C", "köp", "Put") → "Cal" / "Put" (field 60). */
+export function callPutOf(v: string | undefined): string | undefined {
+  if (!v) return undefined;
+  const t = v.trim().toLowerCase();
+  if (/^(c|call|cal|köp|köpoption|kaufoption|achat)$/.test(t)) return 'Cal';
+  if (/^(p|put|sälj|säljoption|verkaufsoption|vente)$/.test(t)) return 'Put';
+  if (/^cap$/.test(t)) return 'Cap';
+  if (/^(floor|flr)$/.test(t)) return 'Flr';
+  return undefined;
+}
+/** Exercise style as written → "AM" / "EU" / "AS" / "BE" (field 64). */
+export function exerciseOf(v: string | undefined): string | undefined {
+  if (!v) return undefined;
+  const t = v.trim().toLowerCase();
+  if (/^(am|american|amerikansk|amerikanisch|américaine|americaine)$/.test(t)) return 'AM';
+  if (/^(eu|european|europeisk|europäisch|européenne|europeenne)$/.test(t)) return 'EU';
+  if (/^(as|asian|asiatisk|asiatisch|asiatique)$/.test(t)) return 'AS';
+  if (/^(be|bermudan|bermuda)$/.test(t)) return 'BE';
+  return undefined;
+}
+/** Rating agency name as written → a consistent name (field 113). */
+export function agencyOf(v: string | undefined): string | undefined {
+  if (!v) return undefined;
+  const t = v.trim().toLowerCase();
+  if (/^(s ?& ?p|sp|standard ?& ?poor'?s)/.test(t)) return 'S&P';
+  if (/^moody/.test(t)) return "Moody's";
+  if (/^fitch/.test(t)) return 'Fitch';
+  return v.trim();
+}
+

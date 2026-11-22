@@ -14,7 +14,7 @@ interface Props {
   implied: Record<string, ImpliedFx>;
   derivations: PortfolioDerivations;
   navNote?: string;
-  suggestions: { baseCurrency?: string; baseWhy?: string; valuationDate?: string; valuationDateWhy?: string; portfolioName?: string; portfolioNameWhy?: string };
+  suggestions: { baseCurrency?: string; baseWhy?: string; valuationDate?: string; valuationDateWhy?: string; portfolioName?: string; portfolioNameWhy?: string; nav?: number; navWhy?: string };
   fundRepo: FundProfileRepository;
   onContinue: () => void;
 }
@@ -52,6 +52,14 @@ export function PortfolioStep({ portfolio: p, setPortfolio, fx, implied, derivat
               Use “{suggestions.portfolioName}” as 3 · Portfolio name
             </button>{' '}
             <span class="muted">({suggestions.portfolioNameWhy})</span>
+          </p>
+        )}
+        {suggestions.nav !== undefined && p.level === 'fund' && !p.values['5'] && (
+          <p class="small">
+            <button type="button" class="linklike" onClick={() => setValue('5', String(suggestions.nav))}>
+              Use {suggestions.nav.toLocaleString('en-US')} as 5 · Net asset value
+            </button>{' '}
+            <span class="muted">({suggestions.navWhy})</span>
           </p>
         )}
       </div>

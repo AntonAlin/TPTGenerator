@@ -9,7 +9,7 @@ import type { BenchHolding } from './holdings.ts';
 
 export const CHECKS = [
   'found', 'cic', 'identifier', 'holding', 'currency', 'mv_local', 'mv_portfolio', 'weight', 'coupon', 'maturity',
-  'contract_size', 'strike', 'call_put', 'underlying_price', 'delta', 'modified_duration',
+  'contract_size', 'strike', 'call_put', 'underlying_price', 'delta', 'modified_duration', 'yield',
 ] as const;
 export type Check = (typeof CHECKS)[number];
 
@@ -96,6 +96,7 @@ export function evaluateCase(c: BenchCase): CaseResult {
     if (h.callPut && carried(/call ?\/ ?put/i)) score('call_put', v(row, '60') === (h.callPut === 'call' ? 'Cal' : 'Put'), h, `60=${v(row, '60')}`);
     if (h.underlyingPrice !== undefined && carried(/underlying price/i)) score('underlying_price', v(row, '72') === h.underlyingPrice, h, `72=${v(row, '72')} want ${h.underlyingPrice}`);
     if (h.delta !== undefined && carried(/delta/i)) score('delta', v(row, '93') === h.delta, h, `93=${v(row, '93')} want ${h.delta}`);
+    if (h.yieldPct !== undefined && carried(/yield/i)) score('yield', close(v(row, '129'), h.yieldPct, 1e-6), h, `129=${v(row, '129')} want ${h.yieldPct}`);
     if (h.modifiedDuration !== undefined && carried(/duration/i)) score('modified_duration', close(v(row, '90'), h.modifiedDuration, 1e-6), h, `90=${v(row, '90')} want ${h.modifiedDuration}`);
   }
   const extra = tpt.length - p.holdings.filter((h) => tpt.some((r) => v(r, '17') === h.name)).length;

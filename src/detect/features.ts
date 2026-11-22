@@ -65,6 +65,14 @@ export const FEATURE_NAMES: string[] = [
   'name_like',
   'id_like',
   'upper_code',
+  'callput_text',
+  'ratetype_text',
+  'freq_value',
+  'exercise_text',
+  'agency_text',
+  'nace_format',
+  'int_0_6',
+  'in_neg1_1',
 ];
 
 export interface ColumnInput {
@@ -81,6 +89,14 @@ export interface ColumnProfile {
   dates: (string | undefined)[];
   stats: Record<string, number>;
 }
+
+// Value vocabularies for the fields that are codes or words rather than numbers (EN/SV/DE/FR).
+const CALLPUT_RE = /^(call|put|c|p|cal|köp|sälj|köpoption|säljoption|kaufoption|verkaufsoption|achat|vente)$/;
+const RATETYPE_RE = /^(fixed|fix|fixe|floating|float|frn|variable|var|fast|rörlig|fest|variabel|inflation[_ -]?linked|inflation|zero|nollkupong)$/;
+const FREQ_TEXT_RE = /^(annual|annually|yearly|semi[- ]?annual(ly)?|quarterly|monthly|weekly|årlig|årsvis|halvår(svis)?|kvartal(svis)?|månad(svis)?|jährlich|halbjährlich|vierteljährlich|monatlich|annuel(le)?|semestriel(le)?|trimestriel(le)?|mensuel(le)?)$/;
+const EXERCISE_RE = /^(american|european|asian|bermudan|am|eu|as|be|amerikansk|europeisk|amerikanisch|europäisch|américaine|européenne)$/;
+const AGENCY_RE = /^(s&p|s & p|standard & poor'?s|moody'?s|fitch|dbrs|scope|sp)$/;
+const NACE_RE = /^[A-U](\d{2}(\.?\d{1,2}){0,2})?$|^\d{2}\.\d{1,2}(\.\d)?[A-Z]?$|^[A-U]\d{4}$/;
 
 const isBlank = (c: RawCell) => c == null || (typeof c === 'string' && c.trim() === '');
 const str = (c: RawCell) => (c instanceof Date ? c.toISOString().slice(0, 10) : String(c)).trim();
@@ -114,8 +130,16 @@ export function profileColumn(col: ColumnInput, sampleLimit = 400, fallbackDecim
 
   let isinValid = 0, isinShape = 0, lei = 0, ccy = 0, ctry = 0, cic = 0, rating = 0, pct = 0, text = 0, kw = 0, nameLike = 0, idLike = 0, upper = 0;
   let textLen = 0, words = 0;
+  let callPut = 0, rateType = 0, freq = 0, exercise = 0, agency = 0, nace = 0;
   for (const v of sample) {
     const s = str(v);
+    const low = s.toLowerCase();
+    if (CALLPUT_RE.test(low)) callPut++;
+    if (RATETYPE_RE.test(low)) rateType++;
+    if (FREQ_TEXT_RE.test(low) || (/^(0|1|2|4|12|52)$/.test(s))) freq++;
+    if (EXERCISE_RE.test(low)) exercise++;
+    if (AGENCY_RE.test(low)) agency++;
+    if (NACE_RE.test(s)) nace++;
     if (isValidIsin(s)) isinValid++;
     if (looksLikeIsin(s)) isinShape++;
     if (isValidLei(s)) lei++;
@@ -173,6 +197,14 @@ export function profileColumn(col: ColumnInput, sampleLimit = 400, fallbackDecim
     in_0_1: nums.length ? nums.filter((x) => x >= 0 && x <= 1).length / nn : 0,
     in_0_20: nums.length ? nums.filter((x) => x >= 0 && x <= 20).length / nn : 0,
     in_50_150: nums.length ? nums.filter((x) => x >= 50 && x <= 150).length / nn : 0,
+    callput_text: callPut / n,
+    ratetype_text: rateType / n,
+    freq_value: freq / n,
+    exercise_text: exercise / n,
+    agency_text: agency / n,
+    nace_format: nace / n,
+    int_0_6: nums.length ? nums.filter((x) => Number.isInteger(x) && x >= 0 && x <= 6).length / nn : 0,
+    in_neg1_1: nums.length ? nums.filter((x) => x >= -1 && x <= 1).length / nn : 0,
     sum_100: nums.length >= 2 && Math.abs(sum - 100) <= 2 ? 1 : 0,
     sum_1: nums.length >= 2 && Math.abs(sum - 1) <= 0.02 ? 1 : 0,
     row_id: numbers.length > 2 ? steps / (numbers.length - 1) : 0,

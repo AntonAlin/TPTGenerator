@@ -7,6 +7,7 @@ import type { CanonicalField } from '../detect/canonical.ts';
 import { CANONICAL_FIELDS } from '../detect/canonical.ts';
 import { normalizeHeader } from '../detect/headerMatch.ts';
 import type { KeyValueStore } from './store.ts';
+import { applyProfile, bestProfile, type LearnedHeader, type LearnedType, type ProfileMatch } from './learned.ts';
 
 export interface SourceProfile {
   fingerprint: string;
@@ -27,6 +28,10 @@ export interface ProfileExport {
   version: 1;
   exportedAt: string;
   profiles: SourceProfile[];
+  /** Headers learned from the user's corrections (optional; older exports have none). */
+  learned?: LearnedHeader[];
+  /** Asset-type texts the user gave a class (optional). */
+  learnedTypes?: LearnedType[];
 }
 
 /** FNV-1a 64-bit over the normalised, order-preserving header list → hex. Deterministic, sync, no crypto needed. */
@@ -55,12 +60,20 @@ export class ProfileRepository {
     return this.store.get<SourceProfile>(STORE_PREFIX + fingerprint);
   }
 
-  /** Find a profile for these headers: exact fingerprint first, then same header set in any order. */
+  /** Find a profile for these headers: exact fingerprint first, then the closest one if it is close enough. */
   async findFor(headers: string[]): Promise<SourceProfile | undefined> {
+    return (await this.matchFor(headers))?.profile;
+  }
+
+  /**
+   * The profile that fits these headers, and how: the same columns in the same order, the same
+   * columns in another order, or a file from the same source whose columns changed a little (a date
+   * in a header, a column added or dropped). Columns the profile does not know are classified as usual.
+   */
+  async matchFor(headers: string[]): Promise<ProfileMatch | undefined> {
     const exact = await this.get(headerFingerprint(headers));
-    if (exact) return exact;
-    const set = new Set(headers.map(normalizeHeader));
-    return (await this.list()).find((p) => p.headers.length === set.size && p.headers.every((h) => set.has(h)));
+    if (exact) return applyProfile(exact, headers);
+    return bestProfile(await this.list(), headers);
   }
 
   async save(input: { name: string; headers: string[]; mapping: CanonicalField[]; options?: SourceProfile['options'] }): Promise<SourceProfile> {
@@ -132,12 +145,10 @@ function isValidProfile(p: unknown): p is SourceProfile {
   );
 }
 
-/** Apply a profile to the current headers: returns column index → field for headers the profile knows. */
+/**
+ * Apply a profile to the current headers: returns column index → field for headers the profile
+ * knows, by exact header or, when unambiguous, by the same header with other dates or numbers in it.
+ */
 export function profileMapping(profile: SourceProfile, headers: string[]): Map<number, CanonicalField> {
-  const out = new Map<number, CanonicalField>();
-  headers.forEach((h, i) => {
-    const f = profile.mapping[normalizeHeader(h)];
-    if (f) out.set(i, f);
-  });
-  return out;
+  return applyProfile(profile, headers).mapping;
 }

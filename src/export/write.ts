@@ -99,6 +99,9 @@ export function writeQualityXlsx(r: QualityReport): Uint8Array<ArrayBuffer> {
         ['Missing', s.bySource.missing],
         ['Validation errors', s.errors],
         ['Validation warnings', s.warnings],
+        ...(r.reconciliation
+          ? [['Reconciliation', `${r.reconciliation.checks.filter((c) => c.status === 'ok').length} of ${r.reconciliation.checks.length} checks agree`, `${r.reconciliation.flags.length} row(s) flagged`]]
+          : []),
         [],
         ['No market or reference data was used. Derived values are estimates; see the "Estimated values" sheet for the method of each.'],
       ],
@@ -147,5 +150,23 @@ export function writeQualityXlsx(r: QualityReport): Uint8Array<ArrayBuffer> {
     ),
     'Amount interpretation',
   );
+  if (r.reconciliation) {
+    const rc = r.reconciliation;
+    XLSX.utils.book_append_sheet(
+      wb,
+      sheet(
+        [
+          ['Check', 'What', 'In the file', 'Rows add up to', 'Difference', 'Status', 'Detail'],
+          ...rc.checks.map((c) => [c.kind, c.label, c.expected, c.actual, c.diff, c.status, c.detail]),
+          [],
+          ['Flagged rows'],
+          ['Row', 'Name', 'Check', 'Message'],
+          ...rc.flags.map((f) => [f.row, f.name, f.check, f.message]),
+        ],
+        [10, 50, 16, 16, 14, 8, 100],
+      ),
+      'Reconciliation',
+    );
+  }
   return new Uint8Array(XLSX.write(wb, { type: 'array', bookType: 'xlsx', bookSST: true, compression: true }) as ArrayBuffer);
 }

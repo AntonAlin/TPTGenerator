@@ -4,6 +4,8 @@
  * accounting negatives, and dates in many formats (including Excel serials).
  */
 
+import currenciesJson from '../data/iso4217.json';
+
 export type DecimalSeparator = ',' | '.';
 
 export interface ParsedNumber {
@@ -12,6 +14,7 @@ export interface ParsedNumber {
   percent: boolean;
 }
 
+const CURRENCY_CODES = new Set<string>([...currenciesJson.currencies.map((c) => c.code), 'CNH', 'GBX']);
 const NBSP = /[   ]/g;
 
 /**
@@ -36,8 +39,10 @@ export function parseNumber(raw: unknown, decimal?: DecimalSeparator): ParsedNum
     percent = true;
     s = s.slice(0, -1).trim();
   }
-  // Strip a currency code or symbol prefix/suffix such as "SEK 1 000" or "1,000 €".
-  s = s.replace(/^([A-Z]{3}|[$€£¥])\s*/, '').replace(/\s*([A-Z]{3}|[$€£¥])$/, '');
+  // Strip a currency code or symbol prefix/suffix such as "SEK 1 000" or "1,000 €". Only real ISO 4217
+  // codes: "FWD-5472" and "SEC123456" are identifiers, not -5,472 and 123,456.
+  const ccy = (m: string, c: string) => (c.length === 1 || CURRENCY_CODES.has(c) ? '' : m);
+  s = s.replace(/^([A-Z]{3}|[$€£¥])\s*/, ccy).replace(/\s*([A-Z]{3}|[$€£¥])$/, ccy);
   if (/^[-+−]/.test(s)) {
     negative = negative !== /^[-−]/.test(s);
     s = s.slice(1).trim();

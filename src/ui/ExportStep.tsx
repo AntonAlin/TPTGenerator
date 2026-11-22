@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'preact/hooks';
-import type { ResolveResult } from '../derive/resolve.ts';
+import { typeTextKey, type ResolveResult } from '../derive/resolve.ts';
+import { ASSET_CLASSES, type AssetClass } from '../derive/assetClass.ts';
+import type { Reconciliation } from '../derive/reconcile.ts';
 import type { FxEntry } from '../derive/valuation.ts';
 import type { PortfolioState } from '../portfolio/portfolio.ts';
 import { buildTptFiles } from '../export/buildTpt.ts';
@@ -16,14 +18,41 @@ interface Props {
   fxMissing: string[];
   /** Table-level findings from the amount interpretation (column totals). */
   amountNotes: string[];
+  /** Asset-type texts the user gave a class, by typeTextKey. */
+  typeLessons: Map<string, { cls: AssetClass; source?: string }>;
+  /** Give an asset-type text a class (remembered in this browser), or forget it (cls undefined). */
+  onTeachType: (shown: string, cls: AssetClass | undefined) => void;
+  reconciliation?: Reconciliation;
 }
 
-type Tab = 'validation' | 'amounts' | 'missing' | 'estimated' | 'fields' | 'notDerived';
+type Tab = 'validation' | 'reconciliation' | 'amounts' | 'types' | 'missing' | 'estimated' | 'fields' | 'notDerived';
+
+interface TypeGroup {
+  shown: string;
+  key: string;
+  rows: number;
+  classes: Map<AssetClass, number>;
+}
+
+/** The file's asset-type texts, with how many rows each has and the classes they were read as. */
+function typeGroups(result: ResolveResult): TypeGroup[] {
+  const by = new Map<string, TypeGroup>();
+  for (const r of result.rows) {
+    const t = r.holding.file.asset_type?.trim();
+    if (!t) continue;
+    const key = typeTextKey(t);
+    const g = by.get(key) ?? by.set(key, { shown: t, key, rows: 0, classes: new Map() }).get(key)!;
+    g.rows++;
+    g.classes.set(r.effectiveClass, (g.classes.get(r.effectiveClass) ?? 0) + 1);
+  }
+  return [...by.values()].sort((a, b) => b.rows - a.rows);
+}
+const ASSET_CLASS_OPTIONS = (Object.keys(ASSET_CLASSES) as AssetClass[]).sort((a, b) => ASSET_CLASSES[a].label.localeCompare(ASSET_CLASSES[b].label));
 const XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 const SOURCES: Source[] = ['file', 'user', 'derived', 'missing'];
 const pct = (a: number, b: number) => (b ? `${((a / b) * 100).toFixed(1)}%` : '–');
 
-export function ExportStep({ result, portfolio, fx, fxMissing, amountNotes }: Props) {
+export function ExportStep({ result, portfolio, fx, fxMissing, amountNotes, typeLessons, onTeachType, reconciliation }: Props) {
   const [freeText, setFreeText] = useState(portfolio.values['3']?.replace(/\s+/g, '-').slice(0, 30) || 'TPT');
   const [includeSource, setIncludeSource] = useState(true);
   const [delimiter, setDelimiter] = useState(',');
@@ -43,8 +72,12 @@ export function ExportStep({ result, portfolio, fx, fxMissing, amountNotes }: Pr
   };
 
   const files = useMemo(() => buildTptFiles(result, portfolio, fx, { freeText }), [result, portfolio, fx, freeText]);
+  const types = useMemo(() => typeGroups(result), [result]);
+  const modelRows = useMemo(() => result.rows.filter((r) => r.assetClass.evidence[0]?.startsWith('Row model:')), [result]);
   const file = files[Math.min(fileIdx, files.length - 1)];
-  const report: QualityReport = useMemo(() => buildQualityReport(file), [file]);
+  const report: QualityReport = useMemo(() => buildQualityReport(file, reconciliation), [file, reconciliation]);
+  const recon = report.reconciliation;
+  const reconWarn = recon ? recon.checks.filter((c) => c.status === 'warn').length + recon.flags.length : 0;
   const s = report.summary;
   const prerequisites = [
     !portfolio.values['6'] && 'valuation date (field 6)',
@@ -149,7 +182,9 @@ export function ExportStep({ result, portfolio, fx, fxMissing, amountNotes }: Pr
           {(
             [
               ['validation', `Validation (${report.validation.length})`],
+              ['reconciliation', `Reconciliation${recon ? ` (${reconWarn ? `${reconWarn} to check` : 'all agree'})` : ''}`],
               ['amounts', `Amounts (${report.amounts.length})`],
+              ['types', `Asset types (${types.length + modelRows.length})`],
               ['missing', `Missing mandatory (${report.missingMandatory.length})`],
               ['estimated', `Estimated values (${report.estimated.length})`],
               ['fields', 'Completeness per field'],
@@ -168,6 +203,34 @@ export function ExportStep({ result, portfolio, fx, fxMissing, amountNotes }: Pr
               rows={report.validation.map((v) => [<span class={v.severity === 'error' ? 'error' : 'warn'}>{v.severity}</span>, v.row ?? '', v.identifier ?? '', v.fieldId ?? '', v.message])}
               empty="No validation problems."
             />
+          )}
+          {tab === 'reconciliation' && (
+            <>
+              <p class="muted small">
+                Does the converted portfolio add up to what the file itself says? Each total and sub-total row against the rows it covers, a NAV written in the file
+                against the holdings, the weights, one FX rate per currency, and each row's quantity × price against its value. Nothing here changes a value.
+              </p>
+              <Table
+                head={['', 'Check', 'In the file', 'Rows add up to', 'Difference', 'Detail']}
+                rows={(recon?.checks ?? []).map((c) => [
+                  <span class={c.status === 'warn' ? 'warn' : c.status === 'ok' ? 'ok' : 'muted'} title={c.status}>
+                    {c.status === 'ok' ? '✓' : c.status === 'warn' ? '!' : 'i'}
+                  </span>,
+                  c.label,
+                  c.expected === undefined ? '' : display(c.expected),
+                  c.actual === undefined ? '' : display(c.actual),
+                  c.diff === undefined || Math.abs(c.diff) < 1e-9 ? '' : display(c.diff),
+                  c.detail,
+                ])}
+                empty="Nothing to reconcile against: the file has no totals, NAV, weights or portfolio-currency values."
+              />
+              {recon && recon.flags.length > 0 && (
+                <>
+                  <h4>Rows that do not reconcile</h4>
+                  <Table head={['Row', 'Name', 'Check', 'What is off']} rows={recon.flags.map((f) => [f.row, f.name, f.check, f.message])} empty="" />
+                </>
+              )}
+            </>
           )}
           {tab === 'amounts' && (
             <>
@@ -197,6 +260,62 @@ export function ExportStep({ result, portfolio, fx, fxMissing, amountNotes }: Pr
                   a.alternative ?? '',
                 ])}
                 empty="Every amount column was read as mapped, with high confidence."
+              />
+            </>
+          )}
+          {tab === 'types' && (
+            <>
+              <p class="muted small">
+                The asset type decides the CIC. Each type text in the file is listed with the classes its rows were read as. If a text is read wrongly, or is a code of the
+                file's own ("OPT", "21", "Aktie onoterad"), set its class here: every row with that text follows, in this file and in the next ones (remembered in this
+                browser only).
+              </p>
+              <Table
+                head={['Asset type in the file', 'Rows', 'Read as', 'Set the class']}
+                rows={types.map((g) => {
+                  const lesson = typeLessons.get(g.key);
+                  const main = [...g.classes].sort((a, b) => b[1] - a[1])[0][0];
+                  return [
+                    <code>{g.shown}</code>,
+                    g.rows,
+                    [...g.classes].map(([c, n]) => `${ASSET_CLASSES[c].label}${g.classes.size > 1 ? ` (${n})` : ''}`).join(', '),
+                    <span class="filters">
+                      <select
+                        aria-label={`Class for asset type ${g.shown}`}
+                        value={lesson?.cls ?? ''}
+                        onChange={(e) => {
+                          const v = (e.target as HTMLSelectElement).value;
+                          onTeachType(g.shown, v ? (v as AssetClass) : undefined);
+                        }}
+                      >
+                        <option value="">{lesson ? 'Forget what I set' : `As read (${ASSET_CLASSES[main].label})`}</option>
+                        {ASSET_CLASS_OPTIONS.map((c) => (
+                          <option key={c} value={c}>
+                            {ASSET_CLASSES[c].label}
+                          </option>
+                        ))}
+                      </select>
+                      {lesson && <span class="badge">set by you</span>}
+                    </span>,
+                  ];
+                })}
+                empty="The file has no asset-type column."
+              />
+              <h4>Rows placed by the row model</h4>
+              <p class="muted small">
+                Rows with no telling asset type or keyword, classified from what they carry (strike, delta, contract size, coupon, maturity, how quantity, price and value
+                relate). Check them; give the file an asset-type column, or set the type above, to decide them yourself.
+              </p>
+              <Table
+                head={['Row', 'Name', 'Read as', 'Confidence', 'Evidence']}
+                rows={modelRows.map((r) => [
+                  r.holding.row + 1,
+                  r.holding.file.security_name ?? '',
+                  ASSET_CLASSES[r.effectiveClass].label,
+                  <span class={`conf-${r.assetClass.confidence}`}>{r.assetClass.confidence}</span>,
+                  r.assetClass.evidence.join('; '),
+                ])}
+                empty="No row needed the row model: the type texts and names decided every row."
               />
             </>
           )}

@@ -31,6 +31,27 @@ export interface FileValues {
   accrued_interest?: number;
   fx_rate?: number;
   cic?: string;
+  dirty_price?: number;
+  yield?: number;
+  modified_duration?: number;
+  spread?: number;
+  interest_rate_type?: string;
+  /** Coupons per year: 1, 2, 4, 12 (words like "semi-annual" are read as numbers). */
+  coupon_frequency?: number;
+  call_date?: string;
+  cqs?: number;
+  rating_agency?: string;
+  nace?: string;
+  group_name?: string;
+  group_lei?: string;
+  contract_size?: number;
+  strike?: number;
+  call_put?: string;
+  exercise_type?: string;
+  underlying_name?: string;
+  underlying_id?: string;
+  underlying_price?: number;
+  delta?: number;
 }
 
 /** Columns whose cells are amounts that may need re-sorting per row (see derive/amounts.ts). */
@@ -76,8 +97,25 @@ export interface NormalizeResult {
   totals: TotalRow[];
 }
 
-const NUMERIC: CanonicalField[] = ['quantity', 'nominal', 'market_value_local', 'market_value_portfolio', 'price', 'coupon', 'weight', 'accrued_interest', 'fx_rate', 'amount_mixed'];
-const UPPER: CanonicalField[] = ['isin', 'currency', 'issuer_lei', 'country', 'cic'];
+const NUMERIC: CanonicalField[] = [
+  'quantity', 'nominal', 'market_value_local', 'market_value_portfolio', 'price', 'coupon', 'weight', 'accrued_interest', 'fx_rate', 'amount_mixed',
+  'dirty_price', 'yield', 'modified_duration', 'spread', 'cqs', 'contract_size', 'strike', 'underlying_price', 'delta',
+];
+const UPPER: CanonicalField[] = ['isin', 'currency', 'issuer_lei', 'country', 'cic', 'group_lei', 'nace'];
+const DATES: CanonicalField[] = ['maturity_date', 'call_date'];
+
+/** Coupon payments per year from a number or a word (EN/SV/DE/FR). */
+export function frequencyOf(v: string | number): number | undefined {
+  if (typeof v === 'number') return [0, 1, 2, 4, 12, 52].includes(v) ? v : undefined;
+  const t = v.trim().toLowerCase();
+  if (/^(0|1|2|4|12|52)$/.test(t)) return Number(t);
+  if (/^(semi[- ]?annual(ly)?|half[- ]?yearly|halvår\w*|halbjährlich|semestriel\w*|s)$/.test(t)) return 2;
+  if (/^(annual(ly)?|yearly|årlig\w*|årsvis|jährlich|annuel\w*|a|y)$/.test(t)) return 1;
+  if (/^(quarterly|kvartal\w*|vierteljährlich|trimestriel\w*|q)$/.test(t)) return 4;
+  if (/^(monthly|månad\w*|månatlig\w*|monatlich|mensuel\w*|m)$/.test(t)) return 12;
+  if (/^(weekly|vecko\w*|wöchentlich|hebdomadaire|w)$/.test(t)) return 52;
+  return undefined;
+}
 
 const blank = (c: RawCell) => c == null || (typeof c === 'string' && !c.trim());
 const text = (c: RawCell) => (c instanceof Date ? c.toISOString().slice(0, 10) : String(c)).trim();
@@ -114,11 +152,19 @@ export function normalizeHoldings(table: DetectedTable, mapping: CanonicalField[
           notes.push(`Weights in "${table.headers[col]}" read as percentages (sum ${sum.toFixed(2)}) and divided by 100 (TPT: 1 = 100%).`);
         } else notes.push(`Weights in "${table.headers[col]}" read as fractions (sum ${sum.toFixed(4)}).`);
       }
-      if (field === 'coupon') {
+      if (field === 'coupon' || field === 'yield') {
         const pos = nums.filter((x): x is number => x !== undefined && x > 0);
         if (pos.length && Math.max(...pos) < 0.2 && !parsed.some((p) => p?.percent)) {
           factor = 100;
-          notes.push(`Coupons in "${table.headers[col]}" look like fractions (max ${Math.max(...pos)}) and were multiplied by 100.`);
+          notes.push(`${field === 'coupon' ? 'Coupons' : 'Yields'} in "${table.headers[col]}" look like fractions (max ${Math.max(...pos)}) and were multiplied by 100.`);
+        }
+      }
+      if (field === 'spread') {
+        // A margin in basis points (a header that says bp, or values too large for %) goes to %.
+        const max = Math.max(0, ...nums.map((x) => Math.abs(x ?? 0)));
+        if (/\b(bps?|bp|basis|pb|punkte|punkter)\b/i.test(table.headers[col]) || max > 20) {
+          factor = 0.01;
+          notes.push(`Spreads in "${table.headers[col]}" read as basis points and divided by 100 (TPT field 37 is in %).`);
         }
       }
       const isAmount = (AMOUNT_FIELDS as readonly string[]).includes(field);
@@ -131,7 +177,17 @@ export function normalizeHoldings(table: DetectedTable, mapping: CanonicalField[
       return;
     }
 
-    if (field === 'maturity_date') {
+    if (field === 'coupon_frequency') {
+      values.forEach((v, i) => {
+        if (blank(v)) return;
+        const f = frequencyOf(typeof v === 'number' ? v : text(v));
+        if (f !== undefined) set(holdings[i], field, f);
+        else holdings[i].unparsed.coupon_frequency = text(v);
+      });
+      return;
+    }
+
+    if (DATES.includes(field)) {
       values.forEach((v, i) => {
         if (blank(v)) return;
         const iso =
@@ -143,7 +199,7 @@ export function normalizeHoldings(table: DetectedTable, mapping: CanonicalField[
                 ? '9999-12-31'
                 : parseDate(v, order);
         if (iso) set(holdings[i], field, iso);
-        else holdings[i].unparsed.maturity_date = text(v);
+        else holdings[i].unparsed[field as 'maturity_date' | 'call_date'] = text(v);
       });
       return;
     }

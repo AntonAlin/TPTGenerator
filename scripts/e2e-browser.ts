@@ -4,6 +4,9 @@
  * Drives the real app in headless Chromium through the whole workflow and checks:
  *  - upload → skipped rows → column mapping → source profile → fund form → export,
  *  - mixed amount columns re-read cell by cell (Amounts tab),
+ *  - reconciliation against the file's totals, sub-totals, weights and FX (Reconciliation tab),
+ *  - asset types: a file's own type text given a class, remembered (Asset types tab),
+ *  - learning from corrections: a column mapped by hand maps the same way in the next file,
  *  - the "How it works" page and its live example,
  *  - downloaded TPT / quality report files are valid and have the spec layout,
  *  - IndexedDB persistence (the source profile survives a page reload),
@@ -134,7 +137,14 @@ try {
     const csv = await download(page, 'Download TPT (.csv)');
     assert.equal(csv.bytes.toString('utf8').replace(/^﻿/, '').split('\r\n')[0], headers.join(','));
     const q = await download(page, 'Download quality report (.xlsx)');
-    assert.deepEqual(XLSX.read(q.bytes).SheetNames, ['Summary', 'Field completeness', 'Missing mandatory', 'Estimated values', 'Validation', 'Not derivable', 'Amount interpretation']);
+    assert.deepEqual(XLSX.read(q.bytes).SheetNames, ['Summary', 'Field completeness', 'Missing mandatory', 'Estimated values', 'Validation', 'Not derivable', 'Amount interpretation', 'Reconciliation']);
+  });
+
+  await step('reconciliation: totals, sub-totals, weights and FX agree with the file', async () => {
+    await page.click('button[role=tab]:has-text("Reconciliation")');
+    await page.waitForSelector("text=add up to the file's subtotal");
+    assert.ok(await page.isVisible("text=add up to the file's total"));
+    assert.ok(await page.isVisible('text=all agree'));
   });
 
   await step('after a reload: the source profile is remembered (IndexedDB)', async () => {
@@ -212,6 +222,41 @@ try {
     await page.click('text=4. Export & quality report');
     await page.waitForSelector('text=Mandatory cells filled');
     assert.ok(await page.isVisible('text=0 errors'));
+  });
+
+  await step('asset types: give a type text a class, remembered for the next file', async () => {
+    await page.click('button[role=tab]:has-text("Asset types")');
+    const sel = page.locator('select[aria-label^="Class for asset type"]').first();
+    await sel.waitFor();
+    const label = (await sel.getAttribute('aria-label'))!;
+    await sel.selectOption('other');
+    await page.waitForSelector('text=set by you');
+    await page.reload();
+    await upload(page, 'en_multi_asset.xls');
+    await page.click('text=Continue to column mapping');
+    await page.click('text=Confirm mapping');
+    await page.click('text=4. Export & quality report');
+    await page.click('button[role=tab]:has-text("Asset types")');
+    assert.equal(await page.inputValue(`select[aria-label="${label}"]`), 'other');
+    await page.selectOption(`select[aria-label="${label}"]`, '');
+    await page.waitForSelector('text=set by you', { state: 'detached' });
+  });
+
+  await step('learning: a column mapped by hand maps the same way in the next file', async () => {
+    await upload(page, 'en_multi_asset.xls');
+    await page.click('text=Continue to column mapping');
+    await page.waitForSelector('table.mapping');
+    await page.selectOption('select[aria-label="Mapping for Rating"]', 'ignore');
+    await page.click('text=Confirm mapping');
+    await page.waitForSelector('text=Fund and share class data');
+    await upload(page, 'en_multi_asset.xls');
+    await page.click('text=Continue to column mapping');
+    await page.waitForSelector('text=mapped the way you mapped the same header before');
+    assert.equal(await page.inputValue('select[aria-label="Mapping for Rating"]'), 'ignore');
+    // Forget it again from the profiles panel.
+    await page.click('summary:has-text("learned headers")');
+    await page.click('tr:has(code:text-is("rating")) button:has-text("Forget")');
+    await page.waitForSelector('tr:has(code:text-is("rating"))', { state: 'detached' });
   });
 
   assert.deepEqual(errors, [], `page errors: ${errors.join('\n')}`);
