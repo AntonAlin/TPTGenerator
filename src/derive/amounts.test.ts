@@ -207,3 +207,18 @@ describe('ambiguity is reported, not hidden', () => {
     expect(r.holdings[0]).toBe(h);
   });
 });
+
+describe('identities with nothing on either side', () => {
+  it("a future's 0 values do not prove that a 0 is its contract count", () => {
+    // 0 × price = 0 holds for any reading; it once moved the 24 contracts into the SEK value.
+    const fut = holding(0, { security_name: 'EURO STOXX 50 FUT MAR27', currency: 'EUR', price: 4703.9, weight: 0 }, [
+      ['Bestand', 'amount_mixed', 24],
+      ['Kurswert lokal', 'market_value_local', 0],
+      ['Kurswert SEK', 'market_value_portfolio', 0],
+    ]);
+    // No EUR rate yet: only the arithmetic of the row itself speaks.
+    const r = interpretAmounts([fut], { portfolioCurrency: 'SEK', fx: (c) => (c === 'SEK' ? 1 : undefined) });
+    expect(roles(r, 0)).toEqual({ Bestand: 'quantity', 'Kurswert lokal': 'mv_local', 'Kurswert SEK': 'mv_port' });
+    expect(r.holdings[0].file).toMatchObject({ quantity: 24, market_value_local: 0, market_value_portfolio: 0 });
+  });
+});

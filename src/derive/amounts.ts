@@ -185,22 +185,24 @@ function scoreAssignment(cells: AmountCell[], roles: AmountRole[], rc: RowContex
   const N = val.nominal;
   const ML = val.mv_local;
   const MP = val.mv_port;
-  const reward = (m: 0 | 1 | 2, full: number, text: string) => {
-    if (!m) return false;
+  // 0 × price = 0 holds for any reading: an identity with nothing on either side proves nothing
+  // (a future's 0 value would otherwise "prove" that a 0 elsewhere is its contract count).
+  const reward = (m: 0 | 1 | 2, full: number, text: string, sides: number[] = []) => {
+    if (!m || sides.some((x) => x === 0)) return false;
     score += m === 2 ? full : full * 0.6;
     evidence.push(text + (m === 1 ? ' (within 1%)' : ''));
     return true;
   };
 
   if (P !== undefined && P !== 0) {
-    if (Q !== undefined && ML !== undefined) reward(match(Q * P, ML), rc.kind === 'units' || rc.kind === 'listed' ? 4 : 2.5, `"${header.quantity}" × price = "${header.mv_local}" (${fmt(Q)} × ${fmt(P)} = ${fmt(ML)}) → units`);
+    if (Q !== undefined && ML !== undefined) reward(match(Q * P, ML), rc.kind === 'units' || rc.kind === 'listed' ? 4 : 2.5, `"${header.quantity}" × price = "${header.mv_local}" (${fmt(Q)} × ${fmt(P)} = ${fmt(ML)}) → units`, [Q, ML]);
     if (N !== undefined && ML !== undefined) {
-      reward(match((N * P) / 100, ML), rc.kind === 'bond' ? 4 : 2.5, `"${header.nominal}" × price ÷ 100 = "${header.mv_local}" (${fmt(N)} × ${fmt(P)}% = ${fmt(ML)}) → nominal`) ||
-        (AI !== undefined && reward(match((N * P) / 100 + AI, ML), rc.kind === 'bond' ? 4 : 2.5, `"${header.nominal}" × price ÷ 100 + accrued = "${header.mv_local}" → nominal`));
+      reward(match((N * P) / 100, ML), rc.kind === 'bond' ? 4 : 2.5, `"${header.nominal}" × price ÷ 100 = "${header.mv_local}" (${fmt(N)} × ${fmt(P)}% = ${fmt(ML)}) → nominal`, [N, ML]) ||
+        (AI !== undefined && reward(match((N * P) / 100 + AI, ML), rc.kind === 'bond' ? 4 : 2.5, `"${header.nominal}" × price ÷ 100 + accrued = "${header.mv_local}" → nominal`, [N, ML]));
     }
     if (fx !== undefined && ML === undefined && MP !== undefined) {
-      if (Q !== undefined) reward(match(Q * P * fx, MP), rc.kind === 'units' ? 3.5 : 2, `"${header.quantity}" × price × FX = "${header.mv_port}" → units`);
-      if (N !== undefined) reward(match(((N * P) / 100) * fx, MP), rc.kind === 'bond' ? 3.5 : 2, `"${header.nominal}" × price ÷ 100 × FX = "${header.mv_port}" → nominal`);
+      if (Q !== undefined) reward(match(Q * P * fx, MP), rc.kind === 'units' ? 3.5 : 2, `"${header.quantity}" × price × FX = "${header.mv_port}" → units`, [Q, MP]);
+      if (N !== undefined) reward(match(((N * P) / 100) * fx, MP), rc.kind === 'bond' ? 3.5 : 2, `"${header.nominal}" × price ÷ 100 × FX = "${header.mv_port}" → nominal`, [N, MP]);
     }
   }
   if (ML !== undefined && MP !== undefined && fx !== undefined) {
