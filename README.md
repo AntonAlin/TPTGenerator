@@ -2,7 +2,7 @@
 
 # TPT Generator
 
-**Version 1.2** · [What's new](CHANGELOG.md)
+**Version 1.3** · [What's new](CHANGELOG.md)
 
 A free, static web app that turns a portfolio holdings file (xlsx, xls or csv) with unknown, inconsistent
 column names into a FinDatEx **Solvency II Tripartite Template (TPT)**. It is for fund managers and
@@ -219,6 +219,19 @@ The current figures (validation accuracy, accuracy of the confident share, calib
 regression baseline) are in `src/detect/model.json` under `metrics` and on the app's "How it works" page.
 
 If you change the feature list you must retrain: the app refuses a model trained on a different feature set.
+
+## Nexus Portfolio Lab
+
+TPT Generator and Nexus Portfolio Lab (nexus.alin.one, a separate repository) share a bar at the top of the
+page with both logos and a switch between them (`src/ui/FamilyBar.tsx`; the same markup is in options-lab
+`js/familybar.js`).
+
+**Hand-off.** "Make a TPT from this portfolio" in Nexus opens this app at `#from-nexus` in a new tab, which
+tells its opener it is ready; Nexus then posts the holdings as CSV text with the portfolio's name, base
+currency and valuation date (`src/ui/handoff.ts`). This is `postMessage` between two tabs of the same
+browser: nothing goes over the network, and the Content-Security-Policy still forbids every request. Only a
+message from `https://nexus.alin.one`, sent by the window that opened the tab, is read. The name, currency
+and date fill the fund form where it is empty.
 
 ## Mixed amount columns
 

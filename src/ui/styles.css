@@ -238,3 +238,21 @@ tr.missing-row td { background: var(--warn-soft); }
 .button-link:hover { filter: brightness(1.1); }
 .button-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (prefers-color-scheme: dark) { .button-link { color: #0d1117; } }
+
+/* The bar Nexus Portfolio Lab and TPT Generator share (same in options-lab css/app.css). */
+.family-bar { position: sticky; top: 0; z-index: 70; display: flex; align-items: center; gap: 4px; height: 34px; padding: 0 12px; background: #0b1220; color: #aab6c8; border-bottom: 1px solid rgba(255, 255, 255, 0.06); font: 500 12.5px/1 Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+.family-bar .fb-app { display: inline-flex; align-items: center; gap: 7px; height: 26px; padding: 0 10px; border-radius: 7px; color: #aab6c8; text-decoration: none; white-space: nowrap; }
+.family-bar .fb-app:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
+.family-bar .fb-app[aria-current='page'] { background: rgba(255, 255, 255, 0.1); color: #fff; }
+.family-bar .fb-logo { width: 18px; height: 18px; flex: none; }
+.family-bar .fb-short { display: none; }
+.family-bar .fb-note { margin-left: auto; color: #7d8aa0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 12px; }
+@media (max-width: 640px) {
+  .family-bar .fb-name, .family-bar .fb-note { display: none; }
+  .family-bar .fb-short { display: inline; }
+}
+@media print { .family-bar { display: none; } }
+
+.handoff-note { display: flex; align-items: flex-start; gap: 12px; margin: 8px 0 0; padding: 8px 12px; border-radius: 6px; background: var(--accent-soft); color: var(--text); }
+.handoff-note.error { background: var(--warn-soft); }
+.handoff-note button { margin-left: auto; }

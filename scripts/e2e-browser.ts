@@ -7,6 +7,7 @@
  *  - reconciliation against the file's totals, sub-totals, weights and FX (Reconciliation tab),
  *  - asset types: a file's own type text given a class, remembered (Asset types tab),
  *  - learning from corrections: a column mapped by hand maps the same way in the next file,
+ *  - the bar shared with Nexus Portfolio Lab, and a portfolio handed over from Nexus tab to tab,
  *  - the "How it works" page and its live example,
  *  - downloaded TPT / quality report files are valid and have the spec layout,
  *  - IndexedDB persistence (the source profile survives a page reload),
@@ -78,6 +79,44 @@ try {
       assert.equal((await page.request.get(href)).status(), 200);
     }
     assert.ok(await page.evaluate(() => (document.querySelector('.brand-logo') as HTMLImageElement).naturalWidth > 0), 'logo did not load');
+    // The bar shared with Nexus Portfolio Lab: both apps, this one current, logos inline.
+    assert.equal(await page.getAttribute('.family-bar a[aria-current="page"]', 'href'), 'https://tptgenerator.alin.one/');
+    assert.equal(await page.getAttribute('.family-bar a:has-text("Nexus Portfolio Lab")', 'href'), 'https://nexus.alin.one/');
+  });
+
+  await step('hand-off from Nexus Portfolio Lab: holdings arrive tab to tab, nothing uploaded', async () => {
+    // A stand-in for nexus.alin.one that does what its "Make TPT" button does (options-lab js/handoff.js).
+    const csv = readFileSync(join(samples, 'nexus_holdings_demo.csv'), 'utf8');
+    const nexus = await context.newPage();
+    await nexus.route('https://nexus.alin.one/**', (r) =>
+      r.fulfill({
+        contentType: 'text/html',
+        body: `<!doctype html><button id="go">Make TPT</button><script>
+          document.getElementById('go').onclick = () => {
+            const w = window.open(${JSON.stringify(url)} + '#from-nexus', '_blank');
+            addEventListener('message', (e) => {
+              if (e.source !== w || !e.data || e.data.type !== 'tpt-ready') return;
+              w.postMessage({ type: 'nexus-holdings', version: 1, fileName: 'demo-nordic-balanced-holdings-2026-10-30.csv', csv: ${JSON.stringify(csv)},
+                meta: { portfolioName: 'Demo: Nordic Balanced Fund', baseCurrency: 'SEK', valuationDate: '2026-10-30' } }, ${JSON.stringify(origin)});
+            });
+          };</script>`,
+      }),
+    );
+    await nexus.goto('https://nexus.alin.one/');
+    const [tpt] = await Promise.all([context.waitForEvent('page'), nexus.click('#go')]);
+    const tptForeign: string[] = [];
+    tpt.on('request', (r) => !r.url().startsWith(origin) && !r.url().startsWith('blob:') && !r.url().startsWith('data:') && tptForeign.push(r.url()));
+    tpt.on('pageerror', (e) => errors.push(e.message));
+    await tpt.waitForSelector('text=Portfolio received from');
+    await tpt.waitForSelector('text=holdings rows');
+    assert.equal(new URL(tpt.url()).hash, '', 'the #from-nexus marker is removed once the holdings are in');
+    await tpt.click('text=Continue to column mapping');
+    await tpt.click('text=Confirm mapping');
+    await tpt.waitForSelector('text=Fund and share class data');
+    assert.equal(await tpt.inputValue('label:has-text("3 · Portfolio name") input'), 'Demo: Nordic Balanced Fund');
+    assert.deepEqual(tptForeign, [], `TPT Generator made requests elsewhere: ${tptForeign.join(', ')}`);
+    await tpt.close();
+    await nexus.close();
   });
 
   await step('the published build has no source maps', async () => {

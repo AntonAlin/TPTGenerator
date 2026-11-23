@@ -5,7 +5,9 @@ import { UploadStep } from './UploadStep.tsx';
 import { MappingStep } from './MappingStep.tsx';
 import { PortfolioStep } from './PortfolioStep.tsx';
 import { ExportStep } from './ExportStep.tsx';
-import { dateFromMetadata, type LoadedSheet } from './session.ts';
+import { dateFromMetadata, loadFile, type LoadedSheet } from './session.ts';
+import { FamilyBar } from './FamilyBar.tsx';
+import { listenForNexus, type NexusHandoff } from './handoff.ts';
 import { ProfileRepository } from '../profiles/profiles.ts';
 import { LearnedRepository } from '../profiles/learned.ts';
 import { openStore } from '../profiles/store.ts';
@@ -69,6 +71,33 @@ export function App() {
   const [portfolio, setPortfolio] = useState<PortfolioState>(emptyPortfolio);
   const [stores, setStores] = useState<Stores | null>(null);
   const [typeLessons, setTypeLessons] = useState<Map<string, { cls: AssetClass; source?: string }>>(new Map());
+  const [fromNexus, setFromNexus] = useState<{ fileName: string; error?: string } | null>(null);
+
+  // Opened by Nexus Portfolio Lab with a portfolio to convert: take it over, in this browser.
+  useEffect(
+    () =>
+      listenForNexus(async (h: NexusHandoff) => {
+        history.replaceState(null, '', `${location.pathname}${location.search}`);
+        try {
+          const s = await loadFile(new File([h.csv], h.fileName, { type: 'text/csv' }));
+          setLoaded(s);
+          setMapping(null);
+          // What the user set in Nexus for this portfolio, where nothing is entered yet.
+          setPortfolio((prev) => {
+            const next = structuredClone(prev);
+            if (h.meta.portfolioName && !next.values['3']) next.values['3'] = h.meta.portfolioName;
+            if (h.meta.baseCurrency && !next.values['4']) next.values['4'] = h.meta.baseCurrency;
+            if (h.meta.valuationDate && !next.values['6']) next.values['6'] = h.meta.valuationDate;
+            return next;
+          });
+          setFromNexus({ fileName: h.fileName });
+          setActiveState('upload');
+        } catch (e) {
+          setFromNexus({ fileName: h.fileName, error: e instanceof Error ? e.message : String(e) });
+        }
+      }),
+    [],
+  );
 
   useEffect(() => {
     (async () => {
@@ -217,6 +246,8 @@ export function App() {
     );
 
   return (
+    <>
+    <FamilyBar current="tpt" />
     <div class="app">
       <header class="app-header">
         <div class="brand">
@@ -249,6 +280,23 @@ export function App() {
         ))}
       </nav>
 
+      {fromNexus && (
+        <div class={`handoff-note ${fromNexus.error ? 'error' : ''}`} role="status">
+          <span>
+            {fromNexus.error ? (
+              <>Could not read the portfolio from Nexus Portfolio Lab ({fromNexus.fileName}): {fromNexus.error}</>
+            ) : (
+              <>
+                Portfolio received from <strong>Nexus Portfolio Lab</strong> ({fromNexus.fileName}), passed from tab to tab in this browser: nothing was uploaded. Its
+                name, currency and date are filled in step 3 where they were empty.
+              </>
+            )}
+          </span>
+          <button type="button" class="linklike" onClick={() => setFromNexus(null)} aria-label="Dismiss">
+            ✕
+          </button>
+        </div>
+      )}
       <main class="content">{body}</main>
 
       <footer class="app-footer muted">
@@ -272,5 +320,6 @@ export function App() {
         <Promo />
       </footer>
     </div>
+    </>
   );
 }

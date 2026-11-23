@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3 (2026-11-23)
+
+**One family with Nexus Portfolio Lab**
+
+- A bar at the top of both apps with their logos and a switch between them.
+- "Make a TPT from this portfolio" in Nexus opens TPT Generator with the holdings already loaded, passed
+  from tab to tab in the browser (nothing is uploaded), and the fund's name, currency and date filled in.
+
 ## 1.2 (2026-11-22)
 
 **Hedge fund files**, from testing a long/short European technology fund's position report:
